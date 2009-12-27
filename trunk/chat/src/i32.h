@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NAMETABLE_SIZE 2
+#define NAMETABLE_SIZE 128
 
 // днгУ
 #define i32malloc malloc

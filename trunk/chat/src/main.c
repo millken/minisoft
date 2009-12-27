@@ -58,10 +58,10 @@ int WINAPI WinMain (HINSTANCE hiold, HINSTANCE hithis, LPSTR param, int cmd)
 
 	reg();
 
-	i32create("form", ":s:n", WS_OVERLAPPED, "f1");
-	i32set (hwnd, ":s:n", WS_OVERLAPPED, "f2");
+	MessageBox(NULL, "d", "µÄ ", MB_OK);
+	i32create("form", "f1");
+	//i32set (hwnd, ":s:n", WS_OVERLAPPED, "f2");
 	hwnd = i32h("f1");
-	SetWindowLong ();
 	ShowWindow (hwnd, SW_SHOW);
 	msgloop();
 	printf ("%u\n", hwnd);
