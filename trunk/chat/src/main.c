@@ -52,19 +52,36 @@ int msgloop()
     }
 }
 
+int click (HWND hwnd, WPARAM wp, LPARAM lp)
+{
+	printf("click\n");
+}
+
+int hover (HWND hwnd, WPARAM wp, LPARAM lp)
+{
+	printf("hover\n");
+}
+
 int WINAPI WinMain (HINSTANCE hiold, HINSTANCE hithis, LPSTR param, int cmd)
 {
 	HWND hwnd;
+	I32CALLBACK f;
 
 	reg();
 
-	MessageBox(NULL, "d", "µÄ ", MB_OK);
 	i32create("form", "f1");
 	//i32set (hwnd, ":s:n", WS_OVERLAPPED, "f2");
 	hwnd = i32h("f1");
-	ShowWindow (hwnd, SW_SHOW);
-	msgloop();
-	printf ("%u\n", hwnd);
+
+	i32set_callback(hwnd, WM_LBUTTONDOWN, click);
+	i32set_callback(hwnd, WM_LBUTTONUP, hover);
+	i32set_callback(hwnd, WM_LBUTTONDBLCLK, hover);
+	i32set_callback(hwnd, WM_CANCELJOURNAL, hover);
+	i32set_callback(hwnd, WM_RBUTTONDBLCLK, hover);
+	f = i32get_callback(hwnd, WM_CANCELJOURNAL);
+	f (hwnd, 0, 0);
+	//ShowWindow (hwnd, SW_SHOW);
+	//msgloop();
 
 	return 0;
 }
