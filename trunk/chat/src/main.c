@@ -55,6 +55,7 @@ int msgloop()
 int click (HWND hwnd, WPARAM wp, LPARAM lp)
 {
 	printf("click\n");
+	return 0;
 }
 
 int hover (HWND hwnd, WPARAM wp, LPARAM lp)
@@ -65,23 +66,32 @@ int hover (HWND hwnd, WPARAM wp, LPARAM lp)
 int WINAPI WinMain (HINSTANCE hiold, HINSTANCE hithis, LPSTR param, int cmd)
 {
 	HWND hwnd;
-	I32CALLBACK f;
+	I32PROC f;
 
 	reg();
 
-	i32create("form", "f1");
+	i32create("form", "f13b");
 	//i32set (hwnd, ":s:n", WS_OVERLAPPED, "f2");
-	hwnd = i32h("f1");
+	hwnd = i32h("f13b");
 
-	i32set_callback(hwnd, WM_LBUTTONDOWN, click);
-	i32set_callback(hwnd, WM_LBUTTONUP, hover);
-	i32set_callback(hwnd, WM_LBUTTONDBLCLK, hover);
-	i32set_callback(hwnd, WM_CANCELJOURNAL, hover);
-	i32set_callback(hwnd, WM_RBUTTONDBLCLK, hover);
-	f = i32get_callback(hwnd, WM_CANCELJOURNAL);
-	f (hwnd, 0, 0);
-	//ShowWindow (hwnd, SW_SHOW);
-	//msgloop();
+	i32setproc(hwnd, WM_LBUTTONDOWN, click);
+	i32setproc(hwnd, WM_LBUTTONDBLCLK, hover);
+{
+	DWORD t1 = GetTickCount();
+	int i;
+	for (i = 0; i < 1000000; i++) {
+		float x = 1.4*i*(3.14);
+		//i32getproc (hwnd, WM_LBUTTONDOWN);
+		i32h("f13b");
+	}
+	printf ("time: %u\n", GetTickCount()-t1);
+}
+	ShowWindow (hwnd, SW_SHOW);
+
+	i32debug ();
+
+
+	msgloop();
 
 	return 0;
 }

@@ -11,19 +11,19 @@ static struct hwndname {
 static struct hwndmsg {
 	HWND hwnd;
 	UINT msg;
-	I32CALLBACK f;
+	I32PROC f;
 	struct hwndmsg *next;
 } *msgtable[MSGTABLE_SIZE];
 
 
 
-static int _init ()
+static int init ()
 {
 	static BOOL inited = FALSE;
 	if (inited) return 1;
 
 	memset(nametable, 0, sizeof(nametable));
-	memset(nametable, 0, sizeof(msgtable));
+	memset(msgtable, 0, sizeof(msgtable));
 	inited = TRUE;
 	return 1;
 }
@@ -47,7 +47,7 @@ void i32bind (HWND hwnd, char *name)
 	struct hwndname **hn;
 
 	if (!name) return;
-	_init ();
+	init ();
 
 	hash = strhash(name) % NAMETABLE_SIZE;
 	hn = &nametable[hash];
@@ -72,12 +72,10 @@ HWND i32h (char *name)
 	struct hwndname *p;
 
 	if (!name) return NULL;
-	_init ();
+	init ();
 
 	hash = strhash (name) % NAMETABLE_SIZE;
 	p = nametable[hash];
-	if (p && p->next==NULL)
-		return p->hwnd;
 	while (p) {
 		if (strcmp(p->name, name) == 0)
 			return p->hwnd;
@@ -91,7 +89,7 @@ HWND i32create (char *classname, char *name)
 {
 	HWND hwnd;
 
-	_init ();
+	init ();
 	hwnd = CreateWindow (
            classname,         	/* Classname */
            NULL,       			/* Title Text */
@@ -111,13 +109,10 @@ HWND i32create (char *classname, char *name)
 }
 
 
-void i32set_callback (HWND hwnd, UINT message, I32CALLBACK f)
+static void set_proc (HWND hwnd, UINT message, I32PROC f)
 {
 	struct hwndmsg **hm;
 	unsigned hash;
-
-	if (hwnd==NULL || message==0 || f==NULL) return;
-	_init();
 
 	hash = msghash(hwnd, message);
 	hm = &msgtable[hash%MSGTABLE_SIZE];
@@ -136,22 +131,94 @@ void i32set_callback (HWND hwnd, UINT message, I32CALLBACK f)
 	(*hm)->next = NULL;
 }
 
-I32CALLBACK i32get_callback (HWND hwnd, UINT message)
+
+I32PROC i32getproc (HWND hwnd, UINT message)
 {
 	struct hwndmsg *p;
 	unsigned hash;
 
-	if (hwnd==NULL || message==0) return NULL;
-	_init();
+	if (hwnd==NULL) return NULL;
+	init();
 
 	hash = msghash(hwnd, message);
 	p = msgtable[hash%MSGTABLE_SIZE];
-	if (p && p->next==NULL)
-		return p->f;
 	while (p) {
 		if (p->hwnd==hwnd && p->msg==message)
 			return p->f;
 		p = p->next;
 	}
 	return NULL;
+}
+
+
+static LRESULT CALLBACK
+i32defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+	I32PROC thisproc;
+	WNDPROC oldproc;
+
+	thisproc = i32getproc (hwnd, message);
+	if (thisproc)
+		return thisproc (hwnd, wp, lp);
+
+	oldproc = (WNDPROC)i32getproc (hwnd, 0);
+	return oldproc ? oldproc(hwnd, message, wp, lp) : 0;
+}
+
+static void bind_defproc (HWND hwnd)
+{
+	I32PROC oldproc;
+
+	oldproc = i32getproc (hwnd, 0);
+	if (oldproc) {return;}
+
+	oldproc = (I32PROC)GetWindowLong(hwnd, GWL_WNDPROC);
+	set_proc (hwnd, 0, oldproc);
+	SetWindowLong (hwnd, GWL_WNDPROC, (LONG)i32defproc);
+}
+
+void i32setproc (HWND hwnd, UINT message, I32PROC f)
+{
+	if (hwnd==NULL || message==0 || f==NULL) return;
+	init();
+	bind_defproc (hwnd);
+
+	set_proc (hwnd, message, f);
+}
+
+void i32debug ()
+{
+	int i;
+
+	printf ("name table:\n");
+	for (i = 0; i < NAMETABLE_SIZE; i++) {
+		printf ("%u", nametable[i]!=0);
+		if (nametable[i]) {
+			struct hwndname *p = nametable[i];
+			printf ("(");
+			while (p) {
+				printf ("[%u:%s],", p->hwnd, p->name);
+				p = p->next;
+			}
+			printf (")");
+		}
+		else printf (" ");
+		puts("\r");
+	}
+
+	printf ("\nmsg table:\n");
+	for (i = 0; i < MSGTABLE_SIZE; i++) {
+		printf ("%u", msgtable[i]!=0);
+		if (msgtable[i]) {
+			struct hwndmsg *p = msgtable[i];
+			printf ("(");
+			while (p) {
+				printf ("[%u:%u],", p->hwnd, p->msg);
+				p = p->next;
+			}
+			printf (")");
+		}
+		else printf (" ");
+		puts("\r");
+	}
 }
