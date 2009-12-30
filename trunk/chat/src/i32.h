@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NAMETABLE_SIZE 4
-#define MSGTABLE_SIZE 2
+#define NAMETABLE_SIZE 16
+#define MSGTABLE_SIZE 32
 
 // ‘›”√
 #define i32malloc malloc
