@@ -1,19 +1,21 @@
 #include "i32.h"
+#include <ctype.h>
 
 #define msghash(hwnd, msg) ((unsigned)hwnd ^ (unsigned)msg)
+#define STRSAME(a, b) (strcmp((a),(b))==0)
 
 static struct hwndname {
 	HWND hwnd;
 	char *name;
 	struct hwndname *next;
-} *nametable[NAMETABLE_SIZE];
+} *nametable[I32NAMETABLE_SIZE];
 
 static struct hwndmsg {
 	HWND hwnd;
 	UINT msg;
 	I32PROC f;
 	struct hwndmsg *next;
-} *msgtable[MSGTABLE_SIZE];
+} *msgtable[I32MSGTABLE_SIZE];
 
 
 
@@ -49,7 +51,7 @@ void i32bind (HWND hwnd, char *name)
 	if (!name) return;
 	init ();
 
-	hash = strhash(name) % NAMETABLE_SIZE;
+	hash = strhash(name) % I32NAMETABLE_SIZE;
 	hn = &nametable[hash];
 	while (*hn) {
 		struct hwndname *p = *hn;
@@ -74,7 +76,7 @@ HWND i32h (char *name)
 	if (!name) return NULL;
 	init ();
 
-	hash = strhash (name) % NAMETABLE_SIZE;
+	hash = strhash (name) % I32NAMETABLE_SIZE;
 	p = nametable[hash];
 	while (p) {
 		if (strcmp(p->name, name) == 0)
@@ -85,37 +87,13 @@ HWND i32h (char *name)
 }
 
 
-HWND i32create (char *classname, char *name)
-{
-	HWND hwnd;
-
-	init ();
-	hwnd = CreateWindow (
-           classname,         	/* Classname */
-           NULL,       			/* Title Text */
-           WS_OVERLAPPEDWINDOW,					/* default window */
-           CW_USEDEFAULT,		/* Windows decides the position */
-           CW_USEDEFAULT,		/* where the window ends up on the screen */
-           CW_USEDEFAULT,		/* The programs width */
-           CW_USEDEFAULT,		/* and height in pixels */
-           HWND_DESKTOP,        /* The window is a child-window to desktop */
-           NULL,                /* No menu */
-           GetModuleHandle(NULL),       /* Program Instance handler */
-           NULL                 /* No Window Creation data */
-	);
-	i32bind (hwnd, name);
-
-	return hwnd;
-}
-
-
 static void set_proc (HWND hwnd, UINT message, I32PROC f)
 {
 	struct hwndmsg **hm;
 	unsigned hash;
 
 	hash = msghash(hwnd, message);
-	hm = &msgtable[hash%MSGTABLE_SIZE];
+	hm = &msgtable[hash%I32MSGTABLE_SIZE];
 	while (*hm) {
 		struct hwndmsg *p = *hm;
 		if (p->hwnd==hwnd && p->msg==message) {
@@ -141,7 +119,7 @@ I32PROC i32getproc (HWND hwnd, UINT message)
 	init();
 
 	hash = msghash(hwnd, message);
-	p = msgtable[hash%MSGTABLE_SIZE];
+	p = msgtable[hash%I32MSGTABLE_SIZE];
 	while (p) {
 		if (p->hwnd==hwnd && p->msg==message)
 			return p->f;
@@ -156,13 +134,15 @@ i32defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	I32PROC thisproc;
 	WNDPROC oldproc;
+	int r;
+
+	oldproc = (WNDPROC)i32getproc (hwnd, 0);
+	r = CallWindowProc (oldproc, hwnd, message, wp, lp);
 
 	thisproc = i32getproc (hwnd, message);
 	if (thisproc)
 		return thisproc (hwnd, wp, lp);
-
-	oldproc = (WNDPROC)i32getproc (hwnd, 0);
-	return oldproc ? oldproc(hwnd, message, wp, lp) : 0;
+	return r;
 }
 
 static void bind_defproc (HWND hwnd)
@@ -186,12 +166,13 @@ void i32setproc (HWND hwnd, UINT message, I32PROC f)
 	set_proc (hwnd, message, f);
 }
 
+
 void i32debug ()
 {
 	int i;
 
 	printf ("name table:\n");
-	for (i = 0; i < NAMETABLE_SIZE; i++) {
+	for (i = 0; i < I32NAMETABLE_SIZE; i++) {
 		printf ("%u", nametable[i]!=0);
 		if (nametable[i]) {
 			struct hwndname *p = nametable[i];
@@ -207,7 +188,7 @@ void i32debug ()
 	}
 
 	printf ("\nmsg table:\n");
-	for (i = 0; i < MSGTABLE_SIZE; i++) {
+	for (i = 0; i < I32MSGTABLE_SIZE; i++) {
 		printf ("%u", msgtable[i]!=0);
 		if (msgtable[i]) {
 			struct hwndmsg *p = msgtable[i];
@@ -221,4 +202,224 @@ void i32debug ()
 		else printf (" ");
 		puts("\r");
 	}
+}
+
+static char *
+token (char *buf, char *s)
+{
+	assert (buf && s);
+
+	/* isalpha±Èµ¥¶ÀÅÐ¶Ï·ûºÅÂý2±¶ÒÔÉÏ */
+	while (*s && *s!=I32SEP && *s!=' ')
+		*buf++ = *s++;
+	*buf = '\0';
+	while (*s && (*s==I32SEP || *s==' ')) s++;
+	return s;
+}
+
+
+void i32vset (HWND hwnd, char *format, va_list p)
+{
+	char a[16];
+
+	if (format == NULL)
+		return;
+
+	do {
+		format = token(a, format);
+
+		if (STRSAME("name", a)) {
+			char *name = va_arg(p, char*);
+			i32bind(hwnd, name);
+		}
+		else
+		if (STRSAME("style", a)) {
+			LONG style = va_arg(p, LONG);
+			SetWindowLong(hwnd, GWL_STYLE, style);
+		}
+
+		else
+		if (STRSAME("+style", a)) {
+			LONG style = va_arg(p, LONG);
+			style |= GetWindowLong(hwnd, GWL_STYLE);
+			SetWindowLong(hwnd, GWL_STYLE, style);
+		}
+		else
+		if (STRSAME("-style", a)) {
+			LONG style = va_arg(p, LONG);
+			style = GetWindowLong(hwnd, GWL_STYLE) & ~style;
+			SetWindowLong(hwnd, GWL_STYLE, style);
+		}
+		else
+		if (STRSAME("title", a)) {
+			char *title = va_arg(p, char*);
+			SetWindowText (hwnd, title);
+		}
+		else
+		if (STRSAME("size", a)) {
+			POINT size = va_arg(p, POINT);
+			RECT r;
+			GetWindowRect (hwnd, &r);
+			MoveWindow (hwnd, r.left, r.top, size.x, size.y, TRUE);
+		}
+		else
+		if (STRSAME("pos", a)) {
+			POINT pos = va_arg(p, POINT);
+			RECT r;
+			GetWindowRect (hwnd, &r);
+			MoveWindow (hwnd, pos.x, pos.y, r.right-r.left, r.bottom-r.top, TRUE);
+		}
+		else
+		if (STRSAME("rect", a)) {
+			RECT r = va_arg(p, RECT);
+			MoveWindow (hwnd, r.left, r.top, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("x", a) || STRSAME("left", a)) {
+			int x = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, x, r.top, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("y", a) || STRSAME("top", a)) {
+			int y = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left, y, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("w", a) || STRSAME("width", a)) {
+			int w = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left, r.top, w, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("h", a) || STRSAME("height", a)) {
+			int h = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left, r.top, r.right, h, TRUE);
+		}
+		else
+		if (STRSAME("align", a)) {
+			char *v = va_arg(p, char*);
+			HWND dad = GetParent(hwnd);
+			RECT dr, r;
+			int w, h, dw, dh;
+			char pos[16];
+
+			if (dad) {
+				GetClientRect (dad, &dr);
+				dw = dr.right - dr.left;
+				dh = dr.bottom - dr.top;
+			} else {
+				dw = GetSystemMetrics(SM_CXSCREEN);
+				dh = GetSystemMetrics(SM_CYSCREEN);
+			}
+			GetWindowRect (hwnd, &r);
+			w = r.right - r.left;
+			h = r.bottom - r.top;
+			ScreenToClient (dad, &r);
+			do {
+				v = token(pos, v);
+				if (STRSAME("center", pos)) {
+					r.left = (dw-w)/2;
+					r.top = (dh-h)/2;
+				}
+				else if (STRSAME("left", pos))
+					r.left = 0;
+				else if (STRSAME("right", pos))
+					r.left = dw - w;
+				else if (STRSAME("top", pos))
+					r.top = 0;
+				else if (STRSAME("bottom", pos))
+					r.top = dh - h;
+			} while (*v != '\0');
+			MoveWindow (hwnd, r.left, r.top, w, h, TRUE);
+		} /*endif align*/
+
+		else
+		if (STRSAME("dad", a)) {
+			HWND dad = va_arg(p, HWND);
+			SetParent (hwnd, dad);
+		}
+
+	} while (*format != '\0');
+}
+
+void i32set (HWND hwnd, char *format, ...)
+{
+	va_list p;
+
+	va_start (p, format);
+	i32vset (hwnd, format, p);
+	va_end (p);
+}
+
+
+HWND i32create (char *classname, char *format, ...)
+{
+	HWND hwnd;
+	va_list p;
+
+	init ();
+	hwnd = CreateWindow (
+           classname,         	/* Classname */
+           NULL,       			/* Title Text */
+           WS_OVERLAPPEDWINDOW,					/* default window */
+           CW_USEDEFAULT,		/* Windows decides the position */
+           CW_USEDEFAULT,		/* where the window ends up on the screen */
+           CW_USEDEFAULT,		/* The programs width */
+           CW_USEDEFAULT,		/* and height in pixels */
+           HWND_DESKTOP,        /* The window is a child-window to desktop */
+           NULL,                /* No menu */
+           GetModuleHandle(NULL),       /* Program Instance handler */
+           NULL                 /* No Window Creation data */
+	);
+
+	va_start (p, format);
+	i32vset(hwnd, format, p);
+	va_end(p);
+
+	return hwnd;
+}
+
+
+int i32call_oldproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+	WNDPROC proc = (WNDPROC)i32getproc (hwnd, 0);
+	return CallWindowProc(proc, hwnd, message, wp, lp);
+}
+
+int i32msgloop ()
+{
+	MSG messages;
+
+    /* Run the message loop. It will run until GetMessage() returns 0 */
+    while (GetMessage (&messages, NULL, 0, 0))
+    {
+        /* Translate virtual-key messages into character messages */
+        TranslateMessage(&messages);
+        /* Send message to WindowProcedure */
+        DispatchMessage(&messages);
+    }
+    return messages.wParam;
 }
