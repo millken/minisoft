@@ -255,10 +255,10 @@ token (char *buf, char *s)
 	assert (buf && s);
 
 	/* isalpha比单独判断符号慢2倍以上 */
-	while (*s && *s!=I32SEP && *s!=' ')
+	while (*s && *s!=I32DOT && *s!=' ')
 		*buf++ = *s++;
 	*buf = '\0';
-	while (*s && (*s==I32SEP || *s==' ')) s++;
+	while (*s && (*s==I32DOT || *s==' ')) s++;
 	return s;
 }
 
@@ -447,6 +447,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 
 		else
 		if (STRSAME("dad", a)) {
+			HWND dad = va_arg(p, HWND);
+			SetParent (hwnd, dad);
+		}
+		else
+		if (STRSAME("show", a)) {
 			HWND dad = va_arg(p, HWND);
 			SetParent (hwnd, dad);
 		}

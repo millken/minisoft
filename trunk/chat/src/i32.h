@@ -9,7 +9,7 @@
 
 #define I32NAMETABLE_SIZE 16
 #define I32MSGTABLE_SIZE 32
-#define I32SEP '|'
+#define I32DOT '|'
 
 #define i32pair(a, b) ((POINT){(int)(a), (int)(b)})
 #define i32rect(x, y, w, h) ((RECT){(int)(x), (int)(y), (int)(w), (int)(h)})
@@ -25,15 +25,19 @@ typedef struct {
 } I32EVENT;
 typedef int (*I32PROC) (I32EVENT);
 
-void i32bind (HWND hwnd, char *name);
+
+/* 常用的 */
+HWND i32create (char *classname, char *format, ...);
+void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
-I32PROC i32getproc (HWND hwnd, UINT message);
-void i32set (HWND hwnd, char *format, ...);
-HWND i32create (char *classname, char *format, ...);
-int i32oldproc (UINT message, I32EVENT e);
-
 int i32msgloop ();
+
+/* 不常用的 */
+void i32bind (HWND hwnd, char *name);
+int i32oldproc (UINT message, I32EVENT e);
+I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
+
 
 #endif

@@ -2,16 +2,16 @@
 1261883268 source:e:\dev\minisoft\chat\main.c
 	<windows.h>
 
-1262496556 source:e:\dev\minisoft\chat\src\main.c
+1262693365 source:e:\dev\minisoft\chat\src\main.c
 	<windows.h>
 	"i32.h"
 	"myctl.h"
 
-1262495729 source:e:\dev\minisoft\chat\src\i32.c
+1262868986 source:e:\dev\minisoft\chat\src\i32.c
 	"i32.h"
 	<ctype.h>
 
-1262487344 e:\dev\minisoft\chat\src\i32.h
+1262868985 e:\dev\minisoft\chat\src\i32.h
 	<windows.h>
 	<stdio.h>
 	<stdlib.h>
