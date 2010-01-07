@@ -19,11 +19,8 @@ static struct hwndmsg {
 
 
 
-/*****************************
- * 提供三个容器控件
- *****************************/
 
-/* 普通容器,可作为主窗口 */
+/* 提供一个空控件,可作为容器或主窗口 */
 static LRESULT CALLBACK
 box_proc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
