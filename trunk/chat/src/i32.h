@@ -18,16 +18,20 @@
 #define i32malloc malloc
 #define i32realloc realloc
 
-
-typedef int (*I32PROC) (HWND, WPARAM, LPARAM);
+typedef struct {
+	HWND hwnd;
+	WPARAM wp;
+	LPARAM lp;
+} I32EVENT;
+typedef int (*I32PROC) (I32EVENT);
 
 void i32bind (HWND hwnd, char *name);
-HWND i32h (char *name);
+HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32create (char *classname, char *format, ...);
-int i32call_oldproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp);
+int i32oldproc (UINT message, I32EVENT e);
 
 int i32msgloop ();
 void i32debug ();

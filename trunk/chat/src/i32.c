@@ -19,6 +19,51 @@ static struct hwndmsg {
 
 
 
+/*****************************
+ * 提供三个容器控件
+ *****************************/
+
+/* 普通容器,可作为主窗口 */
+static LRESULT CALLBACK
+box_proc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message) {
+		case WM_DESTROY: {
+			HWND dad = GetParent (hwnd);
+			if (!dad) /* 判断是主窗口才敢退出程序 */
+				PostQuitMessage (0);
+		}
+		break;
+	}
+    return DefWindowProc (hwnd, message, wParam, lParam);
+}
+
+static int reg_box ()
+{
+	WNDCLASSEX wincl;
+
+    /* The Window structure */
+    wincl.hInstance = GetModuleHandle(0);
+    wincl.lpszClassName = "box";
+    wincl.lpfnWndProc = box_proc;      /* This function is called by windows */
+    wincl.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;                 /* Catch double-clicks */
+    wincl.cbSize = sizeof (WNDCLASSEX);
+
+    /* Use default icon and mouse-pointer */
+    wincl.hIcon = LoadIcon (NULL, IDI_APPLICATION);
+    wincl.hIconSm = LoadIcon (NULL, IDI_APPLICATION);
+    wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
+    wincl.lpszMenuName = NULL;                 /* No menu */
+    wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
+    wincl.cbWndExtra = 0;                      /* structure or the window instance */
+    /* Use Windows's default colour as the background of the window */
+    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
+
+    /* Register the window class, and if it fails quit the program */
+    return !!RegisterClassEx (&wincl);
+}
+
+
 static int init ()
 {
 	static BOOL inited = FALSE;
@@ -26,6 +71,7 @@ static int init ()
 
 	memset(nametable, 0, sizeof(nametable));
 	memset(msgtable, 0, sizeof(msgtable));
+	reg_box ();
 	inited = TRUE;
 	return 1;
 }
@@ -68,7 +114,7 @@ void i32bind (HWND hwnd, char *name)
 }
 
 
-HWND i32h (char *name)
+HWND i32 (char *name)
 {
 	unsigned hash;
 	struct hwndname *p;
@@ -140,8 +186,10 @@ i32defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	r = CallWindowProc (oldproc, hwnd, message, wp, lp);
 
 	thisproc = i32getproc (hwnd, message);
-	if (thisproc)
-		return thisproc (hwnd, wp, lp);
+	if (thisproc) {
+		I32EVENT e = {hwnd, wp, lp};
+		return thisproc (e);
+	}
 	return r;
 }
 
@@ -286,6 +334,28 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			MoveWindow (hwnd, x, r.top, r.right, r.bottom, TRUE);
 		}
 		else
+		if (STRSAME("+x", a)) {
+			int dx = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left+dx, r.top, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("-x", a)) {
+			int dx = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left-dx, r.top, r.right, r.bottom, TRUE);
+		}
+		else
 		if (STRSAME("y", a) || STRSAME("top", a)) {
 			int y = va_arg(p, int);
 			RECT r;
@@ -295,6 +365,28 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			r.bottom -= r.top;
 			ScreenToClient (dad, &r);
 			MoveWindow (hwnd, r.left, y, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("+y", a)) {
+			int dy = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left, r.top+dy, r.right, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("-y", a)) {
+			int dy = va_arg(p, int);
+			RECT r;
+			HWND dad = GetParent (hwnd);
+			GetWindowRect (hwnd, &r);
+			r.right -= r.left;
+			r.bottom -= r.top;
+			ScreenToClient (dad, &r);
+			MoveWindow (hwnd, r.left, r.top-dy, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("w", a) || STRSAME("width", a)) {
@@ -385,8 +477,8 @@ HWND i32create (char *classname, char *format, ...)
            classname,         	/* Classname */
            NULL,       			/* Title Text */
            WS_OVERLAPPEDWINDOW,					/* default window */
-           CW_USEDEFAULT,		/* Windows decides the position */
-           CW_USEDEFAULT,		/* where the window ends up on the screen */
+           0,		/* Windows decides the position */
+           0,		/* where the window ends up on the screen */
            CW_USEDEFAULT,		/* The programs width */
            CW_USEDEFAULT,		/* and height in pixels */
            HWND_DESKTOP,        /* The window is a child-window to desktop */
@@ -403,10 +495,10 @@ HWND i32create (char *classname, char *format, ...)
 }
 
 
-int i32call_oldproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+int i32oldproc (UINT message, I32EVENT e)
 {
-	WNDPROC proc = (WNDPROC)i32getproc (hwnd, 0);
-	return CallWindowProc(proc, hwnd, message, wp, lp);
+	WNDPROC proc = (WNDPROC)i32getproc (e.hwnd, 0);
+	return CallWindowProc(proc, e.hwnd, message, e.wp, e.lp);
 }
 
 int i32msgloop ()
