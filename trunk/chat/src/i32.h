@@ -31,7 +31,8 @@ HWND i32create (char *classname, char *format, ...);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
-int i32msgloop ();
+int i32loop ();
+
 
 /* 不常用的 */
 void i32bind (HWND hwnd, char *name);
