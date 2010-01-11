@@ -1,24 +1,39 @@
 #include "i32.h"
 #include "myctl.h"
 
-
-int WINAPI WinMain (HINSTANCE hiold, HINSTANCE hithis, LPSTR param, int cmd)
+void i32vfill (HWND hwnd, struct boxlist *l)
 {
-	HWND hwnd, hbutton;
+	//struct boxlist blist = {}
+	printf("%d\n", l[0].v);
+}
 
-	hwnd = i32create ("box", "title|style|w|h|align|show|layout", "cat home",
-			WS_OVERLAPPEDWINDOW, 300, 200, "center", "yes",
-			"margin:5 5;padding:5;float:left;fill:x;");
+int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
+{
+	HWND hwnd;
 
-	i32create ("box", "layout", "fill:x");
+	hwnd = i32create ("box", "n|t|s|w|h|a", "form", "cat home",
+			WS_OVERLAPPEDWINDOW, 300, 200, "c");
 
-	i32set (hwnd, "show", "yes");
-	ShowWindow (hwnd, SW_SHOW);
+	//i32create("box", "n", "b1");
+	HWND hbox = i32box();
+	//i32set();
+	i32set (hbox, "d|s|w|h|a", hwnd, WS_CHILD|WS_BORDER|WS_VISIBLE,
+		60, 40, "c");
 
+	//i32box ();
+	//HWND hbox = i32create_box (100, 100);
+	//i32set(hbox, "n|a", "box", "c");
+	struct boxlist blist[] = {
+		{1, 98},
+		{2, -1},
+		{3, 10},
+		{0, 0}
+	};
+	//i32vfill (hwnd, blist);
 	//i32debug ();
 
 
-	i32msgloop();
+	i32loop();
 
 	return 0;
 }

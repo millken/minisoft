@@ -184,7 +184,10 @@ i32defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 	thisproc = i32getproc (hwnd, message);
 	if (thisproc) {
-		I32EVENT e = {hwnd, wp, lp};
+		I32EVENT e;
+		e.hwnd = hwnd;
+		e.wp = wp;
+		e.lp = lp;
 		return thisproc (e);
 	}
 	return r;
@@ -223,7 +226,7 @@ void i32debug ()
 			struct hwndname *p = nametable[i];
 			printf ("(");
 			while (p) {
-				printf ("[%u:%s],", p->hwnd, p->name);
+				printf ("[%u:%s],", (unsigned)p->hwnd, p->name);
 				p = p->next;
 			}
 			printf (")");
@@ -239,7 +242,7 @@ void i32debug ()
 			struct hwndmsg *p = msgtable[i];
 			printf ("(");
 			while (p) {
-				printf ("[%u:%u],", p->hwnd, p->msg);
+				printf ("[%u:%u],", (unsigned)p->hwnd, p->msg);
 				p = p->next;
 			}
 			printf (")");
@@ -273,61 +276,42 @@ void i32vset (HWND hwnd, char *format, va_list p)
 	do {
 		format = token(a, format);
 
-		if (STRSAME("name", a)) {
+		if (STRSAME("n", a) || STRSAME("name", a)) {
 			char *name = va_arg(p, char*);
 			i32bind(hwnd, name);
 		}
 		else
-		if (STRSAME("style", a)) {
+		if (STRSAME("s", a) || STRSAME("style", a)) {
 			LONG style = va_arg(p, LONG);
 			SetWindowLong(hwnd, GWL_STYLE, style);
 		}
 
 		else
-		if (STRSAME("+style", a)) {
+		if (STRSAME("+s", a) || STRSAME("+style", a)) {
 			LONG style = va_arg(p, LONG);
 			style |= GetWindowLong(hwnd, GWL_STYLE);
 			SetWindowLong(hwnd, GWL_STYLE, style);
 		}
 		else
-		if (STRSAME("-style", a)) {
+		if (STRSAME("-s", a) || STRSAME("-style", a)) {
 			LONG style = va_arg(p, LONG);
 			style = GetWindowLong(hwnd, GWL_STYLE) & ~style;
 			SetWindowLong(hwnd, GWL_STYLE, style);
 		}
 		else
-		if (STRSAME("title", a)) {
+		if (STRSAME("t", a) || STRSAME("title", a)) {
 			char *title = va_arg(p, char*);
 			SetWindowText (hwnd, title);
 		}
 		else
-		if (STRSAME("size", a)) {
-			POINT size = va_arg(p, POINT);
-			RECT r;
-			GetWindowRect (hwnd, &r);
-			MoveWindow (hwnd, r.left, r.top, size.x, size.y, TRUE);
-		}
-		else
-		if (STRSAME("pos", a)) {
-			POINT pos = va_arg(p, POINT);
-			RECT r;
-			GetWindowRect (hwnd, &r);
-			MoveWindow (hwnd, pos.x, pos.y, r.right-r.left, r.bottom-r.top, TRUE);
-		}
-		else
-		if (STRSAME("rect", a)) {
-			RECT r = va_arg(p, RECT);
-			MoveWindow (hwnd, r.left, r.top, r.right, r.bottom, TRUE);
-		}
-		else
-		if (STRSAME("x", a) || STRSAME("left", a)) {
+		if (STRSAME("x", a)) {
 			int x = va_arg(p, int);
 			RECT r;
 			HWND dad = GetParent (hwnd);
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, x, r.top, r.right, r.bottom, TRUE);
 		}
 		else
@@ -338,7 +322,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left+dx, r.top, r.right, r.bottom, TRUE);
 		}
 		else
@@ -349,18 +333,18 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left-dx, r.top, r.right, r.bottom, TRUE);
 		}
 		else
-		if (STRSAME("y", a) || STRSAME("top", a)) {
+		if (STRSAME("y", a)) {
 			int y = va_arg(p, int);
 			RECT r;
 			HWND dad = GetParent (hwnd);
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left, y, r.right, r.bottom, TRUE);
 		}
 		else
@@ -371,7 +355,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left, r.top+dy, r.right, r.bottom, TRUE);
 		}
 		else
@@ -382,7 +366,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left, r.top-dy, r.right, r.bottom, TRUE);
 		}
 		else
@@ -393,7 +377,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left, r.top, w, r.bottom, TRUE);
 		}
 		else
@@ -404,11 +388,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			r.right -= r.left;
 			r.bottom -= r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			MoveWindow (hwnd, r.left, r.top, r.right, h, TRUE);
 		}
 		else
-		if (STRSAME("align", a)) {
+		if (STRSAME("a", a) || STRSAME("align", a)) {
 			char *v = va_arg(p, char*);
 			HWND dad = GetParent(hwnd);
 			RECT dr, r;
@@ -426,34 +410,39 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			GetWindowRect (hwnd, &r);
 			w = r.right - r.left;
 			h = r.bottom - r.top;
-			ScreenToClient (dad, &r);
+			ScreenToClient (dad, (POINT *)&r);
 			do {
 				v = token(pos, v);
-				if (STRSAME("center", pos)) {
+				if (STRSAME("c", pos) || STRSAME("center", pos)) {
 					r.left = (dw-w)/2;
 					r.top = (dh-h)/2;
 				}
-				else if (STRSAME("left", pos))
+				else if (STRSAME("l", pos) || STRSAME("left", pos))
 					r.left = 0;
-				else if (STRSAME("right", pos))
+				else if (STRSAME("r", pos) || STRSAME("right", pos))
 					r.left = dw - w;
-				else if (STRSAME("top", pos))
+				else if (STRSAME("t", pos) || STRSAME("top", pos))
 					r.top = 0;
-				else if (STRSAME("bottom", pos))
+				else if (STRSAME("b", pos) || STRSAME("bottom", pos))
 					r.top = dh - h;
 			} while (*v != '\0');
 			MoveWindow (hwnd, r.left, r.top, w, h, TRUE);
 		} /*endif align*/
 
 		else
-		if (STRSAME("dad", a)) {
+		if (STRSAME("d", a) || STRSAME("dad", a)) {
 			HWND dad = va_arg(p, HWND);
 			SetParent (hwnd, dad);
 		}
 		else
 		if (STRSAME("show", a)) {
-			HWND dad = va_arg(p, HWND);
-			SetParent (hwnd, dad);
+			char *v = va_arg(p, char *);
+			if (STRSAME("y", v) || STRSAME("yes", v))
+				ShowWindow (hwnd, SW_SHOW);
+			else if (STRSAME("n", v) || STRSAME("no", v))
+				ShowWindow (hwnd, SW_HIDE);
+			else if (STRSAME("n", v) || STRSAME("no", v))
+				ShowWindow (hwnd, SW_HIDE);
 		}
 
 	} while (*format != '\0');
@@ -478,7 +467,7 @@ HWND i32create (char *classname, char *format, ...)
 	hwnd = CreateWindow (
            classname,         	/* Classname */
            NULL,       			/* Title Text */
-           WS_OVERLAPPEDWINDOW,					/* default window */
+           0, /*WS_OVERLAPPEDWINDOW,*/					/* default window */
            0,		/* Windows decides the position */
            0,		/* where the window ends up on the screen */
            CW_USEDEFAULT,		/* The programs width */
@@ -493,6 +482,8 @@ HWND i32create (char *classname, char *format, ...)
 	i32vset(hwnd, format, p);
 	va_end(p);
 
+	ShowWindow(hwnd, SW_SHOW);
+
 	return hwnd;
 }
 
@@ -503,7 +494,7 @@ int i32oldproc (UINT message, I32EVENT e)
 	return CallWindowProc(proc, e.hwnd, message, e.wp, e.lp);
 }
 
-int i32msgloop ()
+int i32loop ()
 {
 	MSG messages;
 

@@ -11,20 +11,25 @@
 #define I32MSGTABLE_SIZE 32
 #define I32DOT '|'
 
-#define i32pair(a, b) ((POINT){(int)(a), (int)(b)})
-#define i32rect(x, y, w, h) ((RECT){(int)(x), (int)(y), (int)(w), (int)(h)})
-
 /* 暂用 */
 #define i32malloc malloc
 #define i32realloc realloc
+
+
+#define i32box() i32create("box", NULL)
 
 typedef struct {
 	HWND hwnd;
 	WPARAM wp;
 	LPARAM lp;
 } I32EVENT;
+
 typedef int (*I32PROC) (I32EVENT);
 
+typedef struct boxlist {
+	HWND hwnd;
+	int v;
+} I32BOXLIST;
 
 /* 常用的 */
 HWND i32create (char *classname, char *format, ...);

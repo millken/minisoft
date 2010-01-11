@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin\chat" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\chatD" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="bin" />
 				<Option object_output="bin\_\d" />
 				<Option type="1" />
@@ -32,7 +32,6 @@
 		</Build>
 		<Compiler>
 			<Add option="-pedantic" />
-			<Add option="-W" />
 			<Add option="-Wall" />
 		</Compiler>
 		<Linker>
