@@ -1,38 +1,88 @@
 #include "i32.h"
 #include "myctl.h"
 
-void i32vfill (HWND hwnd, struct boxlist *l)
+int form_onsize (I32EVENT e)
 {
-	//struct boxlist blist = {}
-	printf("%d\n", l[0].v);
+	i32hfill (e.hwnd,
+		i(b1), 0,
+		i(b1.5), 12,
+		i(b2), -1,
+		NULL);
+	return 0;
+}
+
+int b1_onsize (I32EVENT e)
+{
+	i32vfill (e.hwnd,
+		i(b11), -1,
+		i(b12), -1,
+		i(b13), -1,
+		NULL);
+	return 0;
+}
+
+int b2_onsize (I32EVENT e)
+{
+	i32vfill (e.hwnd,
+		i(b3), -1,
+		i(b4), 19,
+		i(b5), -1,
+		NULL);
+	return 0;
+}
+
+int b3_onsize (I32EVENT e)
+{
+	i32hfill (e.hwnd,
+		i(b31), -1,
+		i(b32), -1,
+		i(b33), -1,
+		i(b34), -1,
+		NULL);
+	return 0;
+}
+
+int b4_onsize (I32EVENT e)
+{
+	i32hfill (e.hwnd,
+		i(b41), -1,
+		i(b42), -1,
+		i(b43), -1,
+		NULL);
+	return 0;
 }
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	HWND hwnd;
 
-	hwnd = i32create ("box", "n|t|s|w|h|a", "form", "cat home",
-			WS_OVERLAPPEDWINDOW, 300, 200, "c");
+	hwnd = i32create ("box", "n|t|s|w|h|a|show", "form", "cat home",
+			WS_OVERLAPPEDWINDOW, 300, 200, "c", "y");
+	i32setproc (hwnd, WM_SIZE, form_onsize);
 
-	//i32create("box", "n", "b1");
-	HWND hbox = i32box();
-	//i32set();
-	i32set (hbox, "d|s|w|h|a", hwnd, WS_CHILD|WS_BORDER|WS_VISIBLE,
-		60, 40, "c");
+	i32box("b1", hwnd);
+	i32set(i(b1), "w|h|a|+y", 50, 50, "c", 40);
+			i32box("b11", i(b1));
+			i32box("b12", i(b1));
+			i32box("b13", i(b1));
+			i32setproc (i(b1), WM_SIZE, b1_onsize);
+	i32box("b1.5", hwnd);
+	i32box("b2", hwnd);
+		i32box("b3", i(b2));
+			i32box("b31", i(b3));
+			i32box("b32", i(b3));
+			i32box("b33", i(b3));
+			i32box("b34", i(b3));
+			i32setproc (i(b3), WM_SIZE, b3_onsize);
+		i32box("b4", i(b2));
+			i32box("b41", i(b4));
+			i32box("b42", i(b4));
+			i32box("b43", i(b4));
+			i32setproc (i(b4), WM_SIZE, b4_onsize);
+		i32box("b5", i(b2));
+		i32setproc (i(b2), WM_SIZE, b2_onsize);
 
-	//i32box ();
-	//HWND hbox = i32create_box (100, 100);
-	//i32set(hbox, "n|a", "box", "c");
-	struct boxlist blist[] = {
-		{1, 98},
-		{2, -1},
-		{3, 10},
-		{0, 0}
-	};
-	//i32vfill (hwnd, blist);
-	//i32debug ();
-
-
+	SendMessage (hwnd, WM_SIZE, 0, 0);
 	i32loop();
 
 	return 0;

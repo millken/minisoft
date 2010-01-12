@@ -90,6 +90,7 @@ void i32bind (HWND hwnd, char *name)
 {
 	unsigned hash;
 	struct hwndname **hn;
+	char *copyname = NULL;
 
 	if (!name) return;
 	init ();
@@ -106,7 +107,9 @@ void i32bind (HWND hwnd, char *name)
 	}
 	*hn = (struct hwndname *)i32malloc (sizeof(struct hwndname));
 	(*hn)->hwnd = hwnd;
-	(*hn)->name = name;
+	copyname = (char *)malloc(strlen(name)+1);
+	strcpy(copyname, name);
+	(*hn)->name = copyname;
 	(*hn)->next = NULL;
 }
 
@@ -219,6 +222,7 @@ void i32debug ()
 {
 	int i;
 
+	init();
 	printf ("name table:\n");
 	for (i = 0; i < I32NAMETABLE_SIZE; i++) {
 		printf ("%u", nametable[i]!=0);
@@ -252,6 +256,7 @@ void i32debug ()
 	}
 }
 
+
 static char *
 token (char *buf, char *s)
 {
@@ -265,14 +270,41 @@ token (char *buf, char *s)
 	return s;
 }
 
+static void ScreenToDad (HWND hwnd, RECT *r)
+{
+	POINT p;
+	HWND dad;
+
+	dad = GetParent(hwnd);
+	GetWindowRect(hwnd, r);
+	r->right -= r->left;
+	r->bottom -= r->top;
+	p.x = r->left;
+	p.y = r->top;
+	ScreenToClient (dad, &p);
+	r->left = p.x;
+	r->top = p.y;
+}
+
+static void ScreenToR (HWND dad, RECT *r)
+{
+	POINT p;
+
+	p.x = r->left;
+	p.y = r->top;
+	ScreenToClient (dad, &p);
+	r->left = p.x;
+	r->top = p.y;
+}
 
 void i32vset (HWND hwnd, char *format, va_list p)
 {
 	char a[16];
 
-	if (format == NULL)
+	if (hwnd == NULL || format == NULL)
 		return;
 
+	init();
 	do {
 		format = token(a, format);
 
@@ -307,88 +339,56 @@ void i32vset (HWND hwnd, char *format, va_list p)
 		if (STRSAME("x", a)) {
 			int x = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, x, r.top, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("+x", a)) {
 			int dx = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left+dx, r.top, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("-x", a)) {
 			int dx = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left-dx, r.top, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("y", a)) {
 			int y = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, y, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("+y", a)) {
 			int dy = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, r.top+dy, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("-y", a)) {
 			int dy = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, r.top-dy, r.right, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("w", a) || STRSAME("width", a)) {
 			int w = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, r.top, w, r.bottom, TRUE);
 		}
 		else
 		if (STRSAME("h", a) || STRSAME("height", a)) {
 			int h = va_arg(p, int);
 			RECT r;
-			HWND dad = GetParent (hwnd);
-			GetWindowRect (hwnd, &r);
-			r.right -= r.left;
-			r.bottom -= r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, r.top, r.right, h, TRUE);
 		}
 		else
@@ -407,10 +407,9 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				dw = GetSystemMetrics(SM_CXSCREEN);
 				dh = GetSystemMetrics(SM_CYSCREEN);
 			}
-			GetWindowRect (hwnd, &r);
-			w = r.right - r.left;
-			h = r.bottom - r.top;
-			ScreenToClient (dad, (POINT *)&r);
+			ScreenToDad(hwnd, &r);
+			w = r.right;
+			h = r.bottom;
 			do {
 				v = token(pos, v);
 				if (STRSAME("c", pos) || STRSAME("center", pos)) {
@@ -441,8 +440,6 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				ShowWindow (hwnd, SW_SHOW);
 			else if (STRSAME("n", v) || STRSAME("no", v))
 				ShowWindow (hwnd, SW_HIDE);
-			else if (STRSAME("n", v) || STRSAME("no", v))
-				ShowWindow (hwnd, SW_HIDE);
 		}
 
 	} while (*format != '\0');
@@ -463,15 +460,15 @@ HWND i32create (char *classname, char *format, ...)
 	HWND hwnd;
 	va_list p;
 
-	init ();
+	init();
 	hwnd = CreateWindow (
            classname,         	/* Classname */
            NULL,       			/* Title Text */
            0, /*WS_OVERLAPPEDWINDOW,*/					/* default window */
            0,		/* Windows decides the position */
            0,		/* where the window ends up on the screen */
-           CW_USEDEFAULT,		/* The programs width */
-           CW_USEDEFAULT,		/* and height in pixels */
+           0,		/* The programs width */
+           0,		/* and height in pixels */
            HWND_DESKTOP,        /* The window is a child-window to desktop */
            NULL,                /* No menu */
            GetModuleHandle(NULL),       /* Program Instance handler */
@@ -482,17 +479,29 @@ HWND i32create (char *classname, char *format, ...)
 	i32vset(hwnd, format, p);
 	va_end(p);
 
-	ShowWindow(hwnd, SW_SHOW);
-
+	UpdateWindow (hwnd);
 	return hwnd;
 }
 
+
+HWND i32box (char *name, HWND dad)
+{
+	HWND hbox;
+
+	hbox = i32create("box", "d|n|s|x|y|w|h",
+		dad, name,
+		WS_CHILD|WS_VISIBLE|WS_BORDER,
+		0,0,0,0);
+
+	return hbox;
+}
 
 int i32oldproc (UINT message, I32EVENT e)
 {
 	WNDPROC proc = (WNDPROC)i32getproc (e.hwnd, 0);
 	return CallWindowProc(proc, e.hwnd, message, e.wp, e.lp);
 }
+
 
 int i32loop ()
 {
@@ -507,4 +516,172 @@ int i32loop ()
         DispatchMessage(&messages);
     }
     return messages.wParam;
+}
+
+
+static int winheight (HWND hwnd)
+{
+	RECT r;
+	GetWindowRect(hwnd, &r);
+	return r.bottom-r.top;
+}
+
+static int winwidth (HWND hwnd)
+{
+	RECT r;
+	GetWindowRect(hwnd, &r);
+	return r.right-r.left;
+}
+
+void i32vfill (HWND hwnd, ...)
+{
+	va_list p;
+
+	struct boxlist {
+		HWND hwnd;
+		int v;
+	} blist[32];
+	int n = 0, i;
+
+	HWND hbox;
+	int h;
+	int blockh = 0; /* 固定块总高度 */
+	int toth = 0; /* 窗口总高度 */
+	int autoh = 0; /* 自动块平均高度 */
+	int auton = 0; /* 自动块的个数 */
+	int autorem = 0; /* 整除余数 */
+
+	RECT r;
+
+	if (hwnd == NULL) return;
+	init();
+
+	va_start (p, hwnd);
+
+	/* 第一遍确定高度 */
+	GetClientRect (hwnd, &r);
+	toth = r.bottom - r.top;
+	do {
+		if (n >= sizeof(blist)/sizeof(struct boxlist))
+			break;
+		hbox = va_arg(p, HWND);
+		if (hbox == NULL) break;
+		blist[n].hwnd = hbox;
+		h = va_arg(p, int);
+		if (h > 0) {
+			blist[n].v = h;
+			blockh += h;
+		}
+		else if (h == 0) {
+			blist[n].v = winheight(hbox);
+			blockh += blist[n].v;
+		}
+		else {
+			auton++;
+			blist[n].v = -1;
+		}
+		n++;
+	} while(TRUE);
+
+	if (auton > 0) {
+		autoh = (toth - blockh) / auton;
+		autorem = (toth - blockh) % auton;
+	}
+	else
+		autoh = toth;
+
+	/* 第二遍放置控件 */
+	h = 0; /* 积累高度 */
+	for (i = 0 ; i < n; i++) {
+		RECT tmpr = {0, 0, 0, 0};
+		tmpr.top = h;
+		tmpr.right = r.right;
+		if (blist[i].v < 0) {
+			blist[i].v = autoh;
+			blist[i].v += autorem-- > 0;
+		}
+		tmpr.bottom = blist[i].v;
+		MoveWindow (blist[i].hwnd,
+			tmpr.left, tmpr.top, tmpr.right, tmpr.bottom, TRUE);
+		h += blist[i].v;
+	}
+
+	va_end(p);
+}
+
+void i32hfill (HWND hwnd, ...)
+{
+	va_list p;
+
+	struct boxlist {
+		HWND hwnd;
+		int v;
+	} blist[32];
+	int n = 0, i;
+
+	HWND hbox;
+	int w;
+	int blockw = 0; /* 固定块总宽度 */
+	int totw = 0; /* 窗口总宽度 */
+	int autow = 0; /* 自动块平均宽度 */
+	int auton = 0; /* 自动块的个数 */
+	int autorem = 0;
+
+	RECT r;
+
+	if (hwnd == NULL) return;
+	init();
+
+	va_start (p, hwnd);
+
+	/* 第一遍确定高度 */
+	GetClientRect (hwnd, &r);
+	totw = r.right - r.left;
+	do {
+		if (n >= sizeof(blist)/sizeof(struct boxlist))
+			break;
+		hbox = va_arg(p, HWND);
+		if (hbox == NULL) break;
+		blist[n].hwnd = hbox;
+		w = va_arg(p, int);
+		if (w > 0) {
+			blist[n].v = w;
+			blockw += w;
+		}
+		else if (w == 0) {
+			blist[n].v = winwidth(hbox);
+			blockw += blist[n].v;
+		}
+		else {
+			auton++;
+			blist[n].v = -1;
+		}
+		n++;
+	} while(TRUE);
+
+	if (auton > 0) {
+		autow = (totw - blockw) / auton;
+		autorem = (totw - blockw) % auton;
+	}
+	else
+		autow = totw;
+
+	/* 第二遍放置控件 */
+	w = 0; /* 积累高度 */
+	for (i = 0 ; i < n; i++) {
+		RECT tmpr = {0, 0, 0, 0};
+		tmpr.left = w;
+		tmpr.top = 0;
+		tmpr.bottom = r.bottom;
+		if (blist[i].v < 0) {
+			blist[i].v = autow;
+			blist[i].v += autorem-- > 0;
+		}
+		tmpr.right = blist[i].v;
+		MoveWindow (blist[i].hwnd,
+			tmpr.left, tmpr.top, tmpr.right, tmpr.bottom, TRUE);
+		w += blist[i].v;
+	}
+
+	va_end(p);
 }

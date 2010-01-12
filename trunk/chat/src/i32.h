@@ -15,8 +15,7 @@
 #define i32malloc malloc
 #define i32realloc realloc
 
-
-#define i32box() i32create("box", NULL)
+#define i(name) i32(#name)
 
 typedef struct {
 	HWND hwnd;
@@ -26,20 +25,20 @@ typedef struct {
 
 typedef int (*I32PROC) (I32EVENT);
 
-typedef struct boxlist {
-	HWND hwnd;
-	int v;
-} I32BOXLIST;
 
-/* 常用的 */
+/* 核心 */
 HWND i32create (char *classname, char *format, ...);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
 int i32loop ();
 
+/* 布局 */
+HWND i32box (char *name, HWND dad);
+void i32vfill (HWND hwnd, ...);
+void i32hfill (HWND hwnd, ...);
 
-/* 不常用的 */
+/* 其他 */
 void i32bind (HWND hwnd, char *name);
 int i32oldproc (UINT message, I32EVENT e);
 I32PROC i32getproc (HWND hwnd, UINT message);
