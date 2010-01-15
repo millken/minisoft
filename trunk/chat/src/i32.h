@@ -16,9 +16,11 @@
 #define i32realloc realloc
 
 #define i(name) i32(#name)
+#define I32E I32EVENT
 
 typedef struct {
 	HWND hwnd;
+	UINT msg;
 	WPARAM wp;
 	LPARAM lp;
 } I32EVENT;
@@ -31,16 +33,16 @@ HWND i32create (char *classname, char *format, ...);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
+int i32callold (I32EVENT e);
 int i32loop ();
 
 /* 布局 */
 HWND i32box (char *name, HWND dad);
-void i32vfill (HWND hwnd, ...);
-void i32hfill (HWND hwnd, ...);
+void i32fillv (HWND hwnd, ...);
+void i32fillh (HWND hwnd, ...);
 
 /* 其他 */
 void i32bind (HWND hwnd, char *name);
-int i32oldproc (UINT message, I32EVENT e);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
 

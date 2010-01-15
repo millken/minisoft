@@ -176,23 +176,25 @@ I32PROC i32getproc (HWND hwnd, UINT message)
 
 
 static LRESULT CALLBACK
-i32defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	I32PROC thisproc;
 	WNDPROC oldproc;
 	int r;
 
-	oldproc = (WNDPROC)i32getproc (hwnd, 0);
-	r = CallWindowProc (oldproc, hwnd, message, wp, lp);
-
 	thisproc = i32getproc (hwnd, message);
 	if (thisproc) {
 		I32EVENT e;
 		e.hwnd = hwnd;
+		e.msg = message;
 		e.wp = wp;
 		e.lp = lp;
 		return thisproc (e);
 	}
+
+	oldproc = (WNDPROC)i32getproc (hwnd, 0);
+	r = CallWindowProc (oldproc, hwnd, message, wp, lp);
+
 	return r;
 }
 
@@ -205,7 +207,7 @@ static void bind_defproc (HWND hwnd)
 
 	oldproc = (I32PROC)GetWindowLong(hwnd, GWL_WNDPROC);
 	set_proc (hwnd, 0, oldproc);
-	SetWindowLong (hwnd, GWL_WNDPROC, (LONG)i32defproc);
+	SetWindowLong (hwnd, GWL_WNDPROC, (LONG)defproc);
 }
 
 void i32setproc (HWND hwnd, UINT message, I32PROC f)
@@ -238,7 +240,6 @@ void i32debug ()
 		else printf (" ");
 		puts("\r");
 	}
-
 	printf ("\nmsg table:\n");
 	for (i = 0; i < I32MSGTABLE_SIZE; i++) {
 		printf ("%u", msgtable[i]!=0);
@@ -262,7 +263,7 @@ token (char *buf, char *s)
 {
 	assert (buf && s);
 
-	/* isalpha比单独判断符号慢2倍以上 */
+	/* isalpha比手工判断慢2倍以上 */
 	while (*s && *s!=I32DOT && *s!=' ')
 		*buf++ = *s++;
 	*buf = '\0';
@@ -279,17 +280,6 @@ static void ScreenToDad (HWND hwnd, RECT *r)
 	GetWindowRect(hwnd, r);
 	r->right -= r->left;
 	r->bottom -= r->top;
-	p.x = r->left;
-	p.y = r->top;
-	ScreenToClient (dad, &p);
-	r->left = p.x;
-	r->top = p.y;
-}
-
-static void ScreenToR (HWND dad, RECT *r)
-{
-	POINT p;
-
 	p.x = r->left;
 	p.y = r->top;
 	ScreenToClient (dad, &p);
@@ -496,10 +486,10 @@ HWND i32box (char *name, HWND dad)
 	return hbox;
 }
 
-int i32oldproc (UINT message, I32EVENT e)
+int i32callold (I32EVENT e)
 {
 	WNDPROC proc = (WNDPROC)i32getproc (e.hwnd, 0);
-	return CallWindowProc(proc, e.hwnd, message, e.wp, e.lp);
+	return CallWindowProc(proc, e.hwnd, e.msg, e.wp, e.lp);
 }
 
 
@@ -533,7 +523,7 @@ static int winwidth (HWND hwnd)
 	return r.right-r.left;
 }
 
-void i32vfill (HWND hwnd, ...)
+void i32fillv (HWND hwnd, ...)
 {
 	va_list p;
 
@@ -609,7 +599,7 @@ void i32vfill (HWND hwnd, ...)
 	va_end(p);
 }
 
-void i32hfill (HWND hwnd, ...)
+void i32fillh (HWND hwnd, ...)
 {
 	va_list p;
 
