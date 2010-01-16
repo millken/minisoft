@@ -4,7 +4,7 @@
 int form_onsize (I32EVENT e)
 {
 	i32fillh (e.hwnd,
-		i(b1), 0,
+		i(b1), -1,
 		i(b1.5), 12,
 		i(b2), -1,
 		NULL);
@@ -60,6 +60,13 @@ int on_clearbg (I32E e)
 	return 0;
 }
 
+int b1_oncommand (I32E e)
+{
+	if (e.lp==i(bt1) )
+		printf("click:%u\n", HIWORD(e.wp));
+	return 0;
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	HWND hwnd;
@@ -71,12 +78,12 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	i32box("b1", hwnd);
 	i32set(i(b1), "w|h|a|+y", 50, 50, "c", 40);
 			i32create("button", "n|d|t|s|w|h|a", "bt1", i(b1), "ÄãºÃ..",
-				WS_CHILD|WS_VISIBLE|BS_RADIOBUTTON, 76, 24, "c");
-			i32setproc (i(bt1), WM_PAINT, on_clearbg);
+				WS_CHILD|WS_VISIBLE|BS_CHECKBOX|BS_MULTILINE, 76, 24, "c");
 			i32box("b11", i(b1));
 			i32box("b12", i(b1));
 			i32box("b13", i(b1));
 			i32setproc (i(b1), WM_SIZE, b1_onsize);
+			i32setproc (i(b1), WM_COMMAND, b1_oncommand);
 
 	i32box("b1.5", hwnd);
 	i32box("b2", hwnd);
@@ -93,6 +100,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 			i32setproc (i(b4), WM_SIZE, b4_onsize);
 		i32box("b5", i(b2));
 		i32setproc (i(b2), WM_SIZE, b2_onsize);
+
 /**/
 	//SendMessage (hwnd, WM_SIZE, 0, 0);
 	ShowWindow(hwnd, SW_SHOWNORMAL);
