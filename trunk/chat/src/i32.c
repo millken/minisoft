@@ -22,17 +22,18 @@ static struct hwndmsg {
 
 /* 提供一个空控件,可作为容器或主窗口 */
 static LRESULT CALLBACK
-box_proc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	switch (message) {
-		case WM_DESTROY: {
+		/* 命令消息直接穿透 */
+		case WM_COMMAND: {
 			HWND dad = GetParent (hwnd);
-			if (!dad) /* 判断是主窗口才敢退出程序 */
-				PostQuitMessage (0);
+			if (dad)
+				SendMessage (dad, message, wp, lp);
 		}
-		break;
+		return 0;
 	}
-    return DefWindowProc (hwnd, message, wParam, lParam);
+    return DefWindowProc (hwnd, message, wp, lp);
 }
 
 static int reg_box ()

@@ -1,0 +1,7 @@
+FORM_HEAD BITMAP "rc/head.bmp"
+FORM_LEFT BITMAP "rc/bord-left.bmp"
+FORM_RIGHT BITMAP "rc/bord-right.bmp"
+FORM_FOOT BITMAP "rc/foot.bmp"
+FORM_MIN BITMAP "rc/min.bmp"
+FORM_CLOSE BITMAP "rc/close.bmp"
+FORM_ICON BITMAP "rc/icon.bmp"

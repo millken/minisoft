@@ -1,110 +1,61 @@
 #include "i32.h"
 #include "myctl.h"
 
-int form_onsize (I32EVENT e)
-{
-	i32fillh (e.hwnd,
-		i(b1), -1,
-		i(b1.5), 12,
-		i(b2), -1,
-		NULL);
-	return 0;
-}
 
-int b1_onsize (I32EVENT e)
+int f1_onsize (I32E e)
 {
-	i32fillv (e.hwnd,
-		i(bt1), -1,
-		i(b11), -1,
-		i(b12), -1,
-		i(b13), -1,
-		NULL);
-	return 0;
-}
-
-int b2_onsize (I32EVENT e)
-{
-	i32fillv (e.hwnd,
-		i(b3), -1,
-		i(b4), 19,
-		i(b5), -1,
-		NULL);
-	return 0;
-}
-
-int b3_onsize (I32EVENT e)
-{
-	i32fillh (e.hwnd,
-		i(b31), -1,
-		i(b32), -1,
-		i(b33), -1,
-		i(b34), -1,
-		NULL);
-	return 0;
-}
-
-int b4_onsize (I32EVENT e)
-{
-	i32fillh (e.hwnd,
-		i(b41), -1,
-		i(b42), -1,
-		i(b43), -1,
-		NULL);
-	return 0;
-}
-
-int on_clearbg (I32E e)
-{
-	printf ("f");
 	i32callold(e);
+
+	i32fillv (e.hwnd,
+		H(flist1), -1,
+		H(b1), -1,
+		NULL);
+
 	return 0;
 }
 
-int b1_oncommand (I32E e)
+int f1_onquit (I32E e)
 {
-	if (e.lp==i(bt1) )
-		printf("click:%u\n", HIWORD(e.wp));
+	PostQuitMessage(0);
 	return 0;
 }
+
+int f1_oncmd (I32E e)
+{
+	printf ("c");
+	return 0;
+}
+
+
+int b1_onsize (I32E e)
+{
+	i32set(H(bt1), "a", "c");
+
+	return 0;
+}
+
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	HWND hwnd;
 
-	hwnd = i32create ("box", "n|t|s|w|h|a|-x|+y", "form", "cat home",
+	reg_myctl ();
+
+	hwnd = i32create ("form", "n|t|s|w|h|a|-x|+y", "f1", "cat home",
 			WS_OVERLAPPEDWINDOW, 200, 300, "c", -100, 10);
-	i32setproc (hwnd, WM_SIZE, form_onsize);
+	i32setproc (hwnd, WM_SIZE, f1_onsize);
+	i32setproc (hwnd, WM_DESTROY, f1_onquit);
+	i32setproc (hwnd, WM_COMMAND, f1_oncmd);
+
+	i32create("flist", "n|d|s|w|h|a", "flist1", hwnd, WS_CHILD|WS_BORDER|WS_VISIBLE,
+		100, 100, "c");
 
 	i32box("b1", hwnd);
-	i32set(i(b1), "w|h|a|+y", 50, 50, "c", 40);
-			i32create("button", "n|d|t|s|w|h|a", "bt1", i(b1), "ÄãºÃ..",
-				WS_CHILD|WS_VISIBLE|BS_CHECKBOX|BS_MULTILINE, 76, 24, "c");
-			i32box("b11", i(b1));
-			i32box("b12", i(b1));
-			i32box("b13", i(b1));
-			i32setproc (i(b1), WM_SIZE, b1_onsize);
-			i32setproc (i(b1), WM_COMMAND, b1_oncommand);
+	i32setproc (H(b1), WM_SIZE, b1_onsize);
+	  i32create ("button", "n|d|s|w|h|a|t", "bt1", H(b1), WS_CHILD|WS_BORDER|WS_VISIBLE,
+			70, 24, "c", "Button");
 
-	i32box("b1.5", hwnd);
-	i32box("b2", hwnd);
-		i32box("b3", i(b2));
-			i32box("b31", i(b3));
-			i32box("b32", i(b3));
-			i32box("b33", i(b3));
-			i32box("b34", i(b3));
-			i32setproc (i(b3), WM_SIZE, b3_onsize);
-		i32box("b4", i(b2));
-			i32box("b41", i(b4));
-			i32box("b42", i(b4));
-			i32box("b43", i(b4));
-			i32setproc (i(b4), WM_SIZE, b4_onsize);
-		i32box("b5", i(b2));
-		i32setproc (i(b2), WM_SIZE, b2_onsize);
-
-/**/
-	//SendMessage (hwnd, WM_SIZE, 0, 0);
 	ShowWindow(hwnd, SW_SHOWNORMAL);
-	UpdateWindow(hwnd);
 	i32loop();
 
 	return 0;

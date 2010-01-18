@@ -1,6 +1,9 @@
 #ifndef _I32_H
 #define _I32_H
 
+#undef WINVER
+#define WINVER 0x0500
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +18,7 @@
 #define i32malloc malloc
 #define i32realloc realloc
 
-#define i(name) i32(#name)
+#define H(name) i32(#name)
 #define I32E I32EVENT
 
 typedef struct {
