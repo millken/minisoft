@@ -1,27 +1,114 @@
 #include "myctl.h"
 
-
-
 /**
- * 好友列表
+ * 分组列表
  */
+#define GLISTMAXN 10
+#define GROUPMAXN 30
+#define ITEMMAXN 1000
+
+
+static
+struct grouplist {
+	HWND hwnd;
+	Group *groups;
+	int gn;
+	Item *items;
+	int in;
+} Glist[GLISTMAXN];
+
+static void init_grouplist ()
+{
+	static int inited = FALSE;
+	if (inited)
+		return;
+	memset (&Glist, 0, sizeof(Glist));
+	inited = TRUE;
+}
+
+static
+BOOL new_grouplist (HWND hwnd)
+{
+	int i;
+
+	init_grouplist();
+
+	for (i = 0; i < GLISTMAXN; i++)
+		if (Glist[i].hwnd == NULL) {
+			Glist[i].hwnd = hwnd;
+			Glist[i].groups = (struct group *)malloc(sizeof(struct group)*GROUPMAXN);
+			Glist[i].gn = 0;
+			Glist[i].items = (struct item *)malloc(sizeof(struct item)*ITEMMAXN);
+			Glist[i].in = 0;
+			printf ("newgroup, %d %d %d\n", i, Glist[i].gn, Glist[i].in);
+			return TRUE;
+		}
+	exit(1001); /* 这样调试 */
+	return FALSE;
+}
+
+
+static
+struct grouplist *get_grouplist (HWND hwnd)
+{
+	int i;
+
+	for (i = 0; i < GLISTMAXN; i++)
+		if (Glist[i].hwnd == hwnd)
+			return &Glist[i];
+	exit(1002);
+	return NULL;
+}
+
+
+static del_grouplist (HWND hwnd)
+{
+	struct grouplist *glist;
+
+	glist = get_grouplist (hwnd);
+	free(glist->groups);
+	free(glist->items);
+	memset(glist, 0, sizeof(struct grouplist));
+}
+
+
 static LRESULT CALLBACK
-flist_proc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+grouplist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
     switch (message)                  /* handle the messages */
     {
-		case WM_PAINT: {
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hwnd, &ps);
-			HBRUSH hbrush = CreateSolidBrush(0xff00ff);
-			RECT r = {2, 2, 20, 20};
-			//FillRect (hdc, &r, hbrush);
-			EndPaint(hwnd, &ps);
+		case WM_CREATE: {
+			new_grouplist (hwnd);
 		}
 		return 0;
+
+		case WM_DESTROY: {
+			del_grouplist (hwnd);
+		}
+		break;
+
+		case FM_ADDGROUP: {
+			struct grouplist *glist;
+			Group *group;
+			Group *newgroup;
+
+			glist = get_grouplist (hwnd);
+			newgroup = &glist->groups[glist->gn++];
+			group = (Group *)wp;
+			memmove (newgroup, group, sizeof(Group));
+			printf ("%d %s\n", newgroup->gid, newgroup->name);
+		}
+		return 0;
+
     }
-	return DefWindowProc (hwnd, message, wParam, lParam);
+	return DefWindowProc (hwnd, message, wp, lp);
 }
+
+
+
+
+
+
 
 
 
@@ -70,8 +157,8 @@ static int BtnMarginLeft = -36; //NC按钮左上角定位
 static int BtnMarginTop = 5;
 static int BtnSpace = 2;
 /* 窗口css */
-static int RNDH = 4; /* 圆角半径 */
-static int RNDW = 4;
+static int RNDH = 0; /* 圆角半径 */
+static int RNDW = 1;
 static DWORD FrameColor = 0x00000000; /* 边框颜色 */
 
 
@@ -467,6 +554,13 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 }
 
 
+
+
+
+
+
+
+
 /**
  * REGISTER CONTROLS NAME
  */
@@ -497,6 +591,6 @@ static void reg (char *classname, WNDPROC f)
 
 void reg_myctl ()
 {
-	reg("flist", flist_proc);
+	reg("grouplist", grouplist_proc);
 	reg("form", form_proc);
 }

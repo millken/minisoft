@@ -39,10 +39,8 @@
 			<Add library="gdi32" />
 			<Add library="user32" />
 			<Add library="kernel32" />
+			<Add library="msimg32" />
 		</Linker>
-		<Unit filename="src\chatlist.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="src\i32.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -54,6 +52,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\myctl.h" />
+		<Unit filename="src\myctl.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />

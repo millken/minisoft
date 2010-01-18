@@ -47,14 +47,32 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	i32setproc (hwnd, WM_DESTROY, f1_onquit);
 	i32setproc (hwnd, WM_COMMAND, f1_oncmd);
 
-	i32create("flist", "n|d|s|w|h|a", "flist1", hwnd, WS_CHILD|WS_BORDER|WS_VISIBLE,
+	i32create("grouplist", "n|d|s|w|h|a", "flist1", hwnd, WS_CHILD|WS_BORDER|WS_VISIBLE,
 		100, 100, "c");
+
+	Group g = {1, "บวบว"};
+	SendMessage (H(flist1), FM_ADDGROUP, (WPARAM)&g, 0);
 
 	i32box("b1", hwnd);
 	i32setproc (H(b1), WM_SIZE, b1_onsize);
 	  i32create ("button", "n|d|s|w|h|a|t", "bt1", H(b1), WS_CHILD|WS_BORDER|WS_VISIBLE,
 			70, 24, "c", "Button");
 
+
+/*
+	i32create("flist", "xx", ...);
+	groups = getservergroup(uid);
+	friends = getserverfriend(uid);
+	foreach (group in groups)
+		SendMessage (flist, FM_ADDGROUP, {group.id, group.name}, 0);
+	foreach (f in friends)
+		SendMessage (flist, FM_ADDFRIEND, {f.uid, f.hicon, f.gid, f.number, f.name, f.bakname, f.sign}, 0);
+	SendMessage (flist, FM_SETGROUPID, f.uid, f.gid);
+	SendMessage (flist, FM_SETGROUPNAME, gid, "NAME");
+	SendMessage (flist, FM_DELGROUP, gid, 0);
+	SendMessage (flist, FM_FOLDGROUP, gid, 0);
+	SendMessage (flist, FM_EXGROUP, gid, 0);
+*/
 	ShowWindow(hwnd, SW_SHOWNORMAL);
 	i32loop();
 
