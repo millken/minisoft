@@ -308,7 +308,6 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			LONG style = va_arg(p, LONG);
 			SetWindowLong(hwnd, GWL_STYLE, style);
 		}
-
 		else
 		if (STRSAME("+s", a) || STRSAME("+style", a)) {
 			LONG style = va_arg(p, LONG);
