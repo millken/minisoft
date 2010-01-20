@@ -13,10 +13,12 @@
 #define I32NAMETABLE_SIZE 16
 #define I32MSGTABLE_SIZE 32
 #define I32DOT '|'
+#define WS_CTRL (WS_CHILD|WS_BORDER|WS_VISIBLE)
 
 /* ‘›”√ */
 #define i32malloc malloc
 #define i32realloc realloc
+#define i32free free
 
 #define H(name) i32(#name)
 #define I32E I32EVENT
