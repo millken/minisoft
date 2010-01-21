@@ -523,7 +523,7 @@ static int winwidth (HWND hwnd)
 	return r.right-r.left;
 }
 
-void i32fillv (HWND hwnd, ...)
+void i32vfill (HWND hwnd, ...)
 {
 	va_list p;
 
@@ -599,7 +599,7 @@ void i32fillv (HWND hwnd, ...)
 	va_end(p);
 }
 
-void i32fillh (HWND hwnd, ...)
+void i32hfill (HWND hwnd, ...)
 {
 	va_list p;
 
@@ -674,4 +674,39 @@ void i32fillh (HWND hwnd, ...)
 	}
 
 	va_end(p);
+}
+
+
+
+/**
+ * »æÍ¼
+ */
+void i32framerect (HDC hdc, RECT *r, DWORD col)
+{
+	HBRUSH hbrush = CreateSolidBrush(col);
+	FrameRect(hdc, r, hbrush);
+	DeleteObject(hbrush);
+}
+
+void i32fillrect (HDC hdc, RECT *r, DWORD col)
+{
+	HBRUSH hbrush = CreateSolidBrush(col);
+	FillRect(hdc, r, hbrush);
+	DeleteObject(hbrush);
+}
+
+int i32clientw (HWND hwnd)
+{
+	RECT r;
+
+	GetClientRect (hwnd, &r);
+	return r.right;
+}
+
+int i32clienth (HWND hwnd)
+{
+	RECT r;
+
+	GetClientRect (hwnd, &r);
+	return r.bottom;
 }

@@ -4,10 +4,10 @@
 #include <windows.h>
 #include "i32.h"
 
-/* chattable¥Û–° */
-#define CHATTSIZE 10
 
-
+enum ChatListMsg {
+	CLM_SCROLL = WM_USER + 1,
+};
 
 
 

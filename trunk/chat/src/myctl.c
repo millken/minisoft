@@ -1,12 +1,21 @@
 #include "myctl.h"
 
 /****************************************
- *              聊天列表
+ *              可分组好友列表
  ****************************************/
+/* chattable大小 */
+#define CHATTSIZE 10
+
+#define GROUP_H 20 /* 分组高度 */
+#define BUDDYPIC_H 35 /* 带头像的好友高度 */
+#define BUDDY_H 25 /* 不带头像的高度 */
+
 
 /* 个人类型 */
 typedef struct chatbuddy {
 	int uid;
+
+	struct chatgroup *chatgroup; /* 所属组 */
 
 	char *name; /* 名字 */
 	char *note; /* 注释,名字后面的括号 */
@@ -27,6 +36,8 @@ typedef struct chatgroup {
 
 	char *name; /* 组名 */
 
+	struct chatlist *chatlist; /* 所在chatlist */
+
 	ChatBuddy *buddylist;
 	int bn; /* 好友列表长度 */
 
@@ -46,6 +57,12 @@ typedef struct chatlist {
 	ChatGroup *grouplist;  /* 0号组是'未分组' */
 	int gn;
 
+	BOOL showpic; /* 是否显示头像 */
+	BOOL showsb; /* 是否显示滚动条 */
+
+	int top; /* 绘制起点,相对于client */
+	int height; /* 总长度 */
+
 	/* 哈希表开链用 */
 	struct chatlist *hashnext;
 
@@ -64,6 +81,22 @@ static void init_chattable ()
 
 		did = TRUE;
 	}
+}
+
+/* 获得总高度 */
+static int get_chatlist_h (ChatList *cl)
+{
+	int h = 0;
+	ChatGroup *g;
+	ChatBuddy *b;
+
+	if (!cl) return h;
+
+	for (g = cl->grouplist; g; g = g->next)
+		h += g->bn * (cl->showpic?BUDDYPIC_H:BUDDY_H) + GROUP_H;
+	cl->height = h;
+
+	return h;
 }
 
 static void free_chatbuddy (ChatBuddy *buddy)
@@ -133,7 +166,10 @@ static ChatGroup *new_chatgroup (ChatList *cl, int gid)
 	p = *lp;
 	memset (p, 0, sizeof(ChatGroup));
 	p->gid = gid;
+	p->chatlist = cl;
+
 	cl->gn++;
+	get_chatlist_h(cl);
 
 	return p;
 }
@@ -167,6 +203,7 @@ static void del_chatgroup (ChatList *cl, int gid)
 			free_chatgroup (p);
 			*lp = next;
 			cl->gn--;
+			get_chatlist_h(cl);
 			return;
 		}
 		lp = &p->next;
@@ -192,7 +229,11 @@ static ChatBuddy *new_chatbuddy (ChatGroup *group, int uid)
 	p = *lp;
 	memset (p, 0, sizeof(ChatBuddy));
 	p->uid = uid;
+	p->chatgroup = group;
 	group->bn++;
+
+	get_chatlist_h (group->chatlist);
+
 	return p;
 }
 
@@ -226,6 +267,7 @@ static void del_chatbuddy (ChatGroup *group, int uid)
 			free_chatbuddy (p);
 			*lp = next;
 			group->bn--;
+			get_chatlist_h(group->chatlist);
 			return;
 		}
 		lp = &p->next;
@@ -251,6 +293,7 @@ static ChatList *new_chatlist (HWND hwnd)
 	p = *lp;
 	memset(p, 0, sizeof(ChatList));
 	p->hwnd = hwnd;
+	p->showpic = TRUE;
 	return p;
 }
 
@@ -290,31 +333,166 @@ static void del_chatlist (HWND hwnd)
 
 }
 
+static void
+draw_chatlist (HDC hdc, ChatList *cl)
+{
+	ChatGroup *g;
+	ChatBuddy *b;
+	int accHeight = cl->top;
+
+	int ClientWidth = i32clientw (WindowFromDC(hdc));
+
+	for (g = cl->grouplist; g; g = g->next) {
+		RECT gr;
+		gr.top = accHeight;
+		gr.bottom = gr.top + GROUP_H;
+		gr.left = 1;
+		gr.right = ClientWidth - 1;
+		i32fillrect (hdc, &gr, 0x000000);
+
+		accHeight = gr.bottom;
+
+		for (b = g->buddylist; b; b = b->next) {
+			RECT br;
+			br.top = accHeight;
+			br.bottom = br.top + (cl->showpic?BUDDYPIC_H:BUDDY_H);
+			br.left = 1;
+			br.right = ClientWidth - 1;
+			i32framerect (hdc, &br, 0x000000);
+
+			accHeight = br.bottom;
+		}
+	}
+
+}
+
+static void
+chatlist_scroll (ChatList *cl, int dy)
+{
+	int oldtop;
+	int ClientHeight;
+
+	if (!cl) return;
+
+	oldtop = cl->top;
+	ClientHeight = i32clienth(cl->hwnd);
+
+	cl->top += dy;
+
+	if (cl->top > 0 || cl->height <= ClientHeight)
+		cl->top = 0;
+	else if (cl->top + cl->height < ClientHeight)
+		cl->top = ClientHeight - cl->height;
+
+	if (oldtop != cl->top)
+		InvalidateRect (cl->hwnd, NULL, TRUE);
+}
+
+/* 重新检查滚动条状态 */
+static void
+chatlist_check_scrollbar (ChatList *cl)
+{
+	int clienth;
+	SCROLLINFO si;
+
+	if (!cl) return;
+
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_RANGE;
+	si.nMin = 0;
+
+	clienth = i32clienth(cl->hwnd);
+	if (cl->height > clienth) {
+		cl->showsb = TRUE;
+		si.nMax = cl->height;
+	}
+	else {
+		cl->showsb = FALSE;
+		si.nMax = 0; /* 隐藏滚动条 */
+	}
+
+	SetScrollInfo(cl->hwnd, SB_VERT, &si, TRUE);
+
+	chatlist_scroll (cl, 0);
+}
+
 static LRESULT CALLBACK
 chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
+	ChatList *cl = get_chatlist(hwnd);
+
 	switch (message) {
 		case WM_CREATE:
 			init_chattable ();
 			{
-			ChatList *cl;
 			ChatGroup *g;
-			ChatBuddy *b;
-			cl = new_chatlist(9999);
-			new_chatgroup (cl, 3);
-			new_chatgroup (cl, 4);
-			new_chatgroup (cl, 2);
-			g = get_chatgroup(cl, 3);
-			printf ("gid:%d gn:%d bn:%d\n", g->gid, cl->gn, g->bn);
-			//del_chatgroup (cl, 3);
-			new_chatbuddy(g, 11);
-			new_chatbuddy(g, 12);
-			del_chatbuddy(g, 12);
-			b = get_chatbuddy(g, 12);
-
-			printf ("uid:%d bn:%d\n", b?b->uid:-1, g?g->bn:-1);
+			int h;
+			cl = new_chatlist (hwnd);
+			g = new_chatgroup(cl, 1);
+			new_chatbuddy(g, 1);
+			new_chatbuddy(g, 2);
+			new_chatbuddy(g, 3);
+			new_chatbuddy(g, 4);
+			new_chatbuddy(g, 5);
+			g = new_chatgroup(cl, 2);
+			new_chatbuddy(g, 6);
+			new_chatbuddy(g, 7);
+			new_chatbuddy(g, 8);
+			new_chatbuddy(g, 9);
+			new_chatbuddy(g, 10);
 			}
 		break;
+
+		case WM_PAINT: {
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hwnd, &ps);
+			draw_chatlist (hdc, cl);
+			EndPaint(hwnd, &ps);
+		}
+		return 0;
+
+		case WM_SIZE: {
+			chatlist_check_scrollbar(cl);
+			printf ("sb: %d\n", cl->showsb);
+		}
+		return 0;
+
+		case WM_VSCROLL: {
+			SCROLLINFO si;
+
+			si.cbSize = sizeof(si);
+			si.fMask = SIF_ALL;
+			GetScrollInfo (hwnd, SB_VERT, &si);
+			printf ("trackpos: %d, pos: %d, page: %d\n", si.nTrackPos, si.nPos, si.nPage);
+
+			//cl->top = -si.nTrackPos;
+
+			switch (LOWORD(wp)) {
+				case SB_PAGEDOWN:
+					si.nPos += 10;
+					cl->top -= 100;
+					printf ("pgdown\n");
+				break;
+
+				case SB_PAGEUP:
+					si.nPos -= 10;
+					cl->top += 100;
+					printf ("pgup\n");
+				break;
+			}
+
+			//si.nPos = si.nTrackPos;
+			si.fMask = SIF_POS;
+			SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
+			chatlist_check_scrollbar(cl);
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		return 0;
+
+		case CLM_SCROLL:
+			chatlist_scroll(cl, (int)wp);
+		return 0;
+
 	}
 
 	return DefWindowProc(hwnd, message, wp, lp);
@@ -639,15 +817,33 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		break;
 
+		case WM_EXITSIZEMOVE:
 		case WM_MOVE:
+		case WM_MOVING:
+		case WM_SIZING:
 		case WM_ACTIVATE:
 		case WM_SIZE: {
+			static int oldw = 0;
+			static int oldh = 0;
+			RECT wr;
+			int w, h;
+
+			GetWindowRect (hwnd, &wr);
+			w = wr.right - wr.left;
+			h = wr.bottom - wr.top;
+
+			if (w==oldw && h==oldh)
+				return 0;
+
 			if (FormRgn) {
 				DeleteObject(FormRgn);
 				FormRgn = NULL;
 			}
 			FormRgn = createFormRgn(hwnd);
 			SetWindowRgn (hwnd, FormRgn, TRUE);
+
+			oldw = w;
+			oldh = h;
 		}
 		return 0;
 
@@ -672,12 +868,13 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			stretchBmp (hdc, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 			stretchBmp (hdc, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 
-			drawHeadIcon (hdc);
+			//drawHeadIcon (hdc);
 			drawTitle (hdc);
 
 			drawMin (hdc, BS_NORMAL);
 			drawClose (hdc, BS_NORMAL);
 
+			FormRgn = createFormRgn(hwnd);
 			drawFormFrame (hdc);
 
 			ReleaseDC (hwnd, hdc);
@@ -721,6 +918,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			ReleaseDC(hwnd, hdc);
 		}
 		break;
+
 
 		case WM_MOUSEMOVE:
 		case WM_NCMOUSEMOVE: {
@@ -803,7 +1001,7 @@ static void reg (char *classname, WNDPROC f)
     wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
-    wincl.hbrBackground = (HBRUSH) COLOR_BTNHILIGHT;
+    wincl.hbrBackground = (HBRUSH) COLOR_HIGHLIGHT;
 
     /* Register the window class, and if it fails quit the program */
     RegisterClassEx (&wincl);

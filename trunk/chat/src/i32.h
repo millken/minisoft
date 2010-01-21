@@ -13,7 +13,7 @@
 #define I32NAMETABLE_SIZE 16
 #define I32MSGTABLE_SIZE 32
 #define I32DOT '|'
-#define WS_CTRL (WS_CHILD|WS_BORDER|WS_VISIBLE)
+#define WS_CTRL (WS_CHILD|WS_VISIBLE)
 
 /* 暂用 */
 #define i32malloc malloc
@@ -43,13 +43,18 @@ int i32loop ();
 
 /* 布局 */
 HWND i32box (char *name, HWND dad);
-void i32fillv (HWND hwnd, ...);
-void i32fillh (HWND hwnd, ...);
+void i32vfill (HWND hwnd, ...);
+void i32hfill (HWND hwnd, ...);
+
+/* 绘图 */
+void i32framerect (HDC hdc, RECT *r, DWORD col);
+void i32fillrect (HDC hdc, RECT *r, DWORD col);
+int i32clientw (HWND hwnd);
+int i32clienth (HWND hwnd);
 
 /* 其他 */
 void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
-
 
 #endif
