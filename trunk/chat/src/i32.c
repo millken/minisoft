@@ -20,11 +20,12 @@ static struct hwndmsg {
 
 
 
-/* 提供一个空控件,可作为容器或主窗口 */
+/* 提供一个空控件,作为容器 */
 static LRESULT CALLBACK
 box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	switch (message) {
+
 		/* 命令消息直接穿透 */
 		case WM_COMMAND: {
 			HWND dad = GetParent (hwnd);
@@ -32,6 +33,7 @@ box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				SendMessage (dad, message, wp, lp);
 		}
 		return 0;
+
 	}
     return DefWindowProc (hwnd, message, wp, lp);
 }

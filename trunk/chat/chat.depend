@@ -34,7 +34,7 @@
 1262496478 source:e:\dev\minisoft\chat\src\chatlist.c
 	"myctl.h"
 
-1264037106 source:f:\dev\minisoft\chat\src\i32.c
+1264235988 source:f:\dev\minisoft\chat\src\i32.c
 	"i32.h"
 	<ctype.h>
 
@@ -45,7 +45,7 @@
 	<string.h>
 	<assert.h>
 
-1264062288 source:f:\dev\minisoft\chat\src\main.c
+1264236258 source:f:\dev\minisoft\chat\src\main.c
 	"i32.h"
 	"myctl.h"
 
@@ -53,7 +53,7 @@
 	<windows.h>
 	"i32.h"
 
-1264065940 source:f:\dev\minisoft\chat\src\myctl.c
+1264236208 source:f:\dev\minisoft\chat\src\myctl.c
 	"myctl.h"
 
 1263772928 source:f:\dev\minisoft\chat\src\chatlist.c

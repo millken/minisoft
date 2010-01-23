@@ -1,7 +1,7 @@
 #include "myctl.h"
 
 /****************************************
- *              可分组好友列表
+ *            可分组好友列表
  ****************************************/
 /* chattable大小 */
 #define CHATTSIZE 10
@@ -334,13 +334,13 @@ static void del_chatlist (HWND hwnd)
 }
 
 static void
-draw_chatlist (HDC hdc, ChatList *cl)
+draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 {
 	ChatGroup *g;
 	ChatBuddy *b;
 	int accHeight = cl->top;
 
-	int ClientWidth = i32clientw (WindowFromDC(hdc));
+	int ClientWidth = i32clientw (hwnd);
 
 	for (g = cl->grouplist; g; g = g->next) {
 		RECT gr;
@@ -369,12 +369,10 @@ draw_chatlist (HDC hdc, ChatList *cl)
 static void
 chatlist_scroll (ChatList *cl, int dy)
 {
-	int oldtop;
 	int ClientHeight;
 
 	if (!cl) return;
 
-	oldtop = cl->top;
 	ClientHeight = i32clienth(cl->hwnd);
 
 	cl->top += dy;
@@ -383,9 +381,6 @@ chatlist_scroll (ChatList *cl, int dy)
 		cl->top = 0;
 	else if (cl->top + cl->height < ClientHeight)
 		cl->top = ClientHeight - cl->height;
-
-	if (oldtop != cl->top)
-		InvalidateRect (cl->hwnd, NULL, TRUE);
 }
 
 /* 重新检查滚动条状态 */
@@ -398,7 +393,7 @@ chatlist_check_scrollbar (ChatList *cl)
 	if (!cl) return;
 
 	si.cbSize = sizeof(si);
-	si.fMask = SIF_RANGE;
+	si.fMask = SIF_RANGE|SIF_PAGE;
 	si.nMin = 0;
 
 	clienth = i32clienth(cl->hwnd);
@@ -411,6 +406,10 @@ chatlist_check_scrollbar (ChatList *cl)
 		si.nMax = 0; /* 隐藏滚动条 */
 	}
 
+	if (si.nMax > 0)
+		si.nPage = max(clienth, 1);
+	else
+		si.nPage = 0;
 	SetScrollInfo(cl->hwnd, SB_VERT, &si, TRUE);
 
 	chatlist_scroll (cl, 0);
@@ -443,47 +442,93 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 		break;
 
+		case WM_ERASEBKGND:
+		return 0;
+
 		case WM_PAINT: {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-			draw_chatlist (hdc, cl);
+			HDC hmem;
+			HBITMAP hbmp;
+			RECT r;
+
+			GetClientRect (hwnd, &r);
+
+			hbmp = CreateCompatibleBitmap (hdc, r.right, r.bottom);
+			hmem = CreateCompatibleDC (hdc);
+			SelectObject (hmem, hbmp);
+
+			{
+				RECT tr = {0, 0, r.right, r.bottom};
+				i32fillrect (hmem, &tr, 0xffffff);
+			}
+			draw_chatlist (hwnd, hmem, cl);
+
+			BitBlt (hdc, 0, 0, r.right, r.bottom, hmem, 0, 0, SRCCOPY);
+
+			DeleteObject(hbmp);
+			DeleteObject(hmem);
+
 			EndPaint(hwnd, &ps);
 		}
 		return 0;
 
-		case WM_SIZE: {
+		case WM_SIZE:
 			chatlist_check_scrollbar(cl);
-			printf ("sb: %d\n", cl->showsb);
-		}
 		return 0;
 
 		case WM_VSCROLL: {
 			SCROLLINFO si;
+			int clienth = i32clienth(hwnd);
 
 			si.cbSize = sizeof(si);
 			si.fMask = SIF_ALL;
 			GetScrollInfo (hwnd, SB_VERT, &si);
 			printf ("trackpos: %d, pos: %d, page: %d\n", si.nTrackPos, si.nPos, si.nPage);
 
-			//cl->top = -si.nTrackPos;
+
 
 			switch (LOWORD(wp)) {
-				case SB_PAGEDOWN:
-					si.nPos += 10;
-					cl->top -= 100;
-					printf ("pgdown\n");
+				case SB_TOP:
+					printf ("SB_TOP\n");
+					si.nPos = si.nMin;
+				break;
+
+				case SB_BOTTOM:
+					printf ("SB_BOTTOM\n");
+					si.nPos = si.nMax;
+				break;
+
+				case SB_LINEUP:
+					printf ("SB_LINEUP\n");
+					si.nPos -= BUDDYPIC_H/2;
+				break;
+
+				case SB_LINEDOWN:
+					printf ("SB_LINEDOWN\n");
+					si.nPos += BUDDYPIC_H/2;
 				break;
 
 				case SB_PAGEUP:
-					si.nPos -= 10;
-					cl->top += 100;
-					printf ("pgup\n");
+					printf ("SB_PAGEDOWN\n");
+					si.nPos -= clienth;
+				break;
+
+				case SB_PAGEDOWN:
+					printf ("SB_PAGEUP\n");
+					si.nPos += clienth;
+				break;
+
+				case SB_THUMBTRACK:
+					printf ("SB_THUMBTRACK\n");
+					si.nPos = si.nTrackPos;
 				break;
 			}
 
-			//si.nPos = si.nTrackPos;
 			si.fMask = SIF_POS;
 			SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
+
+			cl->top = -si.nPos;
 			chatlist_check_scrollbar(cl);
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
@@ -552,10 +597,10 @@ static int BtnMarginLeft = -36; /* NC按钮左上角定位 */
 static int BtnMarginTop = 5;
 static int BtnSpace = 2;
 /* 窗口css */
-static int RNDH = 0; /* 圆角半径 */
-static int RNDW = 1;
+static int RNDH = 4; /* 圆角半径 */
+static int RNDW = 4;
 /* 边框 */
-static DWORD FrameColor = 0x555555;
+static DWORD FrameColor = 0x000000;
 
 
 static
@@ -587,7 +632,7 @@ void stretchBmp (HDC hdc, HBITMAP hbmp, int x, int y, int w, int h)
 	SelectObject(hmem, hbmp);
 
 	StretchBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-	/*TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));*/
+	//TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
 	DeleteObject(hmem);
 }
 
@@ -647,20 +692,20 @@ void getMinRect (HWND hwnd, RECT *r)
 }
 
 static
-void drawMin (HDC hdc, int state)
+void drawMin (HWND hwnd, HDC hdc, int state)
 {
 	RECT r;
 
-	getMinRect (WindowFromDC(hdc), &r);
+	getMinRect (hwnd, &r);
 	bltBtn4 (hdc, bmpmin, r.left, r.top, state);
 }
 
 static
-void drawClose (HDC hdc, int state)
+void drawClose (HWND hwnd, HDC hdc, int state)
 {
 	RECT r;
 
-	getCloseRect (WindowFromDC(hdc), &r);
+	getCloseRect (hwnd, &r);
 	bltBtn4 (hdc, bmpclose, r.left, r.top, state);
 }
 
@@ -671,7 +716,7 @@ void drawHeadIcon (HDC hdc)
 }
 
 static
-void drawTitle (HDC hdc)
+void drawTitle (HWND hwnd, HDC hdc)
 {
 	char buf[32];
 	HFONT hfont;
@@ -683,7 +728,7 @@ void drawTitle (HDC hdc)
 	SelectObject (hdc, hfont);
 	SetTextColor (hdc, TitleColor);
 
-	GetWindowText(WindowFromDC(hdc), buf, sizeof(buf));
+	GetWindowText(hwnd, buf, sizeof(buf));
 	TextOut (hdc, TitleLeft, TitleTop, buf, strlen(buf));
 
 	DeleteObject (hfont);
@@ -856,26 +901,44 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
+		case WM_ERASEBKGND:
+		return 0;
+
 		case WM_NCPAINT: {
 			HDC hdc = GetWindowDC(hwnd);
 			RECT r;
-
-			SetBkMode (hdc, TRANSPARENT);
+			HBITMAP hbmp;
+			HDC hmem;
 
 			getNcRect (hwnd, &r);
-			stretchBmp (hdc, bmphead, 0, 0, r.right, NCPADDING_TOP);
-			stretchBmp (hdc, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
-			stretchBmp (hdc, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
-			stretchBmp (hdc, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 
-			//drawHeadIcon (hdc);
-			drawTitle (hdc);
+			hbmp = CreateCompatibleBitmap(hdc, r.right, r.bottom);
+			hmem = CreateCompatibleDC(hdc);
+			SelectObject(hmem, hbmp);
 
-			drawMin (hdc, BS_NORMAL);
-			drawClose (hdc, BS_NORMAL);
+			SetBkMode (hmem, TRANSPARENT);
+
+			i32fillrect (hmem, &r, 0xff00ff);
+			stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
+			stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
+			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
+			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
+
+			drawHeadIcon (hmem);
+			drawTitle (hwnd, hmem);
+
+			drawMin (hwnd, hmem, BS_NORMAL);
+			drawClose (hwnd, hmem, BS_NORMAL);
 
 			FormRgn = createFormRgn(hwnd);
-			drawFormFrame (hdc);
+			drawFormFrame (hmem);
+
+			//BitBlt (hdc, 0, 0, r.right, r.bottom, hmem, 0, 0, SRCCOPY);
+			TransparentBlt (hdc, 0, 0, r.right, r.bottom, hmem,
+						0, 0, r.right, r.bottom, 0xff00ff);
+
+			DeleteObject(hbmp);
+			DeleteObject(hmem);
 
 			ReleaseDC (hwnd, hdc);
 		}
@@ -884,12 +947,12 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		case WM_NCLBUTTONDOWN: {
 			HDC hdc = GetWindowDC(hwnd);
 			if (ptInMin(hwnd)) {
-				drawMin (hdc, BS_DOWN);
+				drawMin (hwnd, hdc, BS_DOWN);
 				bMinDown = TRUE;
 				return 0;
 			}
 			else if (ptInClose(hwnd)) {
-				drawClose (hdc, BS_DOWN);
+				drawClose (hwnd, hdc, BS_DOWN);
 				bCloseDown = TRUE;
 				return 0;
 			}
@@ -901,7 +964,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			HDC hdc = GetWindowDC(hwnd);
 			if (ptInClose(hwnd)) {
 				if (bCloseDown) {
-					drawClose (hdc, BS_NORMAL);
+					drawClose (hwnd, hdc, BS_NORMAL);
 					SendMessage(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 				}
 				bCloseDown = FALSE;
@@ -909,7 +972,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 			else if (ptInMin(hwnd)) {
 				if (bMinDown) {
-					drawMin(hdc, BS_NORMAL);
+					drawMin(hwnd, hdc, BS_NORMAL);
 					SendMessage(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 				}
 				bMinDown = FALSE;
@@ -927,13 +990,13 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			hdc = GetWindowDC(hwnd);
 			if (ptInClose(hwnd)) {
 				if (!bInClose) {
-					drawClose (hdc, BS_HOVER);
+					drawClose (hwnd, hdc, BS_HOVER);
 					bInClose = TRUE;
 				}
 			}
 			else {
 				if (bInClose) {
-					drawClose (hdc, BS_NORMAL);
+					drawClose (hwnd, hdc, BS_NORMAL);
 					bInClose = FALSE;
 				}
 				bCloseDown = FALSE;
@@ -941,13 +1004,13 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			if (ptInMin(hwnd)) {
 				if (!bInMin) {
-					drawMin (hdc, BS_HOVER);
+					drawMin (hwnd, hdc, BS_HOVER);
 					bInMin = TRUE;
 				}
 			}
 			else {
 				if (bInMin) {
-					drawMin (hdc, BS_NORMAL);
+					drawMin (hwnd, hdc, BS_NORMAL);
 					bInMin = FALSE;
 				}
 				bMinDown = FALSE;
@@ -1001,7 +1064,7 @@ static void reg (char *classname, WNDPROC f)
     wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
-    wincl.hbrBackground = (HBRUSH) COLOR_HIGHLIGHT;
+    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
 
     /* Register the window class, and if it fails quit the program */
     RegisterClassEx (&wincl);
