@@ -1,5 +1,5 @@
 #include "i32.h"
-#include "myctl.h"
+#include "c.h"
 
 int mainform_onclose (I32E e)
 {
@@ -10,14 +10,23 @@ int mainform_onclose (I32E e)
 int mainform_onsize (I32E e)
 {
 	i32vfill (e.hwnd,
-		H(friendlist), -1,
-		H(box1), -1,
+		i32("box-top"), -1,
+		i32("box-foot"), -1,
 		NULL
 	);
 	return 0;
 }
 
-int box1_onsize (I32E e)
+int boxtop_onsize (I32E e)
+{
+	i32vfill (e.hwnd,
+		i32("friendlist"), -1,
+		NULL
+	);
+	return 0;
+}
+
+int boxfoot_onsize (I32E e)
 {
 	i32set(H(btnup), "a|-x", "c", 40);
 	i32set(H(btndown), "a|+x", "c", 40);
@@ -26,11 +35,18 @@ int box1_onsize (I32E e)
 
 int mainform_oncmd (I32E e)
 {
-	if (e.lp == H(btnup))
-		SendMessage (H(friendlist), CLM_SCROLL, (WPARAM)47, 0);
+	DWORD col = 0xffffff;
+	HBRUSH hbrush;
+
+	if ((HWND)e.lp == H(btnup))
+		col = 0x33ffff;
 	else
-	if (e.lp == H(btndown))
-		SendMessage (H(friendlist), CLM_SCROLL, (WPARAM)-47, 0);
+	if ((HWND)e.lp == H(btndown))
+		col = 0xffff33;
+
+	hbrush = CreateSolidBrush(col);
+	SetClassLong(i32("box-foot"), GCL_HBRBACKGROUND, hbrush);
+	InvalidateRect (i32("box-foot"), NULL, TRUE);
 
 	return 0;
 }
@@ -44,26 +60,28 @@ int onclearbg (I32E e)
 void create_form ()
 {
 	HWND hwnd;
-	int r;
 
-	hwnd = i32create ("form", "n|t|s|w|h|a|-x|+y", "mainform", "cat studio",
-					  WS_OVERLAPPEDWINDOW, 300, 400, "c", 100, -10);
+	hwnd = i32create ("form", "n|t|s|w|h|a|-x|+y|tp", "mainform", "Œ“",
+					  WS_OVERLAPPEDWINDOW, 300, 400, "c", 100, -10, "yes");
 	i32setproc (hwnd, WM_DESTROY, mainform_onclose);
 	i32setproc (hwnd, WM_SIZE, mainform_onsize);
 	i32setproc (hwnd, WM_COMMAND, mainform_oncmd);
 
-	i32create ("chatlist", "d|n|s|w|h|a|show", hwnd, "friendlist",
-				WS_CTRL, 100, 100, "c", "y");
-/**/
-	i32box ("box1", hwnd);
-	i32setproc (H(box1), WM_SIZE, box1_onsize);
+	i32box("box-top", hwnd);
+	i32set(i32("box-top"), "tp", "yes");
+	i32setproc (i32("box-top"), WM_SIZE, boxtop_onsize);
+	i32create ("chatlist", "d|n|s|w|h|a|show", i32("box-top"), "friendlist",
+				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y");
 
-	i32create("button", "d|n|t|s|w|h|a", H(box1), "btnup", "Up",
-			WS_CTRL|BS_RADIOBUTTON, 70, 23, "c");
+	i32box ("box-foot", hwnd);
 
-	i32create("button", "d|n|t|s|w|h|a", H(box1), "btndown", "Down",
-			WS_CTRL|BS_CHECKBOX, 70, 23, "c");
-	i32setproc (H(btndown), WM_CTLCOLORSTATIC, onclearbg);
+	i32setproc (i32("box-foot"), WM_SIZE, boxfoot_onsize);
+
+	i32create("button", "d|n|t|s|w|h|a", H(box-foot), "btnup", "Up",
+			WS_CTRL, 70, 23, "c");
+
+	i32create("button", "d|n|t|s|w|h|a", H(box-foot), "btndown", "Down",
+			WS_CTRL, 70, 23, "c");
 
 	ShowWindow (hwnd, SW_SHOW);
 }
@@ -75,7 +93,6 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	create_form ();
 
 	i32loop();
-
 
 	return 0;
 }

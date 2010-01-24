@@ -290,6 +290,12 @@ static void ScreenToDad (HWND hwnd, RECT *r)
 	r->top = p.y;
 }
 
+static
+int on_clearbg (I32EVENT e)
+{
+	return 0;
+}
+
 void i32vset (HWND hwnd, char *format, va_list p)
 {
 	char a[16];
@@ -326,6 +332,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 		if (STRSAME("t", a) || STRSAME("title", a)) {
 			char *title = va_arg(p, char*);
 			SetWindowText (hwnd, title);
+		}
+		else
+		if (STRSAME("ut", a) || STRSAME("utitle", a)) {
+			wchar_t *title = va_arg(p, wchar_t*);
+			SetWindowTextW (hwnd, title);
 		}
 		else
 		if (STRSAME("x", a)) {
@@ -432,6 +443,13 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				ShowWindow (hwnd, SW_SHOW);
 			else if (STRSAME("n", v) || STRSAME("no", v))
 				ShowWindow (hwnd, SW_HIDE);
+		}
+		/* ²»»­±³¾° */
+		else
+		if (STRSAME("transparent", a) || STRSAME("tp", a)) {
+			char *v = va_arg(p, char *);
+			if (STRSAME("y", v) || STRSAME("yes", v))
+				i32setproc (hwnd, WM_ERASEBKGND, on_clearbg);
 		}
 
 	} while (*format != '\0');

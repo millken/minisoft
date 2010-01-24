@@ -28,6 +28,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="E:\env\Microsoft Visual Studio\VC98\Lib\MSIMG32.LIB" />
 				</Linker>
 			</Target>
 		</Build>
@@ -39,21 +40,26 @@
 			<Add library="gdi32" />
 			<Add library="user32" />
 			<Add library="kernel32" />
-			<Add library="msimg32" />
 		</Linker>
+		<Unit filename="src\c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\c.h" />
+		<Unit filename="src\c.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="src\c_chatlist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\c_form.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\i32.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\i32.h" />
 		<Unit filename="src\main.c">
 			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src\myctl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src\myctl.h" />
-		<Unit filename="src\myctl.rc">
-			<Option compilerVar="WINDRES" />
 		</Unit>
 		<Extensions>
 			<code_completion />
