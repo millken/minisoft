@@ -15,7 +15,7 @@
 #define I32DOT '|'
 #define WS_CTRL (WS_CHILD|WS_VISIBLE)
 
-/* 暂用 */
+/* 鏆傜敤 */
 #define i32malloc malloc
 #define i32realloc realloc
 #define i32free free
@@ -33,26 +33,26 @@ typedef struct {
 typedef int (*I32PROC) (I32EVENT);
 
 
-/* 核心 */
-HWND i32create (char *classname, char *format, ...);
+/* 鏍稿績 */
+HWND i32create (TCHAR *classname, char *format, ...);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
 int i32callold (I32EVENT e);
 int i32loop ();
 
-/* 布局 */
+/* 甯冨眬 */
 HWND i32box (char *name, HWND dad);
 void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
-/* 绘图 */
+/* 缁樺浘 */
 void i32framerect (HDC hdc, RECT *r, DWORD col);
 void i32fillrect (HDC hdc, RECT *r, DWORD col);
 int i32clientw (HWND hwnd);
 int i32clienth (HWND hwnd);
 
-/* 其他 */
+/* 鍏朵粬 */
 void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();

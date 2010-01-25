@@ -1,6 +1,6 @@
 #ifndef _MYCTL_H
 #define _MYCTL_H
 
-void reg_myctl ();  /* 注册所有自定义控件 */
+void reg_myctl ();  /* 娉ㄥ唽鎵�鏈夎嚜瀹氫箟鎺т欢 */
 
 #endif

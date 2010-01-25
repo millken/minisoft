@@ -28,22 +28,20 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="E:\env\Microsoft Visual Studio\VC98\Lib\MSIMG32.LIB" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
+			<Add option="-DUNICODE" />
 		</Compiler>
 		<Linker>
 			<Add library="gdi32" />
 			<Add library="user32" />
 			<Add library="kernel32" />
+			<Add library="msimg32" />
 		</Linker>
-		<Unit filename="src\c.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="src\c.h" />
 		<Unit filename="src\c.rc">
 			<Option compilerVar="WINDRES" />

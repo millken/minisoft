@@ -20,13 +20,13 @@ static struct hwndmsg {
 
 
 
-/* Ìá¹©Ò»¸ö¿Õ¿Ø¼ş,×÷ÎªÈİÆ÷ */
+/* æä¾›ä¸€ä¸ªç©ºæ§ä»¶,ä½œä¸ºå®¹å™¨ */
 static LRESULT CALLBACK
 box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	switch (message) {
 
-		/* ÃüÁîÏûÏ¢Ö±½Ó´©Í¸ */
+		/* å‘½ä»¤æ¶ˆæ¯ç›´æ¥ç©¿é€ */
 		case WM_COMMAND: {
 			HWND dad = GetParent (hwnd);
 			if (dad)
@@ -44,7 +44,7 @@ static int reg_box ()
 
     /* The Window structure */
     wincl.hInstance = GetModuleHandle(0);
-    wincl.lpszClassName = "box";
+    wincl.lpszClassName = TEXT("box");
     wincl.lpfnWndProc = box_proc;      /* This function is called by windows */
     wincl.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;                 /* Catch double-clicks */
     wincl.cbSize = sizeof (WNDCLASSEX);
@@ -266,7 +266,7 @@ token (char *buf, char *s)
 {
 	assert (buf && s);
 
-	/* isalpha±ÈÊÖ¹¤ÅĞ¶ÏÂı2±¶ÒÔÉÏ */
+	/* isalphaæ¯”æ‰‹å·¥åˆ¤æ–­æ…¢2å€ä»¥ä¸Š */
 	while (*s && *s!=I32DOT && *s!=' ')
 		*buf++ = *s++;
 	*buf = '\0';
@@ -330,13 +330,8 @@ void i32vset (HWND hwnd, char *format, va_list p)
 		}
 		else
 		if (STRSAME("t", a) || STRSAME("title", a)) {
-			char *title = va_arg(p, char*);
+			TCHAR *title = va_arg(p, TCHAR*);
 			SetWindowText (hwnd, title);
-		}
-		else
-		if (STRSAME("ut", a) || STRSAME("utitle", a)) {
-			wchar_t *title = va_arg(p, wchar_t*);
-			SetWindowTextW (hwnd, title);
 		}
 		else
 		if (STRSAME("x", a)) {
@@ -444,7 +439,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			else if (STRSAME("n", v) || STRSAME("no", v))
 				ShowWindow (hwnd, SW_HIDE);
 		}
-		/* ²»»­±³¾° */
+		/* ä¸ç”»èƒŒæ™¯ */
 		else
 		if (STRSAME("transparent", a) || STRSAME("tp", a)) {
 			char *v = va_arg(p, char *);
@@ -465,7 +460,7 @@ void i32set (HWND hwnd, char *format, ...)
 }
 
 
-HWND i32create (char *classname, char *format, ...)
+HWND i32create (TCHAR *classname, char *format, ...)
 {
 	HWND hwnd;
 	va_list p;
@@ -498,7 +493,7 @@ HWND i32box (char *name, HWND dad)
 {
 	HWND hbox;
 
-	hbox = i32create("box", "d|n|s|x|y|w|h",
+	hbox = i32create(TEXT("box"), "d|n|s|x|y|w|h",
 		dad, name,
 		WS_CHILD|WS_VISIBLE|WS_BORDER,
 		0,0,0,0);
@@ -555,11 +550,11 @@ void i32vfill (HWND hwnd, ...)
 
 	HWND hbox;
 	int h;
-	int blockh = 0; /* ¹Ì¶¨¿é×Ü¸ß¶È */
-	int toth = 0; /* ´°¿Ú×Ü¸ß¶È */
-	int autoh = 0; /* ×Ô¶¯¿éÆ½¾ù¸ß¶È */
-	int auton = 0; /* ×Ô¶¯¿éµÄ¸öÊı */
-	int autorem = 0; /* Õû³ıÓàÊı */
+	int blockh = 0; /* å›ºå®šå—æ€»é«˜åº¦ */
+	int toth = 0; /* çª—å£æ€»é«˜åº¦ */
+	int autoh = 0; /* è‡ªåŠ¨å—å¹³å‡é«˜åº¦ */
+	int auton = 0; /* è‡ªåŠ¨å—çš„ä¸ªæ•° */
+	int autorem = 0; /* æ•´é™¤ä½™æ•° */
 
 	RECT r;
 
@@ -568,7 +563,7 @@ void i32vfill (HWND hwnd, ...)
 
 	va_start (p, hwnd);
 
-	/* µÚÒ»±éÈ·¶¨¸ß¶È */
+	/* ç¬¬ä¸€éç¡®å®šé«˜åº¦ */
 	GetClientRect (hwnd, &r);
 	toth = r.bottom - r.top;
 	do {
@@ -600,8 +595,8 @@ void i32vfill (HWND hwnd, ...)
 	else
 		autoh = toth;
 
-	/* µÚ¶ş±é·ÅÖÃ¿Ø¼ş */
-	h = 0; /* »ıÀÛ¸ß¶È */
+	/* ç¬¬äºŒéæ”¾ç½®æ§ä»¶ */
+	h = 0; /* ç§¯ç´¯é«˜åº¦ */
 	for (i = 0 ; i < n; i++) {
 		RECT tmpr = {0, 0, 0, 0};
 		tmpr.top = h;
@@ -631,10 +626,10 @@ void i32hfill (HWND hwnd, ...)
 
 	HWND hbox;
 	int w;
-	int blockw = 0; /* ¹Ì¶¨¿é×Ü¿í¶È */
-	int totw = 0; /* ´°¿Ú×Ü¿í¶È */
-	int autow = 0; /* ×Ô¶¯¿éÆ½¾ù¿í¶È */
-	int auton = 0; /* ×Ô¶¯¿éµÄ¸öÊı */
+	int blockw = 0; /* å›ºå®šå—æ€»å®½åº¦ */
+	int totw = 0; /* çª—å£æ€»å®½åº¦ */
+	int autow = 0; /* è‡ªåŠ¨å—å¹³å‡å®½åº¦ */
+	int auton = 0; /* è‡ªåŠ¨å—çš„ä¸ªæ•° */
 	int autorem = 0;
 
 	RECT r;
@@ -644,7 +639,7 @@ void i32hfill (HWND hwnd, ...)
 
 	va_start (p, hwnd);
 
-	/* µÚÒ»±éÈ·¶¨¸ß¶È */
+	/* ç¬¬ä¸€éç¡®å®šé«˜åº¦ */
 	GetClientRect (hwnd, &r);
 	totw = r.right - r.left;
 	do {
@@ -676,8 +671,8 @@ void i32hfill (HWND hwnd, ...)
 	else
 		autow = totw;
 
-	/* µÚ¶ş±é·ÅÖÃ¿Ø¼ş */
-	w = 0; /* »ıÀÛ¸ß¶È */
+	/* ç¬¬äºŒéæ”¾ç½®æ§ä»¶ */
+	w = 0; /* ç§¯ç´¯é«˜åº¦ */
 	for (i = 0 ; i < n; i++) {
 		RECT tmpr = {0, 0, 0, 0};
 		tmpr.left = w;
@@ -699,7 +694,7 @@ void i32hfill (HWND hwnd, ...)
 
 
 /**
- * »æÍ¼
+ * ç»˜å›¾
  */
 void i32framerect (HDC hdc, RECT *r, DWORD col)
 {

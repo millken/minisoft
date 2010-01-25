@@ -5,13 +5,13 @@
 #include "c.h"
 
 
-/* ±ß¿ò³ß´ç */
+/* è¾¹æ¡†å°ºå¯¸ */
 static int NCPADDING_LEFT = 4;
 static int NCPADDING_RIGHT = 4;
 static int NCPADDING_TOP = 20;
 static int NCPADDING_BOTTOM = 4;
 
-/* formÍ¼Æ¬ */
+/* formå›¾ç‰‡ */
 static HBITMAP bmphead = 0;
 static HBITMAP bmpleft = 0;
 static HBITMAP bmpright = 0;
@@ -20,14 +20,14 @@ static HBITMAP bmpmin = 0;
 static HBITMAP bmpclose = 0;
 static HBITMAP bmpico = 0;
 
-/* ´°¿Ú²Ã¼õÇø */
+/* çª—å£è£å‡åŒº */
 static HRGN FormRgn = 0;
 
-/* °´Å¥³ß´ç */
+/* æŒ‰é’®å°ºå¯¸ */
 static RECT CloseRect = {0, 0, 0, 0};
 static RECT MinRect = {0, 0, 0, 0};
 
-/* °´Å¥×´Ì¬ */
+/* æŒ‰é’®çŠ¶æ€ */
 enum BUTTON_STATE {
 	BS_NORMAL,
 	BS_HOVER,
@@ -35,21 +35,21 @@ enum BUTTON_STATE {
 	BS_BLUR
 };
 
-/* Í¼±êcss */
+/* å›¾æ ‡css */
 static int IconLeft = 5;
 static int IconTop = 6;
-/* ±êÌâcss */
+/* æ ‡é¢˜css */
 static int TitleLeft = 25;
 static int TitleTop = 8;
 static DWORD TitleColor = 0xFFFFFF;
-/* °´Å¥css */
-static int BtnMarginLeft = -36; /* NC°´Å¥×óÉÏ½Ç¶¨Î» */
+/* æŒ‰é’®css */
+static int BtnMarginLeft = -36; /* NCæŒ‰é’®å·¦ä¸Šè§’å®šä½ */
 static int BtnMarginTop = 5;
 static int BtnSpace = 2;
-/* ´°¿Úcss */
-static int RNDH = 4; /* Ô²½Ç°ë¾¶ */
+/* çª—å£css */
+static int RNDH = 4; /* åœ†è§’åŠå¾„ */
 static int RNDW = 4;
-/* ±ß¿ò */
+/* è¾¹æ¡† */
 static DWORD FrameColor = 0x000000;
 
 
@@ -63,10 +63,10 @@ void bltBmp (HDC hdc, HBITMAP hbmp, int x, int y)
 	hmem = CreateCompatibleDC(hdc);
 	SelectObject(hmem, hbmp);
 
-	BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);/**/
-	/* ĞèÒªÁ¬½Ó¿â - msimg32.a */
-	//TransparentBlt (hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem,
-	//	0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	//BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);/**/
+	/* éœ€è¦è¿æ¥åº“ - msimg32.a */
+	TransparentBlt (hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem,
+		0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
 
 	DeleteObject(hmem);
 }
@@ -86,7 +86,7 @@ void stretchBmp (HDC hdc, HBITMAP hbmp, int x, int y, int w, int h)
 	DeleteObject(hmem);
 }
 
-/* »­4¸ö×´Ì¬ºáÏòÆ´³ÉµÄ°´Å¥ÀàÍ¼Æ¬ */
+/* ç”»4ä¸ªçŠ¶æ€æ¨ªå‘æ‹¼æˆçš„æŒ‰é’®ç±»å›¾ç‰‡ */
 static
 void bltBtn4 (HDC hdc, HBITMAP hbmp, int x, int y, int index)
 {
@@ -168,18 +168,24 @@ void drawHeadIcon (HDC hdc)
 static
 void drawTitle (HWND hwnd, HDC hdc)
 {
-	char buf[32];
+	TCHAR buf[32];
 	HFONT hfont;
 
-	hfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-		DEFAULT_CHARSET, OUT_CHARACTER_PRECIS,
-		CLIP_CHARACTER_PRECIS, DEFAULT_QUALITY,
-		FF_MODERN, "Verdana");
+	/** [å…³äºå­—ä½“]
+	 BALTIC_CHARSETå¿…é¡»ä¸Verdanaå…³è”,å¦åˆ™ä¸æ”¯æŒéŸ©æ–‡.
+	 FF_SWISSæ„æ€æ˜¯æ— è¡¬çº¿,å°±æ˜¯åœ¨å­—çš„ç¬”ç”»å¼€å§‹åŠç»“æŸçš„åœ°æ–¹æ²¡æœ‰é¢å¤–çš„è£…é¥°.
+	 æ­¤å­—ä½“æ¨¡ä»¿gtalk.
+	 */
+	hfont = CreateFont (15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE,
+		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
+		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 	SelectObject (hdc, hfont);
 	SetTextColor (hdc, TitleColor);
 
 	GetWindowText(hwnd, buf, sizeof(buf));
-	TextOut (hdc, TitleLeft, TitleTop, buf, strlen(buf));
+	//TextOut (hdc, TitleLeft, TitleTop, buf, strlen(buf));
+	TextOutW (hdc, TitleLeft, TitleTop, L"ì•ˆë…•í•˜å£«å¤§å¤«", 6);
 
 	DeleteObject (hfont);
 }
@@ -241,7 +247,7 @@ static BOOL ptInBorder (HWND hwnd)
 	getNcRect (hwnd, &r);
 	r.left += NCPADDING_LEFT;
 	r.right -= NCPADDING_RIGHT;
-	r.top += NCPADDING_LEFT; /* Õâ¸öÃ»´í */
+	r.top += NCPADDING_LEFT; /* è¿™ä¸ªæ²¡é”™ */
 	r.bottom -= NCPADDING_BOTTOM;
 	ncCursorPos (hwnd, &p);
 
@@ -268,7 +274,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	static BOOL bInClose = FALSE;
 	static BOOL bInMin = FALSE;
-	static BOOL bCloseDown = FALSE; /*È·±£ÏÈ°´ÏÂÁË²Å´¥·¢ÕæÕıµÄkeyup*/
+	static BOOL bCloseDown = FALSE; /*ç¡®ä¿å…ˆæŒ‰ä¸‹äº†æ‰è§¦å‘çœŸæ­£çš„keyup*/
 	static BOOL bMinDown = FALSE;
 
     switch (message)                  /* handle the messages */
@@ -276,14 +282,14 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		case WM_CREATE: {
 			BITMAP bmp;
 			HINSTANCE hinstance = GetModuleHandle(NULL);
-			bmphead = LoadBitmap(hinstance, "FORM_HEAD");
-			bmpfoot = LoadBitmap(hinstance, "FORM_FOOT");
-			bmpleft = LoadBitmap(hinstance, "FORM_LEFT");
-			bmpright = LoadBitmap(hinstance, "FORM_RIGHT");
-			/* °´Å¥Í¼Æ¬±ØĞëÊÇ4ÖÖ×´Ì¬ºáÅÅ */
-			bmpmin = LoadBitmap(hinstance, "FORM_MIN");
-			bmpclose = LoadBitmap(hinstance, "FORM_CLOSE");
-			bmpico = LoadBitmap(hinstance, "FORM_ICON");
+			bmphead = LoadBitmap(hinstance, TEXT("FORM_HEAD"));
+			bmpfoot = LoadBitmap(hinstance, TEXT("FORM_FOOT"));
+			bmpleft = LoadBitmap(hinstance, TEXT("FORM_LEFT"));
+			bmpright = LoadBitmap(hinstance, TEXT("FORM_RIGHT"));
+			/* æŒ‰é’®å›¾ç‰‡å¿…é¡»æ˜¯4ç§çŠ¶æ€æ¨ªæ’ */
+			bmpmin = LoadBitmap(hinstance, TEXT("FORM_MIN"));
+			bmpclose = LoadBitmap(hinstance, TEXT("FORM_CLOSE"));
+			bmpico = LoadBitmap(hinstance, TEXT("FORM_ICON"));
 
 			GetObject (bmphead, sizeof(BITMAP), &bmp);
 			NCPADDING_TOP = bmp.bmHeight;
@@ -371,7 +377,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 
-			drawHeadIcon (hmem);
+			//drawHeadIcon (hmem);
 			drawTitle (hwnd, hmem);
 
 			drawMin (hwnd, hmem, BS_NORMAL);
@@ -380,7 +386,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			FormRgn = createFormRgn(hwnd);
 			drawFormFrame (hmem);
 
-			/* ÈÆ×Å¿Í»§Çø·Ö4¿é»­ */
+			/* ç»•ç€å®¢æˆ·åŒºåˆ†4å—ç”» */
 			BitBlt (hdc, 0, 0, r.right, NCPADDING_TOP,
 					hmem, 0, 0, SRCCOPY);
 			BitBlt (hdc, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM,
@@ -488,7 +494,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 }
 
 
-static void reg (char *classname, WNDPROC f)
+static void reg (TCHAR *classname, WNDPROC f)
 {
     WNDCLASSEX wincl;
 
@@ -515,5 +521,5 @@ static void reg (char *classname, WNDPROC f)
 
 void reg_form ()
 {
-	reg("form", form_proc);
+	reg(TEXT("form"), form_proc);
 }

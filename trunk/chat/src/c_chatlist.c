@@ -1,53 +1,53 @@
 /****************************************
- *            ¿É·Ö×éºÃÓÑÁÐ±í
+ *            å¯åˆ†ç»„å¥½å‹åˆ—è¡¨
  ****************************************/
 #include "i32.h"
 #include "c.h"
 
-/* chattable´óÐ¡ */
+/* chattableå¤§å° */
 #define CHATTSIZE 10
 
-#define GROUP_H 20 /* ·Ö×é¸ß¶È*/
-#define BUDDYPIC_H 35 /* ´øÍ·ÏñµÄºÃÓÑ¸ß¶È */
-#define BUDDY_H 25 /* ²»´øÍ·ÏñµÄ¸ß¶È */
+#define GROUP_H 20 /* åˆ†ç»„é«˜åº¦*/
+#define BUDDYPIC_H 35 /* å¸¦å¤´åƒçš„å¥½å‹é«˜åº¦ */
+#define BUDDY_H 25 /* ä¸å¸¦å¤´åƒçš„é«˜åº¦ */
 
 
-/* ¸öÈËÀàÐÍ */
+/* ä¸ªäººç±»åž‹ */
 typedef struct chatbuddy {
 	int uid;
 
-	struct chatgroup *chatgroup; /* ËùÊô×é */
+	struct chatgroup *chatgroup; /* æ‰€å±žç»„ */
 
-	char *name; /* Ãû×Ö */
-	char *note; /* ×¢ÊÍ,Ãû×ÖºóÃæµÄÀ¨ºÅ */
-	char *sign; /* Ç©Ãû */
+	char *name; /* åå­— */
+	char *note; /* æ³¨é‡Š,åå­—åŽé¢çš„æ‹¬å· */
+	char *sign; /* ç­¾å */
 
-	HBITMAP pic; /* Í·Ïñ */
+	HBITMAP pic; /* å¤´åƒ */
 
-	int status; /* ÔÚÏß×´Ì¬, 1:ÔÚ,0:²»ÔÚ */
+	int status; /* åœ¨çº¿çŠ¶æ€, 1:åœ¨,0:ä¸åœ¨ */
 
-	/* Á´±íÖ¸Õë */
+	/* é“¾è¡¨æŒ‡é’ˆ */
 	struct chatbuddy *next;
 
 } ChatBuddy;
 
-/* ·Ö×éÀàÐÍ */
+/* åˆ†ç»„ç±»åž‹ */
 typedef struct chatgroup {
 	int gid;
 
-	char *name; /* ×éÃû */
+	char *name; /* ç»„å */
 
-	struct chatlist *chatlist; /* ËùÔÚchatlist */
+	struct chatlist *chatlist; /* æ‰€åœ¨chatlist */
 
 	ChatBuddy *buddylist;
-	int bn; /* ºÃÓÑÁÐ±í³¤¶È */
+	int bn; /* å¥½å‹åˆ—è¡¨é•¿åº¦ */
 
-	BOOL fold; /* ÊÇ·ñÕÛµþ, FALSE:Õ¹¿ª,TRUE:ÕÛµþ */
+	BOOL fold; /* æ˜¯å¦æŠ˜å , FALSE:å±•å¼€,TRUE:æŠ˜å  */
 
-	/* »æÖÆ×´Ì¬ */
-	int hoverid; /* ÄÄ¸öÈË±»Êó±ê¾­¹ý */
+	/* ç»˜åˆ¶çŠ¶æ€ */
+	int hoverid; /* å“ªä¸ªäººè¢«é¼ æ ‡ç»è¿‡ */
 
-	/* Á´±íÖ¸Õë */
+	/* é“¾è¡¨æŒ‡é’ˆ */
 	struct chatgroup *next;
 
 } ChatGroup;
@@ -55,21 +55,21 @@ typedef struct chatgroup {
 typedef struct chatlist {
 	HWND hwnd;
 
-	ChatGroup *grouplist;  /* 0ºÅ×éÊÇ'Î´·Ö×é' */
+	ChatGroup *grouplist;  /* 0å·ç»„æ˜¯'æœªåˆ†ç»„' */
 	int gn;
 
-	BOOL showpic; /* ÊÇ·ñÏÔÊ¾Í·Ïñ */
-	BOOL showsb; /* ÊÇ·ñÏÔÊ¾¹ö¶¯Ìõ */
+	BOOL showpic; /* æ˜¯å¦æ˜¾ç¤ºå¤´åƒ */
+	BOOL showsb; /* æ˜¯å¦æ˜¾ç¤ºæ»šåŠ¨æ¡ */
 
-	int top; /* »æÖÆÆðµã,Ïà¶ÔÓÚclient */
-	int height; /* ×Ü³¤¶È */
+	int top; /* ç»˜åˆ¶èµ·ç‚¹,ç›¸å¯¹äºŽclient */
+	int height; /* æ€»é•¿åº¦ */
 
-	/* ¹þÏ£±í¿ªÁ´ÓÃ */
+	/* å“ˆå¸Œè¡¨å¼€é“¾ç”¨ */
 	struct chatlist *hashnext;
 
 } ChatList;
 
-/* hwnd -> chatlistµÄhash±í: chattable */
+/* hwnd -> chatlistçš„hashè¡¨: chattable */
 ChatList *g_chattable[CHATTSIZE];
 
 
@@ -84,7 +84,7 @@ static void init_chattable ()
 	}
 }
 
-/* »ñµÃ×Ü¸ß¶È */
+/* èŽ·å¾—æ€»é«˜åº¦ */
 static int get_chatlist_h (ChatList *cl)
 {
 	int h = 0;
@@ -148,7 +148,7 @@ static void free_grouplist (ChatList *cl)
 	cl->gn = 0;
 }
 
-/* ·ÖÅäÐÂ·Ö×é */
+/* åˆ†é…æ–°åˆ†ç»„ */
 static ChatGroup *new_chatgroup (ChatList *cl, int gid)
 {
 	ChatGroup **lp, *p;
@@ -190,7 +190,7 @@ static ChatGroup *get_chatgroup (ChatList *cl, int gid)
 }
 
 
-/* ´ÓÁ´±íÀïÉ¾³ý·Ö×é */
+/* ä»Žé“¾è¡¨é‡Œåˆ é™¤åˆ†ç»„ */
 static void del_chatgroup (ChatList *cl, int gid)
 {
 	ChatGroup **lp, *p, *next;
@@ -210,7 +210,7 @@ static void del_chatgroup (ChatList *cl, int gid)
 	}
 }
 
-/* ¸ø×éÀï·ÖÅä³ÉÔ± */
+/* ç»™ç»„é‡Œåˆ†é…æˆå‘˜ */
 static ChatBuddy *new_chatbuddy (ChatGroup *group, int uid)
 {
 	ChatBuddy **lp, *p;
@@ -252,7 +252,7 @@ static ChatBuddy *get_chatbuddy (ChatGroup *group, int uid)
 	return p;
 }
 
-/* ´ÓÁ´±íÖÐÉ¾³ýºÃÓÑ */
+/* ä»Žé“¾è¡¨ä¸­åˆ é™¤å¥½å‹ */
 static void del_chatbuddy (ChatGroup *group, int uid)
 {
 	ChatBuddy **lp, *p, *next;
@@ -383,7 +383,7 @@ chatlist_scroll (ChatList *cl, int dy)
 		cl->top = ClientHeight - cl->height;
 }
 
-/* ÖØÐÂ¼ì²é¹ö¶¯Ìõ×´Ì¬ */
+/* é‡æ–°æ£€æŸ¥æ»šåŠ¨æ¡çŠ¶æ€ */
 static void
 chatlist_check_scrollbar (ChatList *cl)
 {
@@ -403,7 +403,7 @@ chatlist_check_scrollbar (ChatList *cl)
 	}
 	else {
 		cl->showsb = FALSE;
-		si.nMax = 0; /* Òþ²Ø¹ö¶¯Ìõ */
+		si.nMax = 0; /* éšè—æ»šåŠ¨æ¡ */
 	}
 
 	if (si.nMax > 0)
@@ -528,7 +528,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	return DefWindowProc(hwnd, message, wp, lp);
 }
 
-static void reg (char *classname, WNDPROC f)
+static void reg (TCHAR *classname, WNDPROC f)
 {
     WNDCLASSEX wincl;
 
@@ -555,5 +555,5 @@ static void reg (char *classname, WNDPROC f)
 
 void reg_chatlist ()
 {
-	reg("chatlist", chatlist_proc);
+	reg(TEXT("chatlist"), chatlist_proc);
 }
