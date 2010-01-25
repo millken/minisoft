@@ -42,14 +42,13 @@
 			<Add library="kernel32" />
 			<Add library="msimg32" />
 		</Linker>
-		<Unit filename="src\c.h" />
-		<Unit filename="src\c.rc">
-			<Option compilerVar="WINDRES" />
-		</Unit>
-		<Unit filename="src\c_chatlist.c">
+		<Unit filename="src\chatlist.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src\c_form.c">
+		<Unit filename="src\ctrl.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="src\form.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\i32.c">

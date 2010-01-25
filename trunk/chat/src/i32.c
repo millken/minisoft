@@ -1,3 +1,8 @@
+/*
+ *   i32: 一个独立的C语言GUI模块
+ *   不想提供A,W两套函数, 只能嵌入源码使用.
+ */
+
 #include "i32.h"
 #include <ctype.h>
 

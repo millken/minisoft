@@ -1,5 +1,4 @@
 #include "i32.h"
-#include "c.h"
 
 void reg_form ();
 void reg_chatlist ();
@@ -31,7 +30,7 @@ void create_form ()
 {
 	reg_myctl ();
 
-	HWND hwnd = i32create (TEXT("form"), "n|t|s|w|h|a|tp", "bigform", TEXT("지 못한哈哈Эучены"),
+	HWND hwnd = i32create (TEXT("form"), "n|t|s|w|h|a|tp", "bigform", TEXT("愛דולεγάBüขนาด ßeكبير지 못한哈哈Эучены"),
 				WS_OVERLAPPEDWINDOW
 				, 300, 400, "c", "y");
 	i32setproc (hwnd, WM_DESTROY, mainform_onclose);
@@ -43,7 +42,6 @@ void create_form ()
 
 	i32create (TEXT("chatlist"), "d|n|s|w|h|a|show", hwnd, "friendlist",
 				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y");
-
 
 	ShowWindow (hwnd, SW_SHOW);
 }

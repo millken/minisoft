@@ -1,4 +1,7 @@
-/* 主窗口图片 */
+/********************
+ *    控件资源文件
+ ********************/
+
 FORM_HEAD BITMAP "rc/head.bmp"  /* 标题栏 */
 FORM_LEFT BITMAP "rc/bord-left.bmp"  /* 左边框 */
 FORM_RIGHT BITMAP "rc/bord-right.bmp"  /* 右边框 */

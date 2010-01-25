@@ -1,3 +1,7 @@
+/*
+ *   i32: 一个独立的C语言GUI模块
+ */
+
 #ifndef _I32_H
 #define _I32_H
 
@@ -10,6 +14,10 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define I32NAMETABLE_SIZE 16
 #define I32MSGTABLE_SIZE 32
 #define I32DOT '|'
@@ -20,7 +28,6 @@
 #define i32realloc realloc
 #define i32free free
 
-#define H(name) i32(#name)
 #define I32E I32EVENT
 
 typedef struct {
@@ -56,5 +63,10 @@ int i32clienth (HWND hwnd);
 void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

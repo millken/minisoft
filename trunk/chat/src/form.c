@@ -1,8 +1,8 @@
-/***************************************
- *                FORM
- ***************************************/
+/*
+ *        form控件：个性窗口
+ */
+
 #include "i32.h"
-#include "c.h"
 
 
 /* 边框尺寸 */
@@ -171,21 +171,20 @@ void drawTitle (HWND hwnd, HDC hdc)
 	TCHAR buf[32];
 	HFONT hfont;
 
-	/** [关于字体]
+	/* [关于字体]
 	 BALTIC_CHARSET必须与Verdana关联,否则不支持韩文.
 	 FF_SWISS意思是无衬线,就是在字的笔画开始及结束的地方没有额外的装饰.
 	 此字体模仿gtalk.
 	 */
 	hfont = CreateFont (15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE,
-		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
+		EASTEUROPE_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
 	SelectObject (hdc, hfont);
 	SetTextColor (hdc, TitleColor);
 
 	GetWindowText(hwnd, buf, sizeof(buf));
-	//TextOut (hdc, TitleLeft, TitleTop, buf, strlen(buf));
-	TextOutW (hdc, TitleLeft, TitleTop, L"안녕하士大夫", 6);
+	TextOut (hdc, TitleLeft, TitleTop, buf, lstrlen (buf));
 
 	DeleteObject (hfont);
 }
@@ -377,7 +376,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
 
-			//drawHeadIcon (hmem);
+			drawHeadIcon (hmem);
 			drawTitle (hwnd, hmem);
 
 			drawMin (hwnd, hmem, BS_NORMAL);
