@@ -46,13 +46,17 @@ void create_form ()
 	ShowWindow (hwnd, SW_SHOW);
 }
 
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	reg_myctl ();
 
 	create_form ();
 
-	i32loop();
+	i32create(TEXT("form"), "n|t|s|w|h|a|+x|+y|show", "setbox",
+			TEXT("2"), WS_POPUP, 100, 100,
+			"c", 100, 50, "y");
 
+	i32loop();
 	return 0;
 }

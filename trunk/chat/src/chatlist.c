@@ -346,8 +346,8 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 		RECT gr;
 		gr.top = accHeight;
 		gr.bottom = gr.top + GROUP_H;
-		gr.left = 1;
-		gr.right = ClientWidth - 1;
+		gr.left = 0;
+		gr.right = ClientWidth - 0;
 		i32fillrect (hdc, &gr, 0x000000);
 
 		accHeight = gr.bottom;
@@ -356,8 +356,8 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 			RECT br;
 			br.top = accHeight;
 			br.bottom = br.top + (cl->showpic?BUDDYPIC_H:BUDDY_H);
-			br.left = 1;
-			br.right = ClientWidth - 1;
+			br.left = 0;
+			br.right = ClientWidth - 0;
 			i32framerect (hdc, &br, 0x000000);
 
 			accHeight = br.bottom;

@@ -2,18 +2,21 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
 	<File name="src\chatlist.c" open="1" top="0" tabpos="2">
-		<Cursor position="10365" topLine="534" />
+		<Cursor position="3137" topLine="158" />
 	</File>
-	<File name="src\form.c" open="1" top="1" tabpos="1">
-		<Cursor position="3974" topLine="168" />
+	<File name="src\ctrl.rc" open="1" top="0" tabpos="6">
+		<Cursor position="936" topLine="0" />
+	</File>
+	<File name="src\form.c" open="1" top="0" tabpos="1">
+		<Cursor position="6115" topLine="193" />
 	</File>
 	<File name="src\i32.c" open="1" top="0" tabpos="3">
 		<Cursor position="81" topLine="0" />
 	</File>
 	<File name="src\i32.h" open="1" top="0" tabpos="4">
-		<Cursor position="1318" topLine="0" />
+		<Cursor position="652" topLine="21" />
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="5">
-		<Cursor position="469" topLine="18" />
+	<File name="src\main.c" open="1" top="1" tabpos="5">
+		<Cursor position="719" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

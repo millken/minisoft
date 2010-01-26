@@ -281,6 +281,10 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		case WM_CREATE: {
 			BITMAP bmp;
 			HINSTANCE hinstance = GetModuleHandle(NULL);
+
+			static BOOL created = FALSE;
+			if (created) return 0;
+
 			bmphead = LoadBitmap(hinstance, TEXT("FORM_HEAD"));
 			bmpfoot = LoadBitmap(hinstance, TEXT("FORM_FOOT"));
 			bmpleft = LoadBitmap(hinstance, TEXT("FORM_LEFT"));
@@ -306,14 +310,16 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			CloseRect.bottom = bmp.bmHeight;
 			CloseRect.right = bmp.bmWidth/4;
 			CloseRect.top = BtnMarginTop;
+
+			created = TRUE;
 		}
 		return 0;
 
 		case WM_DESTROY: {
-			DeleteObject(bmphead);
-			DeleteObject(bmpfoot);
-			DeleteObject(bmpleft);
-			DeleteObject(bmpright);
+			//DeleteObject(bmphead);
+			//DeleteObject(bmpfoot);
+			//DeleteObject(bmpleft);
+			//DeleteObject(bmpright);
 		}
 		break;
 

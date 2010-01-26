@@ -1,6 +1,8 @@
 /********************
  *    控件资源文件
  ********************/
+#include <windows.h>
+
 
 FORM_HEAD BITMAP "rc/head.bmp"  /* 标题栏 */
 FORM_LEFT BITMAP "rc/bord-left.bmp"  /* 左边框 */
@@ -9,3 +11,25 @@ FORM_FOOT BITMAP "rc/foot.bmp"  /* 底边框 */
 FORM_MIN BITMAP "rc/min.bmp"  /* 最小化按钮 */
 FORM_CLOSE BITMAP "rc/close.bmp" /* 关闭按钮 */
 FORM_ICON BITMAP "rc/icon.bmp" /* 图标按钮 */
+
+
+DLG_MAIN DIALOG 0, 0, 267, 167
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_FIXEDSYS | WS_VISIBLE | WS_BORDER | WS_CAPTION | WS_DLGFRAME | WS_POPUP | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "Ms Shell Dlg 2"
+BEGIN
+    DEFPUSHBUTTON   "OK", 1, 113, 61, 50, 14
+    PUSHBUTTON      "Cancel", 2, 113, 80, 50, 14
+    GROUPBOX        "Static", 3, 57, 49, 116, 85
+END
+
+DLGBOXA DIALOG 0, 0, 100, 100
+STYLE WS_CHILD | WS_VISIBLE
+//STYLE WS_CHILD|WS_VISIBLE|DS_3DLOOK|DS_CENTER|WS_BORDER|WS_DLGFRAME|WS_OVERLAPPEDWINDOW
+CAPTION "Dialog"
+FONT 8, "Ms Shell Dlg 2"
+BEGIN
+    DEFPUSHBUTTON   "OK", 1, 113, 61, 50, 14
+    PUSHBUTTON      "Cancel", 2, 113, 80, 50, 14
+    GROUPBOX        "Static", 3, 57, 49, 116, 85
+END
