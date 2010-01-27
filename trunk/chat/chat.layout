@@ -8,15 +8,15 @@
 		<Cursor position="500" topLine="0" />
 	</File>
 	<File name="src\form.c" open="1" top="0" tabpos="1">
-		<Cursor position="1136" topLine="118" />
+		<Cursor position="12629" topLine="506" />
 	</File>
 	<File name="src\i32.c" open="1" top="0" tabpos="3">
-		<Cursor position="6765" topLine="301" />
+		<Cursor position="12995" topLine="589" />
 	</File>
 	<File name="src\i32.h" open="1" top="0" tabpos="4">
-		<Cursor position="123" topLine="0" />
+		<Cursor position="552" topLine="21" />
 	</File>
 	<File name="src\main.c" open="1" top="1" tabpos="5">
-		<Cursor position="1047" topLine="40" />
+		<Cursor position="2090" topLine="74" />
 	</File>
 </CodeBlocks_layout_file>

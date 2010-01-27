@@ -30,6 +30,7 @@ extern "C" {
 #define i32realloc realloc
 #define i32free(p) do{if(p)free(p);}while(0)
 
+#define i32id GetDlgItem
 
 typedef struct {
 	HWND hwnd;

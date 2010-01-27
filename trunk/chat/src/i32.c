@@ -604,6 +604,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			i32setproc (hwnd, WM_ERASEBKGND, on_erasebg);
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
+		else
+		if (STRSAME("id", a)) {
+			LONG id = va_arg(p, LONG);
+			SetWindowLong (hwnd, GWL_ID, id);
+		}
 
 	} while (*format != '\0');
 }

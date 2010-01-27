@@ -39,8 +39,8 @@ enum BUTTON_STATE {
 static int IconLeft = 7;
 static int IconTop = 6;
 /* 标题css */
-static int TitleLeft = 27;
-static int TitleTop = 8;
+static int TitleLeft = 28;
+static int TitleTop = 7;
 static DWORD TitleColor = 0xFFFFFF;
 /* 按钮css */
 static int BtnMarginLeft = -74; /* NC按钮左上角定位 */
