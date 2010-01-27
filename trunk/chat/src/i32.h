@@ -1,5 +1,5 @@
 /*
- *   i32: 一个独立的C语言GUI模块
+ *   i32: GUI模块
  */
 
 #ifndef _I32_H
@@ -18,24 +18,25 @@
 extern "C" {
 #endif
 
-#define I32NAMETABLE_SIZE 16
-#define I32MSGTABLE_SIZE 32
+#define I32NAMETABLE_SIZE 128
+#define I32MSGTABLE_SIZE 512
+#define I32ATTRTABLE_SIZE 128
+
 #define I32DOT '|'
 #define WS_CTRL (WS_CHILD|WS_VISIBLE)
 
 /* 暂用 */
 #define i32malloc malloc
 #define i32realloc realloc
-#define i32free free
+#define i32free(p) do{if(p)free(p);}while(0)
 
-#define I32E I32EVENT
 
 typedef struct {
 	HWND hwnd;
 	UINT msg;
 	WPARAM wp;
 	LPARAM lp;
-} I32EVENT;
+} I32EVENT, I32E;
 
 typedef int (*I32PROC) (I32EVENT);
 

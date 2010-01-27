@@ -35,17 +35,17 @@ enum BUTTON_STATE {
 	BS_BLUR
 };
 
-/* 图标css */
-static int IconLeft = 5;
+/* Logo图标css */
+static int IconLeft = 7;
 static int IconTop = 6;
 /* 标题css */
-static int TitleLeft = 25;
+static int TitleLeft = 27;
 static int TitleTop = 8;
 static DWORD TitleColor = 0xFFFFFF;
 /* 按钮css */
-static int BtnMarginLeft = -36; /* NC按钮左上角定位 */
-static int BtnMarginTop = 5;
-static int BtnSpace = 2;
+static int BtnMarginLeft = -74; /* NC按钮左上角定位 */
+static int BtnMarginTop = 1;
+static int BtnSpace = -1;
 /* 窗口css */
 static int RNDH = 4; /* 圆角半径 */
 static int RNDW = 4;
@@ -99,7 +99,8 @@ void bltBtn4 (HDC hdc, HBITMAP hbmp, int x, int y, int index)
 	hmem = CreateCompatibleDC(hdc);
 	SelectObject(hmem, hbmp);
 
-	BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
+	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
+	TransparentBlt (hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
 
 	DeleteObject(hmem);
 }
@@ -176,10 +177,10 @@ void drawTitle (HWND hwnd, HDC hdc)
 	 FF_SWISS意思是无衬线,就是在字的笔画开始及结束的地方没有额外的装饰.
 	 此字体模仿gtalk.
 	 */
-	hfont = CreateFont (15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE,
-		EASTEUROPE_CHARSET, OUT_CHARACTER_PRECIS,
+	hfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 	SelectObject (hdc, hfont);
 	SetTextColor (hdc, TitleColor);
 
@@ -376,11 +377,11 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			SetBkMode (hmem, TRANSPARENT);
 
-			i32fillrect (hmem, &r, 0xff00ff);
+			//i32fillrect (hmem, &r, 0xff00ff);
 			stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
 			stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
-			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
-			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP);
+			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
+			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
 
 			drawHeadIcon (hmem);
 			drawTitle (hwnd, hmem);
@@ -507,7 +508,7 @@ static void reg (TCHAR *classname, WNDPROC f)
     wincl.hInstance = GetModuleHandle(0);
     wincl.lpszClassName = classname;
     wincl.lpfnWndProc = f;      /* This function is called by windows */
-    wincl.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
+    wincl.style = CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
     wincl.cbSize = sizeof (WNDCLASSEX);
 
     /* Use default icon and mouse-pointer */

@@ -1,6 +1,5 @@
 /*
- *   i32: 一个独立的C语言GUI模块
- *   不想提供A,W两套函数, 只能嵌入源码使用.
+ *   i32: GUI模块
  */
 
 #include "i32.h"
@@ -9,12 +8,16 @@
 #define msghash(hwnd, msg) ((unsigned)hwnd ^ (unsigned)msg)
 #define STRSAME(a, b) (strcmp((a),(b))==0)
 
+/* 3个哈西表 */
+
+/* 名字表 name->hwnd */
 static struct hwndname {
 	HWND hwnd;
 	char *name;
 	struct hwndname *next;
 } *nametable[I32NAMETABLE_SIZE];
 
+/* 消息表 (hwnd,msg)->proc */
 static struct hwndmsg {
 	HWND hwnd;
 	UINT msg;
@@ -22,7 +25,12 @@ static struct hwndmsg {
 	struct hwndmsg *next;
 } *msgtable[I32MSGTABLE_SIZE];
 
-
+/* 属性表 hwnd->attr */
+static struct hwndattr {
+	HWND hwnd;
+	DWORD bgcolor;
+	struct hwndattr *next;
+} *attrtable[I32ATTRTABLE_SIZE];
 
 
 /* 提供一个空控件,作为容器 */
@@ -76,6 +84,7 @@ static int init ()
 
 	memset(nametable, 0, sizeof(nametable));
 	memset(msgtable, 0, sizeof(msgtable));
+	memset(attrtable, 0, sizeof(attrtable));
 	reg_box ();
 	inited = TRUE;
 	return 1;
@@ -140,6 +149,91 @@ HWND i32 (char *name)
 	return NULL;
 }
 
+/* 销毁hwnd的所有名字 */
+static void destroy_name (HWND hwnd)
+{
+	int i;
+
+	if (!hwnd) return;
+
+	for (i = 0; i < I32NAMETABLE_SIZE; i++) {
+		struct hwndname **hn = &nametable[i];
+		while (*hn) {
+			struct hwndname *p = *hn;
+			if (p->hwnd == hwnd) {
+				struct hwndname *next = p->next;
+				i32free(p->name);
+				i32free(p);
+				*hn = next;
+				return;
+			}
+			hn = &p->next;
+		}
+	}
+
+}
+
+static void set_attr (struct hwndattr *data)
+{
+	struct hwndattr **hm;
+	unsigned hash;
+
+	if (!data) return;
+
+	hash = (unsigned)data->hwnd;
+	hm = &attrtable[hash%I32ATTRTABLE_SIZE];
+	while (*hm) {
+		struct hwndattr *p = *hm;
+		if (p->hwnd==data->hwnd) {
+			memcpy (p, data, sizeof(struct hwndattr));
+			return;
+		}
+		hm = &p->next;
+	}
+	*hm = (struct hwndattr *)i32malloc(sizeof(struct hwndattr));
+	memset (*hm, 0, sizeof(struct hwndattr));
+	memcpy (*hm, data, sizeof(struct hwndattr));
+}
+
+static struct hwndattr *get_attr (HWND hwnd)
+{
+	struct hwndattr *p;
+	unsigned hash;
+
+	if (hwnd==NULL) return NULL;
+
+	hash = (unsigned)hwnd;
+	p = attrtable[hash%I32ATTRTABLE_SIZE];
+	while (p) {
+		if (p->hwnd==hwnd)
+			return p;
+		p = p->next;
+	}
+	return NULL;
+}
+
+/* 销毁hwnd的所有属性 */
+static void destroy_attr (HWND hwnd)
+{
+	int i;
+
+	if (!hwnd) return;
+
+	for (i = 0; i < I32ATTRTABLE_SIZE; i++) {
+		struct hwndattr **ha = &attrtable[i];
+		while (*ha) {
+			struct hwndattr *p = *ha;
+			if (p->hwnd == hwnd) {
+				struct hwndattr *next = p->next;
+				i32free(p);
+				*ha = next;
+				return;
+			}
+			ha = &p->next;
+		}
+	}
+
+}
 
 static void set_proc (HWND hwnd, UINT message, I32PROC f)
 {
@@ -182,12 +276,40 @@ I32PROC i32getproc (HWND hwnd, UINT message)
 	return NULL;
 }
 
+/* 销毁hwnd的所有回调函数 */
+static void destroy_procs (HWND hwnd)
+{
+	int i;
+
+	if (!hwnd) return;
+
+	for (i = 0; i < I32MSGTABLE_SIZE; i++) {
+		struct hwndmsg **hm = &msgtable[i];
+		while (*hm) {
+			struct hwndmsg *p = *hm;
+			if (p->hwnd == hwnd) {
+				struct hwndmsg *next = p->next;
+				i32free(p);
+				*hm = next;
+			}
+			hm = &p->next;
+		}
+	}
+}
+
+/* 销毁所有表里的hwnd */
+static void destroy_hwnd (HWND hwnd)
+{
+	destroy_name (hwnd);
+	destroy_attr (hwnd);
+	//destroy_procs (hwnd);
+}
 
 static LRESULT CALLBACK
 defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	I32PROC thisproc;
-	WNDPROC oldproc;
+	WNDPROC oldproc = NULL;
 	int r;
 
 	thisproc = i32getproc (hwnd, message);
@@ -201,7 +323,10 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	}
 
 	oldproc = (WNDPROC)i32getproc (hwnd, 0);
-	r = CallWindowProc (oldproc, hwnd, message, wp, lp);
+	r = oldproc ? CallWindowProc (oldproc, hwnd, message, wp, lp) : 0;
+
+	if (message == WM_DESTROY)
+		destroy_hwnd (hwnd);
 
 	return r;
 }
@@ -263,6 +388,7 @@ void i32debug ()
 		else printf (" ");
 		puts("\r");
 	}
+
 }
 
 
@@ -295,9 +421,27 @@ static void ScreenToDad (HWND hwnd, RECT *r)
 	r->top = p.y;
 }
 
-static
-int on_clearbg (I32EVENT e)
+
+/* 画背景色 */
+static int on_erasebg (I32EVENT e)
 {
+	DWORD col;
+	struct hwndattr *a;
+
+	a = get_attr(e.hwnd);
+	if (!a || a->bgcolor == (unsigned)-1) return 0;
+
+	{
+	RECT r;
+	HBRUSH hbrush;
+
+	GetClientRect (e.hwnd, &r);
+	hbrush = CreateSolidBrush(a->bgcolor);
+	FillRect ((HDC)e.wp, &r, hbrush);
+	DeleteObject(hbrush);
+	return 1;
+	}
+
 	return 0;
 }
 
@@ -444,12 +588,21 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			else if (STRSAME("n", v) || STRSAME("no", v))
 				ShowWindow (hwnd, SW_HIDE);
 		}
-		/* 不画背景 */
 		else
-		if (STRSAME("transparent", a) || STRSAME("tp", a)) {
-			char *v = va_arg(p, char *);
-			if (STRSAME("y", v) || STRSAME("yes", v))
-				i32setproc (hwnd, WM_ERASEBKGND, on_clearbg);
+		if (STRSAME("bgcolor", a) || STRSAME("bc", a)) {
+			DWORD v = va_arg(p, DWORD);
+			struct hwndattr *a = get_attr(hwnd);
+			/* alloc new attribute */
+			if (!a) {
+				struct hwndattr at;
+				memset(&at, 0, sizeof(struct hwndattr));
+				at.hwnd = hwnd;
+				a = &at;
+			}
+			a->bgcolor = v;
+			set_attr (a);
+			i32setproc (hwnd, WM_ERASEBKGND, on_erasebg);
+			InvalidateRect(hwnd, NULL, TRUE);
 		}
 
 	} while (*format != '\0');
@@ -500,7 +653,7 @@ HWND i32box (char *name, HWND dad)
 
 	hbox = i32create(TEXT("box"), "d|n|s|x|y|w|h",
 		dad, name,
-		WS_CHILD|WS_VISIBLE|WS_BORDER,
+		WS_CHILD|WS_VISIBLE,
 		0,0,0,0);
 
 	return hbox;
@@ -698,7 +851,7 @@ void i32hfill (HWND hwnd, ...)
 
 
 
-/**
+/*
  * 绘图
  */
 void i32framerect (HDC hdc, RECT *r, DWORD col)
