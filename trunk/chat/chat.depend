@@ -2,14 +2,14 @@
 1261883268 source:e:\dev\minisoft\chat\main.c
 	<windows.h>
 
-1264597399 source:e:\dev\minisoft\chat\src\main.c
+1264678249 source:e:\dev\minisoft\chat\src\main.c
 	"i32.h"
 
-1264598485 source:e:\dev\minisoft\chat\src\i32.c
+1264675356 source:e:\dev\minisoft\chat\src\i32.c
 	"i32.h"
 	<ctype.h>
 
-1264598208 e:\dev\minisoft\chat\src\i32.h
+1264675356 e:\dev\minisoft\chat\src\i32.h
 	<windows.h>
 	<stdio.h>
 	<stdlib.h>
@@ -29,7 +29,7 @@
 	<windows.h>
 	"i32.h"
 
-1264502657 source:e:\dev\minisoft\chat\src\chatlist.c
+1264682043 source:e:\dev\minisoft\chat\src\chatlist.c
 	"i32.h"
 
 1264668662 source:f:\dev\minisoft\chat\src\i32.c
@@ -88,10 +88,10 @@
 1264377286 source:f:\dev\minisoft\chat\src\c.c
 	"c.h"
 
-1264589346 source:e:\dev\minisoft\chat\src\ctrl.rc
+1264675356 source:e:\dev\minisoft\chat\src\ctrl.rc
 	<windows.h>
 
-1264594616 source:e:\dev\minisoft\chat\src\form.c
+1264681103 source:e:\dev\minisoft\chat\src\form.c
 	"i32.h"
 
 1264670866 source:f:\dev\minisoft\chat\src\ctrl.rc

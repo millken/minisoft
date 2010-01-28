@@ -49,10 +49,6 @@ typedef struct chatgroup {
 
 	BOOL fold; /* 是否折叠, FALSE:展开,TRUE:折叠 */
 
-	/* 绘制状态 */
-	int select_uid; /* 哪个人被鼠标经过 */
-	int select_state; /* 选中状态 0:无, 1:hover, 2:按下 */
-
 	/* 链表指针 */
 	struct chatgroup *next;
 
@@ -71,7 +67,7 @@ typedef struct chatlist {
 	int height; /* 总长度 */
 
 	/* 绘制状态 */
-	int select_gid; /* 哪个组被鼠标经过 */
+	int select_id; /* 哪个组(负数)或人(正数)被鼠标经过 */
 	int select_state; /* 选中状态 0:无, 1:hover, 2:按下 */
 
 	/* 哈希表开链用 */
@@ -363,10 +359,10 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	ChatBuddy *b;
 	int accHeight = cl->top;
 
-	HFONT hfont = CreateFont (14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	HFONT hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
 
@@ -381,9 +377,9 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 			gr.bottom = gr.top + GROUP_H;
 			gr.left = 0;
 			gr.right = ClientWidth - 0;
-			if (cl->select_gid==g->gid && cl->select_state==HOVER)
+			if (cl->select_id==-g->gid && cl->select_state==HOVER)
 				i32fillrect (hdc, &gr, 0x888888);
-			else if (cl->select_gid==g->gid && cl->select_state==PUSHED)
+			else if (cl->select_id==-g->gid && cl->select_state==PUSHED)
 				i32fillrect (hdc, &gr, 0x555555);
 			else
 				i32fillrect (hdc, &gr, 0x33CCFF);
@@ -397,9 +393,9 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 			br.bottom = br.top + get_viewh(cl);
 			br.left = 0;
 			br.right = ClientWidth - 0;
-			if (g->select_uid == b->uid && g->select_state==HOVER)
+			if (cl->select_id == b->uid && cl->select_state==HOVER)
 				i32fillrect (hdc, &br, RGB(237, 243, 250));
-			else if (g->select_uid == b->uid && g->select_state==PUSHED)
+			else if (cl->select_id == b->uid && cl->select_state==PUSHED)
 				i32fillrect (hdc, &br, RGB(232, 238, 245));
 			else
 				i32fillrect (hdc, &br, 0xffffff);
@@ -528,10 +524,6 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	ChatList *cl = get_chatlist(hwnd);
 
-	/* 上次选中的组和人 */
-	static ChatGroup *selgroup = NULL;
-	static ChatBuddy *selbuddy = NULL;
-
 	switch (message) {
 		case WM_CREATE:
 			init_chattable ();
@@ -541,26 +533,26 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			cl = new_chatlist (hwnd);
 			g = new_chatgroup(cl, 0);
 			b = new_chatbuddy(g, 1);
-			b->name = TEXT("Cat 못한");
+			b->name = TEXT("지Cat 못한");
 			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("CHAT_THUMB"));
-			b->sign = TEXT("只缘身在此山中");
+			b->sign = TEXT("只缘身在此山中Эучены");
 			new_chatbuddy(g, 2);
 			b = new_chatbuddy(g, 3);
 			b->name = TEXT("sdны");
 			new_chatbuddy(g, 4);
 			new_chatbuddy(g, 5);
 			g = new_chatgroup(cl, 1);
-			new_chatbuddy(g, 1);
-			new_chatbuddy(g, 2);
-			new_chatbuddy(g, 3);
-			new_chatbuddy(g, 4);
-			new_chatbuddy(g, 5);
-			g = new_chatgroup(cl, 2);
 			new_chatbuddy(g, 6);
 			new_chatbuddy(g, 7);
 			new_chatbuddy(g, 8);
 			new_chatbuddy(g, 9);
 			new_chatbuddy(g, 10);
+			g = new_chatgroup(cl, 2);
+			new_chatbuddy(g, 11);
+			new_chatbuddy(g, 12);
+			new_chatbuddy(g, 13);
+			new_chatbuddy(g, 14);
+			new_chatbuddy(g, 15);
 			}
 		break;
 
@@ -646,10 +638,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
-		case WM_MOUSELEAVE:
-			printf ("l");
-			InvalidateRect(hwnd, NULL, TRUE);
-		return 0;
+
 
 		case WM_LBUTTONUP:
 		case WM_MOUSEMOVE: {
@@ -661,41 +650,38 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			p.y -= cl->top; /* 转化成列表坐标 */
 			r = feedback (cl, &p, &g, &b);
 			if (r == 1) {
-				cl->select_gid = g->gid;
+				cl->select_id = -g->gid;
 				cl->select_state = HOVER;
-				selgroup = g;
-				/* 消除上次选中的人 */
-				if (selbuddy) {
-					selbuddy->group->select_uid = 0;
-					selbuddy->group->select_state = 0;
-					selbuddy = NULL;
-				}
 			}
 			else if (r == 2) {
-				g = b->group;
-				g->select_uid = b->uid;
-				g->select_state = HOVER;
-				selbuddy = b;
-				/* 消除上次选中的组 */
-				if (selgroup) {
-					cl->select_gid = 0;
-					cl->select_state = 0;
-					selgroup = NULL;
-				}
+				cl->select_id = b->uid;
+				cl->select_state = HOVER;
 			}
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
+		if (message == WM_MOUSEMOVE) {
+		    TRACKMOUSEEVENT tme;
+			tme.cbSize = sizeof(tme); //结构体缓冲区大小
+			tme.dwFlags = TME_LEAVE; //注册WM_MOUSEHOVER消息
+			tme.dwHoverTime = 100; //WM_MOUSEHOVER消息触发间隔时间
+			tme.hwndTrack = hwnd; //当前窗口句柄
+
+			TrackMouseEvent(&tme); //注册发送消息
+		}
+
+		return 0;
+
+		case WM_MOUSELEAVE:
+			if (cl->select_id != 0) {
+				cl->select_id = 0;
+				cl->select_state = 0;
+				InvalidateRect (hwnd, NULL, TRUE);
+			}
 		return 0;
 
 		case WM_LBUTTONDOWN: {
-			if (selgroup) {
+			if (cl->select_id > 0)
 				cl->select_state = PUSHED;
-				InvalidateRect(hwnd, NULL, TRUE);
-			}
-			else if (selbuddy) {
-				selbuddy->group->select_state = PUSHED;
-				InvalidateRect(hwnd, NULL, TRUE);
-			}
 		}
 		return 0;
 

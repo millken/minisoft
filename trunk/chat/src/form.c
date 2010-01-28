@@ -324,6 +324,12 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		break;
 
+		case WM_NCACTIVATE:
+			/* 自己重画窗体非客户区域之后，就不能再调用defproc了。
+			   否则窗体又会被重新画成原来的样子。*/
+			/* TODO: 重绘非激活状态 */
+		return TRUE;
+
 		case WM_EXITSIZEMOVE:
 		case WM_MOVE:
 		case WM_MOVING:

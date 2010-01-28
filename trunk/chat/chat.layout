@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Debug" />
-	<File name="src\chatlist.c" open="1" top="0" tabpos="2">
-		<Cursor position="12326" topLine="639" />
+	<ActiveTarget name="Release" />
+	<File name="src\chatlist.c" open="1" top="1" tabpos="2">
+		<Cursor position="12668" topLine="655" />
 	</File>
 	<File name="src\ctrl.rc" open="1" top="0" tabpos="6">
 		<Cursor position="512" topLine="0" />
 	</File>
-	<File name="src\form.c" open="1" top="1" tabpos="1">
-		<Cursor position="7990" topLine="313" />
+	<File name="src\form.c" open="1" top="0" tabpos="1">
+		<Cursor position="8483" topLine="461" />
 	</File>
 	<File name="src\i32.c" open="1" top="0" tabpos="3">
 		<Cursor position="18522" topLine="876" />
@@ -17,6 +17,6 @@
 		<Cursor position="1232" topLine="35" />
 	</File>
 	<File name="src\main.c" open="1" top="0" tabpos="5">
-		<Cursor position="631" topLine="23" />
+		<Cursor position="969" topLine="64" />
 	</File>
 </CodeBlocks_layout_file>
