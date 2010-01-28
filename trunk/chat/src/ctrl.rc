@@ -12,3 +12,5 @@ FORM_FOOT BITMAP "rc/foot.bmp"  /* 底边框 */
 FORM_MIN BITMAP "rc/min.bmp"  /* 最小化按钮 */
 FORM_CLOSE BITMAP "rc/close.bmp" /* 关闭按钮 */
 FORM_ICON BITMAP "rc/logo.bmp" /* 图标按钮 */
+
+CHAT_THUMB BITMAP "rc/thumb.bmp" /* 默认头像 */

@@ -297,12 +297,12 @@ static void destroy_procs (HWND hwnd)
 	}
 }
 
-/* 销毁所有表里的hwnd */
+/* 销毁所有的hwnd */
 static void destroy_hwnd (HWND hwnd)
 {
 	destroy_name (hwnd);
 	destroy_attr (hwnd);
-	//destroy_procs (hwnd);
+	destroy_procs (hwnd);
 }
 
 static LRESULT CALLBACK
@@ -319,7 +319,9 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		e.msg = message;
 		e.wp = wp;
 		e.lp = lp;
-		return thisproc (e);
+		r = thisproc (e);
+		if (r != -1)
+			return r;
 	}
 
 	oldproc = (WNDPROC)i32getproc (hwnd, 0);
@@ -667,7 +669,12 @@ HWND i32box (char *name, HWND dad)
 int i32callold (I32EVENT e)
 {
 	WNDPROC proc = (WNDPROC)i32getproc (e.hwnd, 0);
-	return CallWindowProc(proc, e.hwnd, e.msg, e.wp, e.lp);
+	LRESULT r = proc ? CallWindowProc(proc, e.hwnd, e.msg, e.wp, e.lp) : 0;
+
+	if (e.msg == WM_DESTROY)
+		destroy_hwnd (e.hwnd);
+
+	return r;
 }
 
 
@@ -887,4 +894,22 @@ int i32clienth (HWND hwnd)
 
 	GetClientRect (hwnd, &r);
 	return r.bottom;
+}
+
+
+void i32bltbmp (HDC hdc, HBITMAP hbmp, int x, int y)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	/*BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);*/
+	/* 需要连接库 - msimg32.a */
+	TransparentBlt (hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem,
+		0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+
+	DeleteObject(hmem);
 }

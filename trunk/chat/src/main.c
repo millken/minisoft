@@ -12,6 +12,7 @@ void reg_myctl ()
 int mainform_onclose (I32E e)
 {
 	PostQuitMessage(0);
+
 	return 0;
 }
 
@@ -30,14 +31,14 @@ void create_form ()
 {
 	reg_myctl ();
 
-	HWND hwnd = i32create (TEXT("form"), "n|t|s|w|h|a|bc", "bigform", TEXT("財神道"),
+	HWND hwnd = i32create (TEXT("form"), "n|t|s|w|h|a|bc", "bigform", TEXT("財神說"),
 				WS_OVERLAPPEDWINDOW
 				, 270, 500, "c", -1);
 	i32setproc (hwnd, WM_DESTROY, mainform_onclose);
 	i32setproc (hwnd, WM_SIZE, bigform_onsize);
 
 	i32box ("panel-t", hwnd);
-	i32set (i32("panel-t"), "bc", RGB(89,156,238));
+	i32set (i32("panel-t"), "bc", 0xEE9C59);
 
 	i32box ("panel-b", hwnd);
 	i32set (i32("panel-b"), "bc", RGB(89,156,238));
@@ -67,6 +68,12 @@ int dlgfoot_onsize (I32E e)
 	return 0;
 }
 
+int setbox_onclose (I32E e)
+{
+	SetFocus(i32("bigform"));
+	return -1;
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	reg_myctl ();
@@ -77,6 +84,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, 350, 350,
 			"c", 100, 50, -1);
 	i32setproc (hwnd, WM_SIZE, setbox_onsize);
+	i32setproc (hwnd, WM_CLOSE, setbox_onclose);
 
 	i32box ("dlg-top", hwnd);
 	i32set (i32("dlg-top"), "bc", RGB(89,156,238));
@@ -87,7 +95,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	i32box ("dlg-foot", hwnd);
 	i32set (i32("dlg-foot"), "bc", RGB(89,156,238));
 	i32create (TEXT("edit"), "n|d|s|t|h", "inputer", i32("dlg-foot"),
-			WS_CTRL|ES_MULTILINE|ES_AUTOHSCROLL | ES_AUTOVSCROLL,
+			WS_CTRL|ES_MULTILINE|ES_AUTOHSCROLL | ES_AUTOVSCROLL|WS_BORDER,
 			TEXT(""), 22
 			);
 	i32setproc (i32("dlg-foot"), WM_SIZE, dlgfoot_onsize);

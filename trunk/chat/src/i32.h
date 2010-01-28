@@ -60,6 +60,7 @@ void i32framerect (HDC hdc, RECT *r, DWORD col);
 void i32fillrect (HDC hdc, RECT *r, DWORD col);
 int i32clientw (HWND hwnd);
 int i32clienth (HWND hwnd);
+void i32bltbmp (HDC hdc, HBITMAP hbmp, int x, int y);
 
 /* 其他 */
 void i32bind (HWND hwnd, char *name);
