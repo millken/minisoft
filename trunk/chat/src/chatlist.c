@@ -7,14 +7,65 @@
 /* 哈西表大小 */
 #define CHATTSIZE 10
 
-#define GROUP_H 20 /* 分组条高度*/
+/* CSS */
+#define GROUP_H 23 /* 分组条高度*/
 #define BUDDYPIC_H 40 /* 大头像高度 */
-#define BUDDY_H 25 /* 小头像和无头像的高度 */
+#define BUDDY_H 26 /* 小头像和无头像的高度 */
+
+#define LIST_BGCOLOR 0xffffff
+
+#define GROUP_BGCOLOR 0xCCFFFF
+#define GROUP_HOVER_BGCOLOR RGB(208, 223, 242)
+#define GROUP_PUSHED_BGCOLOR RGB(232, 238, 245)
+#define GROUP_NAME_COLOR RGB(192, 192, 192) /* 文字颜色 */
+#define GROUP_NOTE_COLOR RGB(192, 192, 192) /* 括号里的文字颜色 */
+#define GROUP_LINE_COLOR 0xffffff /*  */
+
+#define BUDDY_BGCOLOR 0xffffff
+#define BUDDY_HOVER_BGCOLOR RGB(208, 223, 242)
+#define BUDDY_PUSHED_BGCOLOR RGB(232, 238, 245)
+#define BUDDY_NAME_COLOR 0x000000
+#define BUDDY_NOTE_COLOR 0x999999
+#define BUDDY_SIGN_COLOR 0x999999
+#define BUDDY_LINE_COLOR 0xf0f0f0
+
+#define GROUP_NAME_MARGIN 4
+#define GROUP_NAME_Y 2
+#define GROUP_NOTE_MARGIN 18
+#define GROUP_ARROW_MARGIN 6
+#define GROUP_ARROW_Y 4
+
+#define BBUDDY_PIC_X 6
+#define BBUDDY_PIC_Y 4
+#define BBUDDY_PIC_W 32
+#define BBUDDY_PIC_H 32
+#define BBUDDY_NAME_X 8
+#define BBUDDY_NAME_Y 4
+#define BUDDY_NOTE_MARGIN 5
+#define BBUDDY_SIGN_X 8
+#define BBUDDY_SIGN_Y 22
+
+#define SBUDDY_PIC_X 6
+#define SBUDDY_PIC_Y 3
+#define SBUDDY_PIC_W 20
+#define SBUDDY_PIC_H 20
+#define SBUDDY_NAME_X 6
+#define SBUDDY_NAME_Y 5
+#define SBUDDY_SIGN_MARGIN 5
+#define SBUDDY_SIGN_Y SBUDDY_NAME_Y
+
 
 enum SELECT_STATE {
 	NONE = 0,
 	HOVER,
-	PUSHED
+	PUSHED,
+};
+
+/* feedback返回值 */
+enum SLECT_OBJECT {
+	SELECT_NONE = 0,
+	SELECT_GROUP,
+	SELECT_BUDDY,
 };
 
 /* 个人类型 */
@@ -41,6 +92,7 @@ typedef struct chatgroup {
 	int gid;
 
 	TCHAR *name; /* 组名 */
+	TCHAR *note; /* 注解 */
 
 	struct chatlist *chatlist; /* 所在chatlist */
 
@@ -69,6 +121,7 @@ typedef struct chatlist {
 	/* 绘制状态 */
 	int select_id; /* 哪个组(负数)或人(正数)被鼠标经过 */
 	int select_state; /* 选中状态 0:无, 1:hover, 2:按下 */
+	BOOL pushed; /* 鼠标按下还没抬起来 */
 
 	/* 哈希表开链用 */
 	struct chatlist *hashnext;
@@ -77,15 +130,17 @@ typedef struct chatlist {
 
 /* hwnd -> chatlist的hash表: chattable */
 ChatList *g_chattable[CHATTSIZE];
+HBITMAP g_grouparrow; /* 下拉箭头 */
+HBITMAP g_defavatar; /* 默认头像 */
 
-
-static void init_chattable ()
+static void init ()
 {
 	static BOOL did = FALSE;
 
 	if (!did) {
 		memset (g_chattable, 0, sizeof(g_chattable));
-
+		g_grouparrow = LoadBitmap(GetModuleHandle(NULL), TEXT("GROUP_ARROW"));
+		g_defavatar = LoadBitmap(GetModuleHandle(NULL), TEXT("DEF_AVATAR"));
 		did = TRUE;
 	}
 }
@@ -111,8 +166,10 @@ static int get_chatlist_h (ChatList *cl)
 
 	if (!cl) return h;
 
-	for (g = cl->grouplist; g; g = g->next)
-		h += g->bn * get_viewh(cl) + GROUP_H;
+	for (g = cl->grouplist; g; g = g->next) {
+		h += g->gid>0 ? GROUP_H : 0;
+		h += g->fold ? 0 : g->bn * get_viewh(cl);
+	}
 	cl->height = h;
 
 	return h;
@@ -358,11 +415,17 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	ChatGroup *g;
 	ChatBuddy *b;
 	int accHeight = cl->top;
+	HFONT hfont, hbfont;
 
-	HFONT hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
 		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+	hbfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
+		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
 
@@ -370,6 +433,14 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 
 	for (g = cl->grouplist; g; g = g->next) {
 		RECT gr;
+		int gnamew = 0;
+		int gnotew = 0;
+		int avatarw = 0;
+
+		if (cl->view == 0)
+			avatarw = BBUDDY_PIC_X + BBUDDY_PIC_W;
+		else if (cl->view == 1)
+			avatarw = SBUDDY_PIC_X + SBUDDY_PIC_W;
 
 		/* 0号组是纯列表 */
 		if (g->gid > 0) {
@@ -378,44 +449,99 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 			gr.left = 0;
 			gr.right = ClientWidth - 0;
 			if (cl->select_id==-g->gid && cl->select_state==HOVER)
-				i32fillrect (hdc, &gr, 0x888888);
+				i32fillrect (hdc, &gr, GROUP_HOVER_BGCOLOR);
 			else if (cl->select_id==-g->gid && cl->select_state==PUSHED)
-				i32fillrect (hdc, &gr, 0x555555);
+				i32fillrect (hdc, &gr, GROUP_PUSHED_BGCOLOR);
 			else
-				i32fillrect (hdc, &gr, 0x33CCFF);
+				i32fillrect (hdc, &gr, GROUP_BGCOLOR);
+
+			if (g->note) {
+				GetTextExtentPoint32 (hdc, g->note, lstrlen(g->note), &gnotew);
+				SelectObject(hdc, hfont);
+				gnotew += GROUP_NOTE_MARGIN;
+				i32textout (hdc, ClientWidth-gnotew, accHeight+GROUP_NAME_Y,
+						g->note, GROUP_NOTE_COLOR);
+			}
+
+			if (g->name) {
+				GetTextExtentPoint32 (hdc, g->name, lstrlen(g->name), &gnamew);
+				SelectObject(hdc, hbfont);
+				i32textout (hdc, ClientWidth-gnamew-GROUP_NAME_MARGIN-gnotew,
+						accHeight+GROUP_NAME_Y,
+						g->name, GROUP_NAME_COLOR);
+				SelectObject(hdc, hfont);
+			}
+
+			i32hblt(hdc, g_grouparrow, ClientWidth-9-GROUP_ARROW_MARGIN, accHeight+GROUP_ARROW_Y,
+					(int)g->fold, 2);
 
 			accHeight = gr.bottom;
+
+			if (g->fold && g->next)
+				i32line (hdc, 0, accHeight-1, ClientWidth, accHeight-1, GROUP_LINE_COLOR);
 		}
+
+		if (g->fold == TRUE)
+			continue;
 
 		for (b = g->buddylist; b; b = b->next) {
 			RECT br;
+			int bnamew = 0;
+			int bnotew = 0;
 			br.top = accHeight;
 			br.bottom = br.top + get_viewh(cl);
 			br.left = 0;
 			br.right = ClientWidth - 0;
 			if (cl->select_id == b->uid && cl->select_state==HOVER)
-				i32fillrect (hdc, &br, RGB(237, 243, 250));
+				i32fillrect (hdc, &br, BUDDY_HOVER_BGCOLOR);
 			else if (cl->select_id == b->uid && cl->select_state==PUSHED)
-				i32fillrect (hdc, &br, RGB(232, 238, 245));
+				i32fillrect (hdc, &br, BUDDY_PUSHED_BGCOLOR);
 			else
-				i32fillrect (hdc, &br, 0xffffff);
+				i32fillrect (hdc, &br, BUDDY_BGCOLOR);
 
-			if (b->name)
-				TextOut(hdc, 50, accHeight+5, b->name, lstrlen(b->name));
-
-			if (b->sign) {
-				SetTextColor(hdc, 0x888888);
-				TextOut(hdc, 50, accHeight+22, b->sign, lstrlen(b->sign));
+			if (b->name) {
+				int x = cl->view>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
+				int y = cl->view>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
+				SIZE tsize;
+				i32textout(hdc, x, accHeight+y, b->name, BUDDY_NAME_COLOR);
+				GetTextExtentPoint32 (hdc, b->name, lstrlen(b->name), &tsize);
+				bnamew = tsize.cx;
+			}
+			if (b->note) {
+				int x = cl->view>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
+				int y = cl->view>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
+				SIZE tsize;
+				bnamew += BUDDY_NOTE_MARGIN;
+				i32textout (hdc, x+bnamew, accHeight+y, b->note, BUDDY_NOTE_COLOR);
+				GetTextExtentPoint32 (hdc, b->note, lstrlen(b->note), &tsize);
+				bnotew = tsize.cx;
+			}
+			if (cl->view==0 && b->sign) {
+				int x;
+				int y = cl->view>0 ? SBUDDY_SIGN_Y : BBUDDY_SIGN_Y;
+				x = cl->view>0 ? avatarw+SBUDDY_NAME_X+bnamew+bnotew+SBUDDY_SIGN_MARGIN : avatarw+BBUDDY_SIGN_X;
+				i32textout (hdc, x, accHeight+y, b->sign, BUDDY_SIGN_COLOR);
 			}
 
-			if (b->pic)
-				i32bltbmp (hdc, b->pic, 8, 4);
+			/* 有头象 */
+			if (cl->view < 2) {
+				int x = cl->view>0 ? SBUDDY_PIC_X : BBUDDY_PIC_X;
+				int y = cl->view>0 ? SBUDDY_PIC_Y : BBUDDY_PIC_Y;
+				int w = cl->view>0 ? SBUDDY_PIC_W : BBUDDY_PIC_W;
+				int h = cl->view>0 ? SBUDDY_PIC_H : BBUDDY_PIC_H;
+				HBITMAP avatar = b->pic ? b->pic : g_defavatar;
+				i32draw (hdc, avatar, x, accHeight+y, w, h);
+			}
 
 			accHeight = br.bottom;
+
+			if (cl->view==0 && b->next)
+				i32line (hdc, 5, accHeight-1, ClientWidth-5, accHeight-1, BUDDY_LINE_COLOR);
 		}
 	}
 
 	DeleteObject(hfont);
+	DeleteObject(hbfont);
 }
 
 static void
@@ -490,7 +616,9 @@ static int feedback (ChatList *cl, POINT *p, ChatGroup **group, ChatBuddy **budd
 	x = p->x;
 	y = p->y;
 
-	if (x < 0 || y < 0) return 0;
+	if (x < 0 || y < 0 || y >= cl->height) {
+		return 0;
+	}
 
 	viewh = get_viewh (cl);
 	for (g = cl->grouplist; g; g = g->next) {
@@ -502,6 +630,8 @@ static int feedback (ChatList *cl, POINT *p, ChatGroup **group, ChatBuddy **budd
 		if (g->gid>0) accHeight += GROUP_H;
 		/* 在组里寻找 */
 		/* 不在这组 */
+		if (g->fold == TRUE)
+			continue;
 		if (y >= accHeight + g->bn*viewh) {
 			accHeight += g->bn*viewh;
 			continue;
@@ -526,33 +656,36 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 	switch (message) {
 		case WM_CREATE:
-			init_chattable ();
+			init();
 			{
 			ChatGroup *g;
 			ChatBuddy *b;
 			cl = new_chatlist (hwnd);
+			cl->view = 0;
 			g = new_chatgroup(cl, 0);
 			b = new_chatbuddy(g, 1);
 			b->name = TEXT("지Cat 못한");
 			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("CHAT_THUMB"));
 			b->sign = TEXT("只缘身在此山中Эучены");
+			b->note = TEXT("哈哈");
+			TCHAR *buf = (TCHAR *)i32malloc(lstrlen(b->note)*sizeof(TCHAR)+4);
+			wsprintf (buf, TEXT("(%s)"), b->note);
+			b->note = buf;
 			new_chatbuddy(g, 2);
 			b = new_chatbuddy(g, 3);
 			b->name = TEXT("sdны");
 			new_chatbuddy(g, 4);
 			new_chatbuddy(g, 5);
 			g = new_chatgroup(cl, 1);
+			g->name = TEXT("好友");
+			g->note = TEXT("(1/23)");
+			g->fold = TRUE;
 			new_chatbuddy(g, 6);
 			new_chatbuddy(g, 7);
 			new_chatbuddy(g, 8);
 			new_chatbuddy(g, 9);
 			new_chatbuddy(g, 10);
-			g = new_chatgroup(cl, 2);
 			new_chatbuddy(g, 11);
-			new_chatbuddy(g, 12);
-			new_chatbuddy(g, 13);
-			new_chatbuddy(g, 14);
-			new_chatbuddy(g, 15);
 			}
 		break;
 
@@ -571,7 +704,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			{
 				RECT tr = {0, 0, r.right, r.bottom};
-				i32fillrect (hmem, &tr, 0xffffff);
+				i32fillrect (hmem, &tr, LIST_BGCOLOR);
 			}
 			draw_chatlist (hwnd, hmem, cl);
 
@@ -638,37 +771,58 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
+		/* 必须由主窗口代传 */
+		case WM_MOUSEWHEEL: {
+			SCROLLINFO si;
+			int ch;
+			short int d = HIWORD(wp);
+			ch = i32clienth(hwnd);
+			if (d > 0)
+				cl->top += ch/3 + 1; /* 一下滚动半屏 */
+			else if (d < 0)
+				cl->top -= ch/3 + 1;
 
+			chatlist_check_scrollbar(cl);
 
-		case WM_LBUTTONUP:
+			si.nPos = -cl->top;
+			si.fMask = SIF_POS;
+			SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
+
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		return 0;
+
 		case WM_MOUSEMOVE: {
 			ChatGroup *g;
 			ChatBuddy *b;
 			POINT p;
 			int r;
+
 			CursorPos (hwnd, &p);
 			p.y -= cl->top; /* 转化成列表坐标 */
 			r = feedback (cl, &p, &g, &b);
-			if (r == 1) {
+			if (r == SELECT_GROUP && !(cl->select_id==-g->gid && cl->select_state==PUSHED)) {
 				cl->select_id = -g->gid;
 				cl->select_state = HOVER;
 			}
-			else if (r == 2) {
+			else if (r == SELECT_BUDDY && !(cl->select_id==b->uid && cl->select_state==PUSHED)) {
 				cl->select_id = b->uid;
 				cl->select_state = HOVER;
 			}
+			else {
+				cl->select_id = 0;
+				cl->select_state = 0;
+			}
 			InvalidateRect(hwnd, NULL, TRUE);
-		}
-		if (message == WM_MOUSEMOVE) {
+		} {
 		    TRACKMOUSEEVENT tme;
-			tme.cbSize = sizeof(tme); //结构体缓冲区大小
-			tme.dwFlags = TME_LEAVE; //注册WM_MOUSEHOVER消息
-			tme.dwHoverTime = 100; //WM_MOUSEHOVER消息触发间隔时间
-			tme.hwndTrack = hwnd; //当前窗口句柄
+			tme.cbSize = sizeof(tme);
+			tme.dwFlags = TME_LEAVE;
+			tme.dwHoverTime = 1500;
+			tme.hwndTrack = hwnd;
 
-			TrackMouseEvent(&tme); //注册发送消息
+			TrackMouseEvent(&tme);
 		}
-
 		return 0;
 
 		case WM_MOUSELEAVE:
@@ -679,12 +833,54 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 		return 0;
 
-		case WM_LBUTTONDOWN: {
-			if (cl->select_id > 0)
-				cl->select_state = PUSHED;
+		case WM_LBUTTONUP: {
+			ChatGroup *g;
+			ChatBuddy *b;
+			POINT p;
+			int r;
+			i32mousepos (hwnd, &p);
+			p.y -= cl->top;
+			r = feedback (cl, &p, &g, &b);
+			if (r == SELECT_GROUP) {
+				SCROLLINFO si;
+				if (g->fold) {
+					/* 分组展开后向上滚动合适的距离 */
+					//int dy = min(g->bn*get_viewh(cl)-GROUP_H, i32clienth(hwnd)-GROUP_H);
+					int dy = i32clienth(hwnd)-GROUP_H*2;
+					cl->height += g->bn * get_viewh(cl);
+					cl->top -= dy;
+				}
+				else
+					cl->height -= g->bn * get_viewh(cl);
+				g->fold = !g->fold;
+
+				chatlist_check_scrollbar(cl);
+				si.nPos = -cl->top;
+				si.fMask = SIF_POS;
+				SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
+			}
+
+			cl->select_state = HOVER;
+			InvalidateRect (hwnd, NULL, TRUE);
 		}
 		return 0;
 
+		case WM_LBUTTONDOWN: {
+			if (cl->select_id != 0)
+				cl->select_state = PUSHED;
+			InvalidateRect (hwnd, NULL, TRUE);
+		}
+		return 0;
+
+		case WM_SETCURSOR: {
+			POINT p;
+			i32mousepos(hwnd, &p);
+			if (p.y < cl->height)
+				SetCursor(LoadCursor(NULL, IDC_HAND));
+			else
+				SetCursor(LoadCursor(NULL, IDC_ARROW));
+		}
+		return 0;
 	}
 
 	return DefWindowProc(hwnd, message, wp, lp);

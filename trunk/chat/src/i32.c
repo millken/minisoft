@@ -866,6 +866,12 @@ void i32hfill (HWND hwnd, ...)
 /*
  * 绘图
  */
+void i32mousepos (HWND hwnd, POINT *p)
+{
+	GetCursorPos(p);
+	ScreenToClient(hwnd, p);
+}
+
 void i32framerect (HDC hdc, RECT *r, DWORD col)
 {
 	HBRUSH hbrush = CreateSolidBrush(col);
@@ -878,6 +884,15 @@ void i32fillrect (HDC hdc, RECT *r, DWORD col)
 	HBRUSH hbrush = CreateSolidBrush(col);
 	FillRect(hdc, r, hbrush);
 	DeleteObject(hbrush);
+}
+
+void i32line (HDC hdc, int x, int y, int tox, int toy, DWORD col)
+{
+	HPEN hpen = CreatePen(PS_SOLID, 1, col);
+	SelectObject(hdc, hpen);
+	MoveToEx (hdc, x, y, NULL);
+	LineTo (hdc, tox, toy);
+	DeleteObject(hpen);
 }
 
 int i32clientw (HWND hwnd)
@@ -897,7 +912,7 @@ int i32clienth (HWND hwnd)
 }
 
 
-void i32bltbmp (HDC hdc, HBITMAP hbmp, int x, int y)
+void i32blt (HDC hdc, HBITMAP hbmp, int x, int y)
 {
 	BITMAP bmp;
 	HDC hmem = 0;
@@ -912,4 +927,49 @@ void i32bltbmp (HDC hdc, HBITMAP hbmp, int x, int y)
 		0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
 
 	DeleteObject(hmem);
+}
+
+void i32draw (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	/*StretchBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);*/
+	TransparentBlt (hdc, x, y, neww, newh, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	DeleteObject(hmem);
+}
+
+/* 画横向第i贞 */
+void i32hblt (HDC hdc, HBITMAP hbmp, int x, int y, int index, int pagen)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+	int left, top, w, h;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	index = index % pagen;
+	h = bmp.bmHeight;
+	w = bmp.bmWidth / pagen;
+	left = index * w;
+	top = 0;
+
+	/*BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);*/
+	/* 需要连接库 - msimg32.a */
+	TransparentBlt (hdc, x, y, w, h, hmem,
+		left, top, w, h, RGB(255, 0, 255));
+
+	DeleteObject(hmem);
+}
+
+void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col)
+{
+	SetTextColor (hdc, col);
+	TextOut (hdc, x, y, text, lstrlen(text));
 }

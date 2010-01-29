@@ -53,7 +53,7 @@ int setbox_onsize (I32E e)
 {
 	i32vfill (e.hwnd,
 		i32("dlg-top"), 40,
-		i32("viewer"), -1,
+		i32("friendlist2"), -1,
 		i32("dlg-foot"), 53,
 		NULL
 		);
@@ -74,6 +74,12 @@ int setbox_onclose (I32E e)
 	return -1;
 }
 
+int setbox_onwheel (I32E e)
+{
+	SendMessage (i32id(e.hwnd, 0x21), e.msg, e.wp, e.lp);
+	return 0;
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	reg_myctl ();
@@ -88,10 +94,8 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 
 	i32box ("dlg-top", hwnd);
 	i32set (i32("dlg-top"), "bc", RGB(89,156,238));
-	i32create (TEXT("edit"), "n|d|s|t", "viewer", hwnd,
-			WS_CTRL|ES_MULTILINE|ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-			TEXT("似的")
-			);
+	i32create (TEXT("chatlist"), "d|n|s|w|h|a|show|id", hwnd, "friendlist2",
+				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y", 0x21);
 	i32box ("dlg-foot", hwnd);
 	i32set (i32("dlg-foot"), "bc", RGB(89,156,238));
 	i32create (TEXT("edit"), "n|d|s|t|h", "inputer", i32("dlg-foot"),
@@ -99,6 +103,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 			TEXT(""), 22
 			);
 	i32setproc (i32("dlg-foot"), WM_SIZE, dlgfoot_onsize);
+	i32setproc (i32("setbox"), WM_MOUSEWHEEL, setbox_onwheel);
 
 	ShowWindow (hwnd, SW_SHOW);
 

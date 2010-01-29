@@ -13,4 +13,6 @@ FORM_MIN BITMAP "rc/min.bmp"  /* 最小化按钮 */
 FORM_CLOSE BITMAP "rc/close.bmp" /* 关闭按钮 */
 FORM_ICON BITMAP "rc/logo.bmp" /* 图标按钮 */
 
-CHAT_THUMB BITMAP "rc/thumb.bmp" /* 默认头像 */
+DEF_AVATAR BITMAP "rc/defavatar.bmp" /* 默认头像 */
+
+GROUP_ARROW BITMAP "rc/grouparrow.bmp" /* 分组下拉箭头 */

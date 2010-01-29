@@ -56,11 +56,16 @@ void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
 /* 绘图 */
+void i32mousepos (HWND hwnd, POINT *p); /* 获得光标位置 */
 void i32framerect (HDC hdc, RECT *r, DWORD col);
 void i32fillrect (HDC hdc, RECT *r, DWORD col);
+void i32line (HDC hdc, int x, int y, int tox, int toy, DWORD col);
 int i32clientw (HWND hwnd);
 int i32clienth (HWND hwnd);
-void i32bltbmp (HDC hdc, HBITMAP hbmp, int x, int y);
+void i32blt (HDC hdc, HBITMAP hbmp, int x, int y);
+void i32draw (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh);
+void i32hblt (HDC hdc, HBITMAP hbmp, int x, int y, int index, int pagen);
+void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col);
 
 /* 其他 */
 void i32bind (HWND hwnd, char *name);
