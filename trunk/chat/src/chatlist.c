@@ -17,8 +17,8 @@
 #define GROUP_BGCOLOR 0xCCFFFF
 #define GROUP_HOVER_BGCOLOR RGB(208, 223, 242)
 #define GROUP_PUSHED_BGCOLOR RGB(232, 238, 245)
-#define GROUP_NAME_COLOR RGB(192, 192, 192) /* 文字颜色 */
-#define GROUP_NOTE_COLOR RGB(192, 192, 192) /* 括号里的文字颜色 */
+#define GROUP_NAME_COLOR 0x999999 /* 文字颜色 */
+#define GROUP_NOTE_COLOR GROUP_NAME_COLOR /* 括号里的文字颜色 */
 #define GROUP_LINE_COLOR 0xffffff /*  */
 
 #define BUDDY_BGCOLOR 0xffffff
@@ -30,10 +30,10 @@
 #define BUDDY_LINE_COLOR 0xf0f0f0
 
 #define GROUP_NAME_MARGIN 4
-#define GROUP_NAME_Y 2
-#define GROUP_NOTE_MARGIN 18
+#define GROUP_NAME_Y 3
+#define GROUP_NOTE_MARGIN 20
 #define GROUP_ARROW_MARGIN 6
-#define GROUP_ARROW_Y 4
+#define GROUP_ARROW_Y 6
 
 #define BBUDDY_PIC_X 6
 #define BBUDDY_PIC_Y 4
@@ -58,14 +58,14 @@
 enum SELECT_STATE {
 	NONE = 0,
 	HOVER,
-	PUSHED,
+	PUSHED
 };
 
 /* feedback返回值 */
 enum SLECT_OBJECT {
 	SELECT_NONE = 0,
 	SELECT_GROUP,
-	SELECT_BUDDY,
+	SELECT_BUDDY
 };
 
 /* 个人类型 */
@@ -416,6 +416,7 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	ChatBuddy *b;
 	int accHeight = cl->top;
 	HFONT hfont, hbfont;
+	int ClientWidth;
 
 	hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
@@ -429,7 +430,7 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
 
-	int ClientWidth = i32clientw (hwnd);
+	ClientWidth = i32clientw (hwnd);
 
 	for (g = cl->grouplist; g; g = g->next) {
 		RECT gr;
@@ -686,6 +687,13 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			new_chatbuddy(g, 9);
 			new_chatbuddy(g, 10);
 			new_chatbuddy(g, 11);
+			g = new_chatgroup (cl, 2);
+			new_chatbuddy(g, 12);
+			new_chatbuddy(g, 13);
+			new_chatbuddy(g, 14);
+			new_chatbuddy(g, 15);
+			new_chatbuddy(g, 16);
+			new_chatbuddy(g, 17);
 			}
 		break;
 
@@ -702,10 +710,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			hmem = CreateCompatibleDC (hdc);
 			SelectObject (hmem, hbmp);
 
-			{
-				RECT tr = {0, 0, r.right, r.bottom};
-				i32fillrect (hmem, &tr, LIST_BGCOLOR);
-			}
+			i32fillrect (hmem, &r, LIST_BGCOLOR);
 			draw_chatlist (hwnd, hmem, cl);
 
 			BitBlt (hdc, 0, 0, r.right, r.bottom, hmem, 0, 0, SRCCOPY);
@@ -778,9 +783,9 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			short int d = HIWORD(wp);
 			ch = i32clienth(hwnd);
 			if (d > 0)
-				cl->top += ch/3 + 1; /* 一下滚动半屏 */
+				cl->top += ch*7/24 + 1; /* 比1/4大,比1/3小 */
 			else if (d < 0)
-				cl->top -= ch/3 + 1;
+				cl->top -= ch*7/24 + 1;
 
 			chatlist_check_scrollbar(cl);
 
@@ -843,17 +848,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			r = feedback (cl, &p, &g, &b);
 			if (r == SELECT_GROUP) {
 				SCROLLINFO si;
-				if (g->fold) {
-					/* 分组展开后向上滚动合适的距离 */
-					//int dy = min(g->bn*get_viewh(cl)-GROUP_H, i32clienth(hwnd)-GROUP_H);
-					int dy = i32clienth(hwnd)-GROUP_H*2;
-					cl->height += g->bn * get_viewh(cl);
-					cl->top -= dy;
-				}
-				else
-					cl->height -= g->bn * get_viewh(cl);
 				g->fold = !g->fold;
-
 				chatlist_check_scrollbar(cl);
 				si.nPos = -cl->top;
 				si.fMask = SIF_POS;

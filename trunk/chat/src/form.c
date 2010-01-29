@@ -63,7 +63,7 @@ void bltBmp (HDC hdc, HBITMAP hbmp, int x, int y)
 	hmem = CreateCompatibleDC(hdc);
 	SelectObject(hmem, hbmp);
 
-	//BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);/**/
+	/*BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);*/
 	/* 需要连接库 - msimg32.a */
 	TransparentBlt (hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem,
 		0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));

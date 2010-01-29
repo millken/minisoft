@@ -427,7 +427,6 @@ static void ScreenToDad (HWND hwnd, RECT *r)
 /* 画背景色 */
 static int on_erasebg (I32EVENT e)
 {
-	DWORD col;
 	struct hwndattr *a;
 
 	a = get_attr(e.hwnd);
