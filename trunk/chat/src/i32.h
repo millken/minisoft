@@ -55,7 +55,7 @@ HWND i32box (char *name, HWND dad);
 void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
-/* 绘图 */
+/* GDI */
 void i32mousepos (HWND hwnd, POINT *p); /* 获得光标位置 */
 void i32framerect (HDC hdc, RECT *r, DWORD col);
 void i32fillrect (HDC hdc, RECT *r, DWORD col);

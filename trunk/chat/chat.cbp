@@ -45,7 +45,8 @@
 		<Unit filename="src\chatlist.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src\ctrl.rc">
+		<Unit filename="src\ctrls.h" />
+		<Unit filename="src\ctrls.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
 		<Unit filename="src\form.c">

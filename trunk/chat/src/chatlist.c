@@ -3,9 +3,11 @@
  */
 
 #include "i32.h"
+#include "ctrls.h"
 
 /* 哈西表大小 */
 #define CHATTSIZE 10
+#define BUDDYTSIZE 128
 
 /* CSS */
 #define GROUP_H 23 /* 分组条高度*/
@@ -70,7 +72,7 @@ enum SLECT_OBJECT {
 
 /* 个人类型 */
 typedef struct chatbuddy {
-	int uid;
+	int uid; /* 主键 */
 
 	struct chatgroup *group; /* 所属组 */
 
@@ -89,7 +91,7 @@ typedef struct chatbuddy {
 
 /* 分组类型 */
 typedef struct chatgroup {
-	int gid;
+	int gid; /* 主键 */
 
 	TCHAR *name; /* 组名 */
 	TCHAR *note; /* 注解 */
@@ -110,9 +112,9 @@ typedef struct chatlist {
 	HWND hwnd;
 
 	ChatGroup *grouplist;  /* 0号组是'未分组' */
-	int gn;
+	int gn; /* 组数量 */
 
-	int view; /* 联系人视图选项 0:显示大头像, 1:小头像, 2:无头像 */
+	int viewmode; /* 联系人视图模式 0:显示大头像, 1:小头像, 2:无头像 */
 	BOOL showsb; /* 是否显示滚动条 */
 
 	int top; /* 绘制起点,相对于client */
@@ -121,17 +123,24 @@ typedef struct chatlist {
 	/* 绘制状态 */
 	int select_id; /* 哪个组(负数)或人(正数)被鼠标经过 */
 	int select_state; /* 选中状态 0:无, 1:hover, 2:按下 */
-	BOOL pushed; /* 鼠标按下还没抬起来 */
 
 	/* 哈希表开链用 */
 	struct chatlist *hashnext;
 
 } ChatList;
 
-/* hwnd -> chatlist的hash表: chattable */
-ChatList *g_chattable[CHATTSIZE];
-HBITMAP g_grouparrow; /* 下拉箭头 */
-HBITMAP g_defavatar; /* 默认头像 */
+/* hwnd -> chatlist的哈西表 */
+static ChatList *g_chattable[CHATTSIZE];
+
+/* cl+uid->buddy的哈西表 */
+static struct buddytable {
+	ChatList *cl;
+	ChatBuddy *buddy;
+	struct buddytable *next;
+} *g_buddytable[BUDDYTSIZE];
+
+static HBITMAP g_grouparrow; /* 下拉箭头图片 */
+static HBITMAP g_defavatar; /* 默认头像 */
 
 static void init ()
 {
@@ -139,16 +148,89 @@ static void init ()
 
 	if (!did) {
 		memset (g_chattable, 0, sizeof(g_chattable));
+		memset (g_buddytable, 0, sizeof(g_buddytable));
 		g_grouparrow = LoadBitmap(GetModuleHandle(NULL), TEXT("GROUP_ARROW"));
 		g_defavatar = LoadBitmap(GetModuleHandle(NULL), TEXT("DEF_AVATAR"));
 		did = TRUE;
 	}
 }
 
+static BOOL buddytable_add (ChatList *cl, ChatBuddy *b)
+{
+	unsigned hashcode;
+	struct buddytable **lp, *p;
+
+	if (!cl || !b) return FALSE;
+
+	hashcode = (unsigned)cl ^ (unsigned)b->uid;
+	lp = &g_buddytable[hashcode%BUDDYTSIZE];
+	while (*lp) {
+		p = *lp;
+		if (p->cl==cl && p->buddy->uid==b->uid)
+			return FALSE;
+		lp = &p->next;
+	}
+
+	*lp = (struct buddytable *)i32malloc(sizeof(struct buddytable));
+	(*lp)->cl = cl;
+	(*lp)->buddy = b;
+	(*lp)->next = NULL;
+	return TRUE;
+}
+
+static ChatBuddy *buddytable_get (ChatList *cl, int uid)
+{
+	struct buddytable *p;
+	unsigned hashcode;
+
+	if (!cl) return NULL;
+
+	hashcode = (unsigned)cl ^ (unsigned)uid;
+	p = g_buddytable[hashcode%BUDDYTSIZE];
+	while (p) {
+		if (p->cl==cl && p->buddy->uid==uid)
+			return p->buddy;
+		p = p->next;
+	}
+	return NULL;
+}
+
+static void buddytable_del (ChatList *cl, int uid)
+{
+	struct buddytable **lp, *p, *next;
+	unsigned hashcode;
+
+	if (!cl) return;
+
+	hashcode = (unsigned)cl ^ (unsigned)uid;
+	lp = &g_buddytable[hashcode%BUDDYTSIZE];
+	while (*lp) {
+		p = *lp;
+		if (p->cl==cl && p->buddy->uid==uid) {
+			next = p->next;
+			i32free(p);
+			*lp = next;
+			return;
+		}
+		lp = &p->next;
+	}
+}
+
+static ChatGroup *get_group (ChatList *cl, int gid)
+{
+	ChatGroup *g;
+
+	if (!cl) return NULL;
+
+	for (g = cl->grouplist; g; g = g->next)
+		if (g->gid == gid)
+			return g;
+	return NULL;
+}
 
 static int get_viewh (ChatList *cl)
 {
-	switch (cl->view) {
+	switch (cl->viewmode) {
 		case 0:
 		return BUDDYPIC_H;
 		case 1:
@@ -195,6 +277,7 @@ static void free_buddylist (ChatBuddy *bl)
 	p = bl;
 	while (p) {
 		next = p->next;
+		buddytable_del (p->group->chatlist, p->uid);
 		free_chatbuddy (p);
 		p = next;
 	}
@@ -206,6 +289,8 @@ static void free_chatgroup (ChatGroup *group)
 
 	if (group->name)
 		i32free(group->name);
+	if (group->note)
+		i32free(group->note);
 	free_buddylist(group->buddylist);
 	i32free(group);
 }
@@ -266,7 +351,7 @@ static ChatGroup *get_chatgroup (ChatList *cl, int gid)
 }
 
 
-/* 从链表里删除分组 */
+/* 从链表里删除分组,并销毁组里所有人 */
 static void del_chatgroup (ChatList *cl, int gid)
 {
 	ChatGroup **lp, *p, *next;
@@ -289,9 +374,14 @@ static void del_chatgroup (ChatList *cl, int gid)
 /* 给组里分配成员 */
 static ChatBuddy *new_chatbuddy (ChatGroup *group, int uid)
 {
+	ChatList *cl;
 	ChatBuddy **lp, *p;
 
 	if (!group) return NULL;
+
+	cl = group->chatlist;
+	if (buddytable_get(cl, uid))
+		return NULL;
 
 	lp = &group->buddylist;
 	while (*lp) {
@@ -309,31 +399,34 @@ static ChatBuddy *new_chatbuddy (ChatGroup *group, int uid)
 	group->bn++;
 
 	get_chatlist_h (group->chatlist);
+	buddytable_add (cl, p);
 
 	return p;
 }
 
-static ChatBuddy *get_chatbuddy (ChatGroup *group, int uid)
+static ChatBuddy *get_chatbuddy (ChatList *cl, int uid)
 {
 	ChatBuddy *p;
 
-	if (!group) return NULL;
+	if (!cl) return NULL;
+	p = buddytable_get(cl, uid);
 
-	p = group->buddylist;
-	while (p) {
-		if (p->uid == uid)
-			break;
-		p = p->next;
-	}
 	return p;
 }
 
-/* 从链表中删除好友 */
-static void del_chatbuddy (ChatGroup *group, int uid)
+/* 从链表中和hash表中删除好友 */
+static void del_chatbuddy (ChatList *cl, int uid)
 {
-	ChatBuddy **lp, *p, *next;
+	ChatGroup *group;
+	ChatBuddy *b, **lp, *p, *next;
 
+	if (!cl) return;
+	b = buddytable_get(cl, uid);
+	if (!b) return;
+	group = b->group;
 	if (!group) return;
+
+	buddytable_del (cl, uid);
 
 	lp = &group->buddylist;
 	while (*lp) {
@@ -365,7 +458,7 @@ static ChatList *new_chatlist (HWND hwnd)
 		lp = &p->hashnext;
 	}
 
-	*lp = (ChatList *)malloc(sizeof(ChatList));
+	*lp = (ChatList *)i32malloc(sizeof(ChatList));
 	p = *lp;
 	memset(p, 0, sizeof(ChatList));
 	p->hwnd = hwnd;
@@ -438,9 +531,9 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 		int gnotew = 0;
 		int avatarw = 0;
 
-		if (cl->view == 0)
+		if (cl->viewmode == 0)
 			avatarw = BBUDDY_PIC_X + BBUDDY_PIC_W;
-		else if (cl->view == 1)
+		else if (cl->viewmode == 1)
 			avatarw = SBUDDY_PIC_X + SBUDDY_PIC_W;
 
 		/* 0号组是纯列表 */
@@ -457,7 +550,9 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 				i32fillrect (hdc, &gr, GROUP_BGCOLOR);
 
 			if (g->note) {
-				GetTextExtentPoint32 (hdc, g->note, lstrlen(g->note), &gnotew);
+				SIZE tsize;
+				GetTextExtentPoint32 (hdc, g->note, lstrlen(g->note), &tsize);
+				gnotew = tsize.cx;
 				SelectObject(hdc, hfont);
 				gnotew += GROUP_NOTE_MARGIN;
 				i32textout (hdc, ClientWidth-gnotew, accHeight+GROUP_NAME_Y,
@@ -465,7 +560,9 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 			}
 
 			if (g->name) {
-				GetTextExtentPoint32 (hdc, g->name, lstrlen(g->name), &gnamew);
+				SIZE tsize;
+				GetTextExtentPoint32 (hdc, g->name, lstrlen(g->name), &tsize);
+				gnamew = tsize.cx;
 				SelectObject(hdc, hbfont);
 				i32textout (hdc, ClientWidth-gnamew-GROUP_NAME_MARGIN-gnotew,
 						accHeight+GROUP_NAME_Y,
@@ -501,42 +598,42 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 				i32fillrect (hdc, &br, BUDDY_BGCOLOR);
 
 			if (b->name) {
-				int x = cl->view>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
-				int y = cl->view>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
+				int x = cl->viewmode>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
+				int y = cl->viewmode>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
 				SIZE tsize;
 				i32textout(hdc, x, accHeight+y, b->name, BUDDY_NAME_COLOR);
 				GetTextExtentPoint32 (hdc, b->name, lstrlen(b->name), &tsize);
 				bnamew = tsize.cx;
 			}
 			if (b->note) {
-				int x = cl->view>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
-				int y = cl->view>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
+				int x = cl->viewmode>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
+				int y = cl->viewmode>0 ? SBUDDY_NAME_Y : BBUDDY_NAME_Y;
 				SIZE tsize;
 				bnamew += BUDDY_NOTE_MARGIN;
 				i32textout (hdc, x+bnamew, accHeight+y, b->note, BUDDY_NOTE_COLOR);
 				GetTextExtentPoint32 (hdc, b->note, lstrlen(b->note), &tsize);
 				bnotew = tsize.cx;
 			}
-			if (cl->view==0 && b->sign) {
+			if (cl->viewmode==0 && b->sign) {
 				int x;
-				int y = cl->view>0 ? SBUDDY_SIGN_Y : BBUDDY_SIGN_Y;
-				x = cl->view>0 ? avatarw+SBUDDY_NAME_X+bnamew+bnotew+SBUDDY_SIGN_MARGIN : avatarw+BBUDDY_SIGN_X;
+				int y = cl->viewmode>0 ? SBUDDY_SIGN_Y : BBUDDY_SIGN_Y;
+				x = cl->viewmode>0 ? avatarw+SBUDDY_NAME_X+bnamew+bnotew+SBUDDY_SIGN_MARGIN : avatarw+BBUDDY_SIGN_X;
 				i32textout (hdc, x, accHeight+y, b->sign, BUDDY_SIGN_COLOR);
 			}
 
 			/* 有头象 */
-			if (cl->view < 2) {
-				int x = cl->view>0 ? SBUDDY_PIC_X : BBUDDY_PIC_X;
-				int y = cl->view>0 ? SBUDDY_PIC_Y : BBUDDY_PIC_Y;
-				int w = cl->view>0 ? SBUDDY_PIC_W : BBUDDY_PIC_W;
-				int h = cl->view>0 ? SBUDDY_PIC_H : BBUDDY_PIC_H;
+			if (cl->viewmode < 2) {
+				int x = cl->viewmode>0 ? SBUDDY_PIC_X : BBUDDY_PIC_X;
+				int y = cl->viewmode>0 ? SBUDDY_PIC_Y : BBUDDY_PIC_Y;
+				int w = cl->viewmode>0 ? SBUDDY_PIC_W : BBUDDY_PIC_W;
+				int h = cl->viewmode>0 ? SBUDDY_PIC_H : BBUDDY_PIC_H;
 				HBITMAP avatar = b->pic ? b->pic : g_defavatar;
 				i32draw (hdc, avatar, x, accHeight+y, w, h);
 			}
 
 			accHeight = br.bottom;
 
-			if (cl->view==0 && b->next)
+			if (cl->viewmode==0 && b->next)
 				i32line (hdc, 5, accHeight-1, ClientWidth-5, accHeight-1, BUDDY_LINE_COLOR);
 		}
 	}
@@ -662,7 +759,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			ChatGroup *g;
 			ChatBuddy *b;
 			cl = new_chatlist (hwnd);
-			cl->view = 0;
+			cl->viewmode = 0;
 			g = new_chatgroup(cl, 0);
 			b = new_chatbuddy(g, 1);
 			b->name = TEXT("지Cat 못한");
@@ -693,7 +790,16 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			new_chatbuddy(g, 14);
 			new_chatbuddy(g, 15);
 			new_chatbuddy(g, 16);
-			new_chatbuddy(g, 17);
+			b = new_chatbuddy(g, 17);
+			int r = buddytable_add (cl, b);
+			ChatBuddy *p = buddytable_get (cl, 17);
+
+			printf ("%d\n", p?p->uid:0);
+			buddytable_del(cl, 17);
+			p = buddytable_get (cl, 1);
+			printf ("%d\n", p?lstrlen(p->name):0);
+			del_chatgroup(cl, 1);
+
 			}
 		break;
 
@@ -818,7 +924,14 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				cl->select_id = 0;
 				cl->select_state = 0;
 			}
-			InvalidateRect(hwnd, NULL, TRUE);
+			{ /* 刷新频率不用过快,否则浪费cpu */
+				static DWORD clicktime = 0;
+				DWORD now = GetTickCount();
+				if (now - clicktime > 20) {
+					clicktime = now;
+					InvalidateRect(hwnd, NULL, TRUE);
+				}
+			}
 		} {
 		    TRACKMOUSEEVENT tme;
 			tme.cbSize = sizeof(tme);
@@ -849,6 +962,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			if (r == SELECT_GROUP) {
 				SCROLLINFO si;
 				g->fold = !g->fold;
+				get_chatlist_h(cl);
 				chatlist_check_scrollbar(cl);
 				si.nPos = -cl->top;
 				si.fMask = SIF_POS;
@@ -869,12 +983,142 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 		case WM_SETCURSOR: {
 			POINT p;
+			RECT cr;
+			GetClientRect (hwnd, &cr);
 			i32mousepos(hwnd, &p);
-			if (p.y < cl->height)
+			if (PtInRect(&cr, p))
 				SetCursor(LoadCursor(NULL, IDC_HAND));
 			else
 				SetCursor(LoadCursor(NULL, IDC_ARROW));
 		}
+		return 0;
+
+
+
+		/*----------  接口 ----------*/
+
+		/* 联系人视图模式 wp=0:显示大头像, 1:小头像, 2:无头像 */
+		case CM_SETVIEWMODE:
+			cl->viewmode = (int)wp;
+			get_chatlist_h(cl);
+			chatlist_check_scrollbar(cl);
+		return 0;
+
+		case CM_GETVIEWMODE:
+		return cl->viewmode;
+
+		case CM_ADDGROUP:
+		return new_chatgroup(cl, (int)wp) != NULL;
+
+		/* 传进来的必须是TCHAR字符串 */
+		case CM_SETGROUP_NAME: {
+			TCHAR *name = (TCHAR *)lp;
+			int gid = (int)wp;
+			ChatGroup *g;
+
+			if (!name) return FALSE;
+			g = get_group(cl, gid);
+			if (!g) return FALSE;
+			if (g->name) i32free(g->name);
+			g->name = (TCHAR *)i32malloc(sizeof(TCHAR)*(lstrlen(name)+1));
+			lstrcpy(g->name, name);
+			return TRUE;
+		}
+		return FALSE;
+
+		case CM_SETGROUP_NOTE: {
+			TCHAR *note = (TCHAR *)lp;
+			int gid = (int)wp;
+			ChatGroup *g;
+
+			if (!note) return FALSE;
+			g = get_group(cl, gid);
+			if (!g) return FALSE;
+			if (g->note) i32free(g->note);
+			g->note = (TCHAR *)i32malloc(sizeof(TCHAR)*(lstrlen(note)+1));
+			lstrcpy(g->note, note);
+			return TRUE;
+		}
+		return FALSE;
+
+		case CM_DELGROUP: {
+			int gid = (int)wp;
+			del_chatgroup(cl, gid);
+		}
+		return 0;
+
+		/* wp=gid, lp=uid */
+		case CM_ADDBUDDY: {
+			int gid = (int)wp;
+			int uid = (int)lp;
+			ChatGroup *g;
+			ChatBuddy *b;
+			g = get_group(cl, gid);
+			if (!g) return FALSE;
+			b = new_chatbuddy(g, uid);
+			return b!=NULL;
+		}
+		return 0;
+
+		case CM_SETBUDDY_NAME: {
+			int uid = (int)wp;
+			TCHAR *name = (TCHAR *)lp;
+			ChatBuddy *b;
+			if (!name) return FALSE;
+			b = buddytable_get(cl, uid);
+			if (!b) return FALSE;
+			i32free (b->name);
+			b->name = (TCHAR *)i32malloc(sizeof(TCHAR)*(lstrlen(name)+1));
+			lstrcpy (b->name, name);
+		}
+		return TRUE;
+
+		case CM_SETBUDDY_NOTE: {
+			int uid = (int)wp;
+			TCHAR *note = (TCHAR *)lp;
+			ChatBuddy *b;
+			if (!note) return FALSE;
+			b = buddytable_get(cl, uid);
+			if (!b) return FALSE;
+			i32free(b->note);
+			b->note = (TCHAR *)i32malloc(sizeof(TCHAR)*(lstrlen(note)+1));
+			lstrcpy (b->note, note);
+		}
+		return 0;
+
+		case CM_SETBUDDY_SIGN: {
+			int uid = (int)wp;
+			TCHAR *sign = (TCHAR *)lp;
+			ChatBuddy *b;
+			if (!sign) return FALSE;
+			b = buddytable_get(cl, uid);
+			if (!b) return FALSE;
+			i32free(b->sign);
+			b->sign = (TCHAR *)i32malloc(sizeof(TCHAR)*(lstrlen(sign)+1));
+			lstrcpy (b->sign, sign);
+		}
+		return 0;
+
+		case CM_SETBUDDY_PIC: {
+			int uid = (int)wp;
+			ChatBuddy *b = buddytable_get(cl, uid);
+			if (b)
+				b->pic = (HBITMAP)lp;
+		}
+		return 0;
+
+		/* wp=uid, lp=在线状态, 0:不在, 1:在 */
+		case CM_SETBUDDY_STATUS: {
+			ChatBuddy *b = buddytable_get(cl, (int)wp);
+			if (b)
+				b->status = (int)lp;
+		}
+		return 0;
+
+		/* !!不支持切换组!! */
+
+		case CM_DELBUDDY:
+			del_chatbuddy(cl, (int)wp);
 		return 0;
 	}
 

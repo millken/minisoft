@@ -1,4 +1,5 @@
 #include "i32.h"
+#include "ctrls.h"
 
 void reg_form ();
 void reg_chatlist ();
@@ -80,6 +81,28 @@ int setbox_onwheel (I32E e)
 	return 0;
 }
 
+int cl2_onclick (I32E e)
+{
+	int vm = SendMessage (e.hwnd, CM_GETVIEWMODE, 0, 0);
+	SendMessage (e.hwnd, CM_SETVIEWMODE, (vm+1)%3, 0);
+
+	int r = SendMessage (e.hwnd, CM_ADDGROUP, 4, 0);
+	if (r) {
+		SendMessage (e.hwnd, CM_SETGROUP_NAME, 4, TEXT("垃圾"));
+		SendMessage (e.hwnd, CM_SETGROUP_NOTE, 4, TEXT("(3/30)"));
+	}
+	SendMessage (e.hwnd, CM_DELGROUP, 1, 0);
+	SendMessage (e.hwnd, CM_ADDBUDDY, 4, 18);
+	SendMessage (e.hwnd, CM_SETBUDDY_NAME, 1, TEXT("龟"));
+	SendMessage (e.hwnd, CM_SETBUDDY_NOTE, 1, TEXT("兔"));
+	SendMessage (e.hwnd, CM_SETBUDDY_SIGN, 1, TEXT("一剪寒梅傲立雪中."));
+	SendMessage (e.hwnd, CM_SETBUDDY_PIC, 1, LoadBitmap(GetModuleHandle(0), TEXT("FORM_ICON")));
+	SendMessage (e.hwnd, CM_SETBUDDY_STATUS, 1, 2);
+	SendMessage (e.hwnd, CM_DELBUDDY, 1, 0);
+	InvalidateRect(e.hwnd, NULL, TRUE);
+	return 0;
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	reg_myctl ();
@@ -106,6 +129,10 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	i32setproc (i32("setbox"), WM_MOUSEWHEEL, setbox_onwheel);
 
 	ShowWindow (hwnd, SW_SHOW);
+
+	SendMessage (i32("friendlist2"), CM_SETVIEWMODE, 0, 0);
+	SendMessage (i32("friendlist2"), CM_SETVIEWMODE, 1, 0);
+	i32setproc (i32("friendlist2"), WM_RBUTTONDOWN, cl2_onclick);
 
 	i32loop();
 	return 0;
