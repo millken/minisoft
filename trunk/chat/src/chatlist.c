@@ -42,10 +42,10 @@
 #define BBUDDY_PIC_W 32
 #define BBUDDY_PIC_H 32
 #define BBUDDY_NAME_X 8
-#define BBUDDY_NAME_Y 4
+#define BBUDDY_NAME_Y 3
 #define BUDDY_NOTE_MARGIN 5
 #define BBUDDY_SIGN_X 8
-#define BBUDDY_SIGN_Y 22
+#define BBUDDY_SIGN_Y 21
 
 #define SBUDDY_PIC_X 6
 #define SBUDDY_PIC_Y 3
@@ -82,7 +82,7 @@ typedef struct chatbuddy {
 
 	HBITMAP pic; /* 头像 */
 
-	int status; /* 在线状态, 0:不在, 1:在 */
+	int status; /* 在线状态, 0:离线, 1:忙, 2:离开, 3:在 */
 
 	/* 链表指针 */
 	struct chatbuddy *next;
@@ -153,6 +153,43 @@ static void init ()
 		g_defavatar = LoadBitmap(GetModuleHandle(NULL), TEXT("DEF_AVATAR"));
 		did = TRUE;
 	}
+}
+
+/* 好友链表插入排序 */
+static void buddylist_qsort (ChatBuddy **head, ChatBuddy *end)
+{
+	ChatBuddy *pivot = *head;
+	ChatBuddy *p;
+	ChatBuddy left, right;
+
+	left.next = pivot;
+	right.next = NULL;
+
+	if (*head == end) {
+		printf("q");return;
+	}
+
+	for (p = *head; p!=end; ) {
+		ChatBuddy *next = p->next;
+		if (p != pivot) {
+			if (p->status >= pivot->status) {
+				p->next = left.next;
+				left.next = p;
+				printf ("l");
+			}
+			else {
+				p->next = right.next;
+				right.next = p;
+				printf ("r");
+			}
+		}
+		p = next;
+	}
+
+	//buddylist_qsort (&left.next, pivot);
+	buddylist_qsort (&right.next, NULL);
+	pivot->next = right.next;
+	*head = left.next;
 }
 
 static BOOL buddytable_add (ChatList *cl, ChatBuddy *b)
@@ -594,8 +631,16 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 				i32fillrect (hdc, &br, BUDDY_HOVER_BGCOLOR);
 			else if (cl->select_id == b->uid && cl->select_state==PUSHED)
 				i32fillrect (hdc, &br, BUDDY_PUSHED_BGCOLOR);
-			else
-				i32fillrect (hdc, &br, BUDDY_BGCOLOR);
+			else {
+				DWORD bgc = BUDDY_BGCOLOR;
+				if (b->status == 0)
+					bgc = 0xdddddd;
+				else if (b->status == 2)
+					bgc = 0x33ccff;
+				else if (b->status == 3)
+					bgc = 0x9999ff;
+				i32fillrect (hdc, &br, bgc);
+			}
 
 			if (b->name) {
 				int x = cl->viewmode>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
@@ -769,11 +814,14 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			TCHAR *buf = (TCHAR *)i32malloc(lstrlen(b->note)*sizeof(TCHAR)+4);
 			wsprintf (buf, TEXT("(%s)"), b->note);
 			b->note = buf;
+			b->status = 3;
 			new_chatbuddy(g, 2);
 			b = new_chatbuddy(g, 3);
 			b->name = TEXT("sdны");
+			b->status = 2;
 			new_chatbuddy(g, 4);
 			new_chatbuddy(g, 5);
+			buddylist_qsort (&g->buddylist, NULL);
 			g = new_chatgroup(cl, 1);
 			g->name = TEXT("好友");
 			g->note = TEXT("(1/23)");
@@ -784,6 +832,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			new_chatbuddy(g, 9);
 			new_chatbuddy(g, 10);
 			new_chatbuddy(g, 11);
+
 			g = new_chatgroup (cl, 2);
 			new_chatbuddy(g, 12);
 			new_chatbuddy(g, 13);

@@ -98,7 +98,7 @@ int cl2_onclick (I32E e)
 	SendMessage (e.hwnd, CM_SETBUDDY_SIGN, 1, TEXT("一剪寒梅傲立雪中."));
 	SendMessage (e.hwnd, CM_SETBUDDY_PIC, 1, LoadBitmap(GetModuleHandle(0), TEXT("FORM_ICON")));
 	SendMessage (e.hwnd, CM_SETBUDDY_STATUS, 1, 2);
-	SendMessage (e.hwnd, CM_DELBUDDY, 1, 0);
+	//SendMessage (e.hwnd, CM_DELBUDDY, 1, 0);
 	InvalidateRect(e.hwnd, NULL, TRUE);
 	return 0;
 }
