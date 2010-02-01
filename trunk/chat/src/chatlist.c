@@ -64,10 +64,18 @@ enum SELECT_STATE {
 };
 
 /* feedback返回值 */
-enum SLECT_OBJECT {
+enum SELECT_OBJECT {
 	SELECT_NONE = 0,
 	SELECT_GROUP,
 	SELECT_BUDDY
+};
+
+/* 在线状态 */
+enum {
+	ST_OFF = 0,
+	ST_BUSY,
+	ST_IDLE,
+	ST_ON
 };
 
 /* 个人类型 */
@@ -82,7 +90,7 @@ typedef struct chatbuddy {
 
 	HBITMAP pic; /* 头像 */
 
-	int status; /* 在线状态, 0:离线, 1:忙, 2:离开, 3:在 */
+	int status; /* 在线状态, 0:离线, 1:忙, 2:idle(发呆), 3:在 */
 
 	/* 链表指针 */
 	struct chatbuddy *next;
@@ -140,7 +148,10 @@ static struct buddytable {
 } *g_buddytable[BUDDYTSIZE];
 
 static HBITMAP g_grouparrow; /* 下拉箭头图片 */
-static HBITMAP g_defavatar; /* 默认头像 */
+static HBITMAP g_avatarb; /* 默认大头像 */
+static HBITMAP g_avatars; /* 默认小头像 */
+static HBITMAP g_stidle; /* 默认小头像 */
+static HBITMAP g_stbusy; /* 默认小头像 */
 
 static void init ()
 {
@@ -150,46 +161,55 @@ static void init ()
 		memset (g_chattable, 0, sizeof(g_chattable));
 		memset (g_buddytable, 0, sizeof(g_buddytable));
 		g_grouparrow = LoadBitmap(GetModuleHandle(NULL), TEXT("GROUP_ARROW"));
-		g_defavatar = LoadBitmap(GetModuleHandle(NULL), TEXT("DEF_AVATAR"));
+		g_avatarb = LoadBitmap(GetModuleHandle(NULL), TEXT("AVATAR_B"));
+		g_avatars = LoadBitmap(GetModuleHandle(NULL), TEXT("AVATAR_S"));
+		g_stidle = LoadBitmap(GetModuleHandle(NULL), TEXT("ST_IDLE"));
+		g_stbusy = LoadBitmap(GetModuleHandle(NULL), TEXT("ST_BUSY"));
 		did = TRUE;
 	}
 }
 
-/* 好友链表插入排序 */
-static void buddylist_qsort (ChatBuddy **head, ChatBuddy *end)
+static int buddycmp (ChatBuddy *a, ChatBuddy *b)
 {
-	ChatBuddy *pivot = *head;
+	if (a->status != b->status)
+		return a->status - b->status;
+	else
+		return lstrcmp(b->name, a->name);
+}
+
+/* 好友链表快速排序 */
+static void buddylist_qsort (ChatBuddy **head, ChatBuddy *end, int(*f)(ChatBuddy*,ChatBuddy*))
+{
+	ChatBuddy *pivot = *head; /* 中点取的不好,暂时这样 */
 	ChatBuddy *p;
 	ChatBuddy left, right;
 
 	left.next = pivot;
-	right.next = NULL;
+	right.next = end;
 
-	if (*head == end) {
-		printf("q");return;
-	}
+	if (*head == end)
+		return;
 
 	for (p = *head; p!=end; ) {
 		ChatBuddy *next = p->next;
 		if (p != pivot) {
-			if (p->status >= pivot->status) {
+			if (f(p, pivot)>0) {
 				p->next = left.next;
 				left.next = p;
-				printf ("l");
 			}
 			else {
 				p->next = right.next;
 				right.next = p;
-				printf ("r");
 			}
 		}
 		p = next;
 	}
 
-	//buddylist_qsort (&left.next, pivot);
-	buddylist_qsort (&right.next, NULL);
 	pivot->next = right.next;
 	*head = left.next;
+
+	buddylist_qsort (head, pivot, f);
+	buddylist_qsort (&pivot->next, NULL, f);
 }
 
 static BOOL buddytable_add (ChatList *cl, ChatBuddy *b)
@@ -631,16 +651,8 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 				i32fillrect (hdc, &br, BUDDY_HOVER_BGCOLOR);
 			else if (cl->select_id == b->uid && cl->select_state==PUSHED)
 				i32fillrect (hdc, &br, BUDDY_PUSHED_BGCOLOR);
-			else {
-				DWORD bgc = BUDDY_BGCOLOR;
-				if (b->status == 0)
-					bgc = 0xdddddd;
-				else if (b->status == 2)
-					bgc = 0x33ccff;
-				else if (b->status == 3)
-					bgc = 0x9999ff;
-				i32fillrect (hdc, &br, bgc);
-			}
+			else
+				i32fillrect (hdc, &br, BUDDY_BGCOLOR);
 
 			if (b->name) {
 				int x = cl->viewmode>0 ? avatarw+SBUDDY_NAME_X : avatarw+BBUDDY_NAME_X;
@@ -672,14 +684,31 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 				int y = cl->viewmode>0 ? SBUDDY_PIC_Y : BBUDDY_PIC_Y;
 				int w = cl->viewmode>0 ? SBUDDY_PIC_W : BBUDDY_PIC_W;
 				int h = cl->viewmode>0 ? SBUDDY_PIC_H : BBUDDY_PIC_H;
-				HBITMAP avatar = b->pic ? b->pic : g_defavatar;
+				HBITMAP avatar = b->pic;
+				if (b->pic)
+					avatar = b->pic;
+				else if (cl->viewmode == 0)
+					avatar = g_avatarb;
+				else
+					avatar = g_avatars;
 				i32draw (hdc, avatar, x, accHeight+y, w, h);
+
+				if (b->status == ST_IDLE) {
+					BITMAP pic;
+					GetObject (g_stidle, sizeof(BITMAP), &pic);
+					i32blt (hdc, g_stidle, x+w-pic.bmWidth, accHeight+y+h-pic.bmHeight);
+				}
+				else if (b->status == ST_BUSY) {
+					BITMAP pic;
+					GetObject (g_stbusy, sizeof(BITMAP), &pic);
+					i32blt (hdc, g_stbusy, x+w-pic.bmWidth, accHeight+y+h-pic.bmHeight);
+				}
 			}
 
 			accHeight = br.bottom;
 
 			if (cl->viewmode==0 && b->next)
-				i32line (hdc, 5, accHeight-1, ClientWidth-5, accHeight-1, BUDDY_LINE_COLOR);
+				i32line (hdc, 0, accHeight-1, ClientWidth, accHeight-1, BUDDY_LINE_COLOR);
 		}
 	}
 
@@ -818,10 +847,14 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			new_chatbuddy(g, 2);
 			b = new_chatbuddy(g, 3);
 			b->name = TEXT("sdны");
-			b->status = 2;
-			new_chatbuddy(g, 4);
-			new_chatbuddy(g, 5);
-			buddylist_qsort (&g->buddylist, NULL);
+			b->status = ST_BUSY;
+
+			b = new_chatbuddy(g, 4);
+			b->name = TEXT("a");
+			b->status = ST_IDLE;
+			b = new_chatbuddy(g, 5);
+			b->name = TEXT("b");
+
 			g = new_chatgroup(cl, 1);
 			g->name = TEXT("好友");
 			g->note = TEXT("(1/23)");
@@ -1168,6 +1201,14 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 		case CM_DELBUDDY:
 			del_chatbuddy(cl, (int)wp);
+		return 0;
+
+		case CM_BLSORT: {
+			int gid = (int)wp;
+			ChatGroup *g = get_chatgroup(cl, gid);
+			if (!g) return 0;
+			buddylist_qsort(&g->buddylist, NULL, buddycmp);
+		}
 		return 0;
 	}
 

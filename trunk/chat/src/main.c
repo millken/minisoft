@@ -99,16 +99,13 @@ int cl2_onclick (I32E e)
 	SendMessage (e.hwnd, CM_SETBUDDY_PIC, 1, LoadBitmap(GetModuleHandle(0), TEXT("FORM_ICON")));
 	SendMessage (e.hwnd, CM_SETBUDDY_STATUS, 1, 2);
 	//SendMessage (e.hwnd, CM_DELBUDDY, 1, 0);
+	SendMessage (e.hwnd, CM_BLSORT, 0, 0);
 	InvalidateRect(e.hwnd, NULL, TRUE);
 	return 0;
 }
 
-int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
+void create_dlg ()
 {
-	reg_myctl ();
-
-	create_form ();
-
 	HWND hwnd = i32create(TEXT("form"), "n|t|s|w|h|a|+x|+y|bc", "setbox",
 			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, 350, 350,
 			"c", 100, 50, -1);
@@ -133,6 +130,18 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	SendMessage (i32("friendlist2"), CM_SETVIEWMODE, 0, 0);
 	SendMessage (i32("friendlist2"), CM_SETVIEWMODE, 1, 0);
 	i32setproc (i32("friendlist2"), WM_RBUTTONDOWN, cl2_onclick);
+}
+
+int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
+{
+	reg_myctl ();
+
+	create_form ();
+	//create_dlg ();
+
+	HWND headpanel = i32("panel-t");
+	i32create (TEXT("static"), "d|t|bc|s|w|h|a", headpanel, TEXT("cat stutio"),
+			RGB(89,156,238), WS_CTRL, 100, 20, "c");
 
 	i32loop();
 	return 0;
