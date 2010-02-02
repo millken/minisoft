@@ -140,8 +140,8 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	//create_dlg ();
 
 	HWND headpanel = i32("panel-t");
-	i32create (TEXT("static"), "d|t|bc|s|w|h|a", headpanel, TEXT("cat stutio"),
-			RGB(89,156,238), WS_CTRL, 100, 20, "c");
+	i32create (TEXT("static"), "d|t|bc|s|w|h|a|f", headpanel, TEXT("cat stutio"),
+			RGB(89,156,238), WS_CTRL, 100, 20, "c", "Arial,15,1,1,1,1");
 
 	i32loop();
 	return 0;

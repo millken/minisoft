@@ -395,15 +395,15 @@ void i32debug ()
 
 
 static char *
-token (char *buf, char *s)
+token (char *buf, char *s, char dot)
 {
 	assert (buf && s);
 
 	/* isalpha比手工判断慢2倍以上 */
-	while (*s && *s!=I32DOT && *s!=' ')
+	while (*s && *s!=dot && *s!=' ')
 		*buf++ = *s++;
 	*buf = '\0';
-	while (*s && (*s==I32DOT || *s==' ')) s++;
+	while (*s && (*s==dot || *s==' ')) s++;
 	return s;
 }
 
@@ -455,7 +455,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 
 	init();
 	do {
-		format = token(a, format);
+		format = token(a, format, I32DOT);
 
 		if (STRSAME("n", a) || STRSAME("name", a)) {
 			char *name = va_arg(p, char*);
@@ -559,7 +559,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			w = r.right;
 			h = r.bottom;
 			do {
-				v = token(pos, v);
+				v = token(pos, v, I32DOT);
 				if (STRSAME("c", pos) || STRSAME("center", pos)) {
 					r.left = (dw-w)/2;
 					r.top = (dh-h)/2;
@@ -609,6 +609,67 @@ void i32vset (HWND hwnd, char *format, va_list p)
 		if (STRSAME("id", a)) {
 			LONG id = va_arg(p, LONG);
 			SetWindowLong (hwnd, GWL_ID, id);
+		}
+
+		/* 设置字体 */
+		else
+		if (STRSAME("f", a) || STRSAME("font", a)) {
+			char *v = va_arg(p, char *);
+			char buf[32];
+			TCHAR family[32] = {TEXT("Arial")};
+			int size = 15;
+			int bold = FW_NORMAL;
+			BOOL italic = FALSE;
+			BOOL underline = FALSE;
+			BOOL strikeout = FALSE;
+			HFONT hfont;
+
+			v = token(buf, v, ',');
+#ifdef UNICODE
+			MultiByteToWideChar (CP_UTF8, 0, family, -1, buf, strlen(buf));
+#else
+			strcpy(family, buf);
+#endif
+			if (!*v) goto _end;
+
+			v = token(buf, v, ',');
+			size = atoi(buf);
+			if (!*v) goto _end;
+
+			v = token(buf, v, ',');
+			if (STRSAME("1", buf) || STRSAME("true", buf))
+				bold = FW_BOLD;
+			else
+				bold = FW_NORMAL;
+			if (!*v) goto _end;
+
+			v = token(buf, v, ',');
+			if (STRSAME("1", buf) || STRSAME("true", buf))
+				italic = TRUE;
+			else
+				italic = FALSE;
+			if (!*v) goto _end;
+
+			v = token(buf, v, ',');
+			if (STRSAME("1", buf) || STRSAME("true", buf))
+				underline = TRUE;
+			else
+				underline = FALSE;
+			if (!*v) goto _end;
+
+			v = token(buf, v, ',');
+			if (STRSAME("1", buf) || STRSAME("true", buf))
+				strikeout = TRUE;
+			else
+				strikeout = FALSE;
+
+			_end:
+			printf ("%s\n", family);
+			hfont = CreateFont (size, 0, 0, 0, bold, italic, underline, strikeout,
+					BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
+					CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
+					 VARIABLE_PITCH|FF_SWISS, family);
+			/* TODO */
 		}
 
 	} while (*format != '\0');
@@ -937,7 +998,8 @@ void i32draw (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh)
 	hmem = CreateCompatibleDC(hdc);
 	SelectObject(hmem, hbmp);
 
-	/*StretchBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);*/
+	SetStretchBltMode(hdc, HALFTONE);
+	//StretchBlt (hdc, x, y, neww, newh, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 	TransparentBlt (hdc, x, y, neww, newh, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
 	DeleteObject(hmem);
 }
