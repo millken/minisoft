@@ -8,12 +8,19 @@ void reg_myctl ()
 {
 	reg_form();
 	reg_chatlist();
+	reg_cbutton ();
 }
 
 int mainform_onclose (I32E e)
 {
 	PostQuitMessage(0);
 
+	return 0;
+}
+
+int bigform_oncmd (I32E e)
+{
+	printf ("id:%d\n", LOWORD(e.wp));
 	return 0;
 }
 
@@ -32,11 +39,12 @@ void create_form ()
 {
 	reg_myctl ();
 
-	HWND hwnd = i32create (TEXT("form"), "n|t|s|w|h|a|bc", "bigform", TEXT("財神說"),
+	HWND hwnd = i32create (TEXT("box"), "n|t|s|w|h|a|bc", "bigform", TEXT("財神說"),
 				WS_OVERLAPPEDWINDOW
 				, 270, 500, "c", -1);
 	i32setproc (hwnd, WM_DESTROY, mainform_onclose);
 	i32setproc (hwnd, WM_SIZE, bigform_onsize);
+	i32setproc (hwnd, WM_COMMAND, bigform_oncmd);
 
 	i32box ("panel-t", hwnd);
 	i32set (i32("panel-t"), "bc", 0xEE9C59);
@@ -106,7 +114,7 @@ int cl2_onclick (I32E e)
 
 void create_dlg ()
 {
-	HWND hwnd = i32create(TEXT("form"), "n|t|s|w|h|a|+x|+y|bc", "setbox",
+	HWND hwnd = i32create(TEXT("box"), "n|t|s|w|h|a|+x|+y|bc", "setbox",
 			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, 350, 350,
 			"c", 100, 50, -1);
 	i32setproc (hwnd, WM_SIZE, setbox_onsize);
@@ -140,8 +148,26 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 	//create_dlg ();
 
 	HWND headpanel = i32("panel-t");
-	i32create (TEXT("static"), "d|t|bc|s|w|h|a|f", headpanel, TEXT("cat stutio"),
-			RGB(89,156,238), WS_CTRL, 100, 20, "c", "Arial,15,1,1,1,1");
+
+	HWND hbutton = i32create (TEXT("cbutton"), "d|t|bc|s|x|y|w|h|f|id", headpanel, TEXT("cat stutio"),
+			RGB(89,156,238), WS_CTRL|BS_FLAT, 10, 10, 100, 25, "Verdana,15,1", 101);
+	SendMessage(hbutton, WM_SETICON, LoadBitmap(GetModuleHandle(0),TEXT("FORM_ICON")), 0);
+	SendMessage(hbutton, CBM_SETFCOLOR, 0xE19B79, 0);
+	SendMessage(hbutton, CBM_SETBCOLOR, RGB(89,156,238), 0);
+	SendMessage(hbutton, CBM_SETBCOLOR_HOVER, 0xF5DBD1, 0);
+	SendMessage(hbutton, CBM_SETBCOLOR_PUSHED, 0xF8E8E0, 0);
+	SendMessage(hbutton, CBM_SETRADIUS, 9, 0);
+	SendMessage(hbutton, CBM_SETMARGIN, 9, 0);
+	InvalidateRect(hbutton, NULL, TRUE);
+
+	hbutton = i32create (TEXT("cbutton"), "d|t|bc|s|x|y|w|h|f|id", headpanel, TEXT("cat stutio2"),
+			RGB(89,156,238), WS_CTRL|BS_FLAT, 100, 10, 100, 25, "Verdana,15,1", 102);
+	SendMessage(hbutton, WM_SETICON, LoadBitmap(GetModuleHandle(0),TEXT("FORM_ICON")), 0);
+	SendMessage(hbutton, CBM_SETFCOLOR, 0xE19B79, 0);
+	SendMessage(hbutton, CBM_SETBCOLOR, RGB(89,156,238), 0);
+	SendMessage(hbutton, CBM_SETBCOLOR_HOVER, 0xF8E8E0, 0);
+	SendMessage(hbutton, CBM_SETBCOLOR_PUSHED, 0xF5DBD1, 0);
+	SendMessage(hbutton, CBM_SETRADIUS, 9, 0);
 
 	i32loop();
 	return 0;

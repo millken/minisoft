@@ -423,6 +423,21 @@ static void ScreenToDad (HWND hwnd, RECT *r)
 	r->top = p.y;
 }
 
+void i32dadrect (HWND hwnd, RECT *r)
+{
+	HWND dad = GetParent(hwnd);
+	RECT dr;
+
+	if (!r) return;
+
+	GetWindowRect(dad, &dr);
+	GetWindowRect(hwnd, r);
+
+	r->right -= r->left;
+	r->bottom -= r->top;
+	r->left -= dr.left;
+	r->top -= dr.top;
+}
 
 /* 画背景色 */
 static int on_erasebg (I32EVENT e)
@@ -664,12 +679,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				strikeout = FALSE;
 
 			_end:
-			printf ("%s\n", family);
 			hfont = CreateFont (size, 0, 0, 0, bold, italic, underline, strikeout,
 					BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 					CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
 					 VARIABLE_PITCH|FF_SWISS, family);
-			/* TODO */
+			SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
 		}
 
 	} while (*format != '\0');
@@ -989,18 +1003,30 @@ void i32blt (HDC hdc, HBITMAP hbmp, int x, int y)
 	DeleteObject(hmem);
 }
 
+/* 缩放 */
 void i32draw (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh)
 {
 	BITMAP bmp;
-	HDC hmem = 0;
+	HDC hmem = 0, hmemb;
+	HBITMAP hbmpb;
 
 	GetObject (hbmp, sizeof(bmp), &bmp);
 	hmem = CreateCompatibleDC(hdc);
-	SelectObject(hmem, hbmp);
 
-	SetStretchBltMode(hdc, HALFTONE);
-	//StretchBlt (hdc, x, y, neww, newh, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-	TransparentBlt (hdc, x, y, neww, newh, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	hbmpb = CreateCompatibleBitmap (hdc, neww, newh);
+	SelectObject(hmem, hbmpb);
+
+	hmemb = CreateCompatibleDC(hmem);
+	SelectObject(hmemb, hbmp);
+
+	/* 高质量缩放与透明色结合,速度-慢~ */
+	SetStretchBltMode(hmem, HALFTONE);
+	SetBrushOrgEx(hmem, 0, 0, NULL);
+	StretchBlt (hmem, 0, 0, neww, newh, hmemb, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+	TransparentBlt (hdc, x, y, neww, newh, hmem, 0, 0, neww, newh, RGB(255, 0, 255));
+
+	DeleteObject(hbmpb);
+	DeleteObject(hmemb);
 	DeleteObject(hmem);
 }
 

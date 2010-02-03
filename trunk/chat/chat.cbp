@@ -42,6 +42,9 @@
 			<Add library="kernel32" />
 			<Add library="msimg32" />
 		</Linker>
+		<Unit filename="src\cbutton.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\chatlist.c">
 			<Option compilerVar="CC" />
 		</Unit>

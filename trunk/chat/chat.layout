@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
+	<File name="src\cbutton.c" open="1" top="1" tabpos="1">
+		<Cursor position="3017" topLine="120" />
+	</File>
 	<File name="src\chatlist.c" open="1" top="0" tabpos="2">
-		<Cursor position="11476" topLine="561" />
+		<Cursor position="18009" topLine="813" />
 	</File>
-	<File name="src\ctrls.h" open="1" top="0" tabpos="6">
-		<Cursor position="352" topLine="0" />
+	<File name="src\ctrls.h" open="1" top="0" tabpos="3">
+		<Cursor position="398" topLine="0" />
 	</File>
-	<File name="src\ctrls.rc" open="1" top="0" tabpos="7">
-		<Cursor position="587" topLine="0" />
+	<File name="src\ctrls.rc" open="1" top="0" tabpos="6">
+		<Cursor position="458" topLine="0" />
 	</File>
-	<File name="src\form.c" open="1" top="0" tabpos="1">
-		<Cursor position="1887" topLine="65" />
+	<File name="src\form.c" open="1" top="0" tabpos="4">
+		<Cursor position="18" topLine="102" />
 	</File>
-	<File name="src\i32.c" open="1" top="1" tabpos="3">
-		<Cursor position="14290" topLine="637" />
+	<File name="src\i32.c" open="1" top="0" tabpos="10">
+		<Cursor position="8661" topLine="418" />
 	</File>
-	<File name="src\i32.h" open="1" top="0" tabpos="4">
-		<Cursor position="119" topLine="0" />
+	<File name="src\i32.h" open="1" top="0" tabpos="11">
+		<Cursor position="550" topLine="13" />
 	</File>
 	<File name="src\main.c" open="1" top="0" tabpos="5">
-		<Cursor position="3704" topLine="109" />
+		<Cursor position="4292" topLine="134" />
 	</File>
 </CodeBlocks_layout_file>

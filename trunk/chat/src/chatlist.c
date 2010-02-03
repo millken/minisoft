@@ -1,5 +1,5 @@
 /*
- *        chatlist控件: 可分组的好友列表
+ * chatlist 可分组好友列表控件
  */
 
 #include "i32.h"
@@ -821,6 +821,34 @@ static int feedback (ChatList *cl, POINT *p, ChatGroup **group, ChatBuddy **budd
 	return 0;
 }
 
+static void whichishover (ChatList *cl)
+{
+	POINT p;
+	int r;
+	ChatGroup *g;
+	ChatBuddy *b;
+
+	if (!cl) return;
+
+	CursorPos (cl->hwnd, &p);
+	p.y -= cl->top; /* 转化成列表坐标 */
+	r = feedback (cl, &p, &g, &b);
+	if (cl->select_state == PUSHED)
+		return;
+	if (r == SELECT_GROUP && !(cl->select_id==-g->gid && cl->select_state==PUSHED)) {
+		cl->select_id = -g->gid;
+		cl->select_state = HOVER;
+	}
+	else if (r == SELECT_BUDDY && !(cl->select_id==b->uid && cl->select_state==PUSHED)) {
+		cl->select_id = b->uid;
+		cl->select_state = HOVER;
+	}
+	else {
+		cl->select_id = 0;
+		cl->select_state = 0;
+	}
+}
+
 static LRESULT CALLBACK
 chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
@@ -981,31 +1009,15 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			si.fMask = SIF_POS;
 			SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
 
+			whichishover (cl);
+
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		return 0;
 
 		case WM_MOUSEMOVE: {
-			ChatGroup *g;
-			ChatBuddy *b;
-			POINT p;
-			int r;
+			whichishover (cl);
 
-			CursorPos (hwnd, &p);
-			p.y -= cl->top; /* 转化成列表坐标 */
-			r = feedback (cl, &p, &g, &b);
-			if (r == SELECT_GROUP && !(cl->select_id==-g->gid && cl->select_state==PUSHED)) {
-				cl->select_id = -g->gid;
-				cl->select_state = HOVER;
-			}
-			else if (r == SELECT_BUDDY && !(cl->select_id==b->uid && cl->select_state==PUSHED)) {
-				cl->select_id = b->uid;
-				cl->select_state = HOVER;
-			}
-			else {
-				cl->select_id = 0;
-				cl->select_state = 0;
-			}
 			{ /* 刷新频率不用过快,否则浪费cpu */
 				static DWORD clicktime = 0;
 				DWORD now = GetTickCount();
@@ -1014,14 +1026,15 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					InvalidateRect(hwnd, NULL, TRUE);
 				}
 			}
-		} {
-		    TRACKMOUSEEVENT tme;
-			tme.cbSize = sizeof(tme);
-			tme.dwFlags = TME_LEAVE;
-			tme.dwHoverTime = 1500;
-			tme.hwndTrack = hwnd;
+			{
+				TRACKMOUSEEVENT tme;
+				tme.cbSize = sizeof(tme);
+				tme.dwFlags = TME_LEAVE;
+				tme.dwHoverTime = 1500;
+				tme.hwndTrack = hwnd;
 
-			TrackMouseEvent(&tme);
+				TrackMouseEvent(&tme);
+			}
 		}
 		return 0;
 

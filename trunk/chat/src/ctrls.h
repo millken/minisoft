@@ -1,6 +1,7 @@
 #ifndef _CTRLS_H
 #define _CTRLS_H
 
+/* chatlist控件的消息 */
 enum CHATLIST_MSG {
 
 	CM_SETVIEWMODE = WM_USER+1,
@@ -21,4 +22,16 @@ enum CHATLIST_MSG {
 	CM_BLSORT /* 单组好友列表重新排序 */
 };
 
+/* 我的按钮控件消息 */
+enum {
+	CBM_SETRADIUS = WM_USER + 1,
+	CBM_SETMARGIN,
+	CBM_SETBCOLOR,
+	CBM_SETBCOLOR_HOVER,
+	CBM_SETBCOLOR_PUSHED,
+	CBM_SETFCOLOR,
+
+	CBM_LCLICK,
+	CBM_RCLICK
+};
 #endif
