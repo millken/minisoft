@@ -8,7 +8,8 @@ void reg_myctl ()
 {
 	reg_form();
 	reg_chatlist();
-	reg_cbutton ();
+	reg_batton();
+	reg_image();
 }
 
 int mainform_onclose (I32E e)
@@ -18,16 +19,16 @@ int mainform_onclose (I32E e)
 	return 0;
 }
 
-int bigform_oncmd (I32E e)
+int mainform_oncmd (I32E e)
 {
 	printf ("id:%d\n", LOWORD(e.wp));
 	return 0;
 }
 
-int bigform_onsize (I32E e)
+int mainform_onsize (I32E e)
 {
 	i32vfill ( e.hwnd,
-		i32("panel-t"), 50,
+		i32("panel-t"), 80,
 		i32("friendlist"), -1,
 		i32("panel-b"), 40,
 		NULL
@@ -35,25 +36,55 @@ int bigform_onsize (I32E e)
 	return 0;
 }
 
+int panelt_onsize (I32E e)
+{
+	i32set(i32id(e.hwnd, 103), "x|y", 7, 7);
+	i32set(i32id(e.hwnd, 101), "x|y", 7, 32);
+	i32set(i32id(e.hwnd, 102), "a|-x|+y", "t|r", 7, 20);
+
+	return 0;
+}
+
 void create_form ()
 {
-	reg_myctl ();
-
+	HWND hbatton, himage, hmyname;
 	HWND hwnd = i32create (TEXT("box"), "n|t|s|w|h|a|bc", "bigform", TEXT("財神說"),
 				WS_OVERLAPPEDWINDOW
-				, 270, 500, "c", -1);
+				, 270, 500, "l|b", -1);
 	i32setproc (hwnd, WM_DESTROY, mainform_onclose);
-	i32setproc (hwnd, WM_SIZE, bigform_onsize);
-	i32setproc (hwnd, WM_COMMAND, bigform_oncmd);
+	i32setproc (hwnd, WM_SIZE, mainform_onsize);
 
 	i32box ("panel-t", hwnd);
 	i32set (i32("panel-t"), "bc", 0xEE9C59);
+	i32setproc (i32("panel-t"), WM_SIZE, panelt_onsize);
 
 	i32box ("panel-b", hwnd);
 	i32set (i32("panel-b"), "bc", RGB(89,156,238));
 
 	i32create (TEXT("chatlist"), "d|n|s|w|h|a|show", hwnd, "friendlist",
 				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y");
+
+	hbatton = i32create(TEXT("batton"), "d|n|t|s|id|w|h|a|f|show", i32("panel-t"), "battona", TEXT("埋めてみよう못한中铝网"),
+				WS_CTRL, 101, 40, 24, "c|t", "Verdana,15", "y");
+	SendMessage (hbatton, BM_SETBCOLOR, RGB(89,156,238), 0);
+	SendMessage (hbatton, BM_SETFCOLOR, 0xeeeeee, 0);
+	SendMessage (hbatton, BM_SETBCOLOR_HOVER, RGB(160,199,245), 0);
+	SendMessage (hbatton, BM_SETBCOLOR_PUSHED, RGB(160,199,245), 0);
+	SendMessage (hbatton, BM_SETRADIUS, 2, 0);
+	SendMessage (hbatton, BM_SETMARGIN, 5, 0);
+
+	himage = i32create(TEXT("image"), "d|s|id|w|h", i32("panel-t"), WS_CTRL, 102, 37, 37);
+	SendMessage (himage, IM_SETIMAGE, LoadBitmap(GetModuleHandle(0), TEXT("AVATAR_B")), 0);
+	SendMessage (himage, IM_SETFCOLOR_HOVER, 0x555555, 0);
+
+	//hmyname = i32create(TEXT("edit"), "d|t|s|id|w|h|f|show", i32("panel-t"), TEXT("cat street"), WS_CTRL|WS_BORDER,
+	//		103, 100, 24, "Verdana,15", "y");
+	hmyname = i32create(TEXT("edit"), "d|t|s|w|h|f", i32("panel-t"), TEXT("abc"), WS_CTRL|WS_BORDER,
+					100, 22, "Verdana,15");
+	SendMessage (hmyname, BM_SETMARGIN, 0, 0);
+	SendMessage (hmyname, WM_SETICON, LoadBitmap(GetModuleHandle(0), TEXT("FORM_ICON")), 0);
+
+
 
 	ShowWindow (hwnd, SW_SHOW);
 }
@@ -114,7 +145,7 @@ int cl2_onclick (I32E e)
 
 void create_dlg ()
 {
-	HWND hwnd = i32create(TEXT("box"), "n|t|s|w|h|a|+x|+y|bc", "setbox",
+	HWND hwnd = i32create(TEXT("form"), "n|t|s|w|h|a|+x|+y|bc", "setbox",
 			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, 350, 350,
 			"c", 100, 50, -1);
 	i32setproc (hwnd, WM_SIZE, setbox_onsize);
@@ -142,32 +173,13 @@ void create_dlg ()
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
+	HWND cl;
+
 	reg_myctl ();
 
 	create_form ();
 	//create_dlg ();
 
-	HWND headpanel = i32("panel-t");
-
-	HWND hbutton = i32create (TEXT("cbutton"), "d|t|bc|s|x|y|w|h|f|id", headpanel, TEXT("cat stutio"),
-			RGB(89,156,238), WS_CTRL|BS_FLAT, 10, 10, 100, 25, "Verdana,15,1", 101);
-	SendMessage(hbutton, WM_SETICON, LoadBitmap(GetModuleHandle(0),TEXT("FORM_ICON")), 0);
-	SendMessage(hbutton, CBM_SETFCOLOR, 0xE19B79, 0);
-	SendMessage(hbutton, CBM_SETBCOLOR, RGB(89,156,238), 0);
-	SendMessage(hbutton, CBM_SETBCOLOR_HOVER, 0xF5DBD1, 0);
-	SendMessage(hbutton, CBM_SETBCOLOR_PUSHED, 0xF8E8E0, 0);
-	SendMessage(hbutton, CBM_SETRADIUS, 9, 0);
-	SendMessage(hbutton, CBM_SETMARGIN, 9, 0);
-	InvalidateRect(hbutton, NULL, TRUE);
-
-	hbutton = i32create (TEXT("cbutton"), "d|t|bc|s|x|y|w|h|f|id", headpanel, TEXT("cat stutio2"),
-			RGB(89,156,238), WS_CTRL|BS_FLAT, 100, 10, 100, 25, "Verdana,15,1", 102);
-	SendMessage(hbutton, WM_SETICON, LoadBitmap(GetModuleHandle(0),TEXT("FORM_ICON")), 0);
-	SendMessage(hbutton, CBM_SETFCOLOR, 0xE19B79, 0);
-	SendMessage(hbutton, CBM_SETBCOLOR, RGB(89,156,238), 0);
-	SendMessage(hbutton, CBM_SETBCOLOR_HOVER, 0xF8E8E0, 0);
-	SendMessage(hbutton, CBM_SETBCOLOR_PUSHED, 0xF5DBD1, 0);
-	SendMessage(hbutton, CBM_SETRADIUS, 9, 0);
 
 	i32loop();
 	return 0;

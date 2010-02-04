@@ -13,8 +13,8 @@ FORM_MIN BITMAP "rc/min.bmp"  /* 最小化按钮 */
 FORM_CLOSE BITMAP "rc/close.bmp" /* 关闭按钮 */
 FORM_ICON BITMAP "rc/logo.bmp" /* 图标按钮 */
 
-AVATAR_B BITMAP "rc/avatar.bmp" /* 默认大头像 */
-AVATAR_S BITMAP "rc/avatar.bmp" /* 默认小头像 */
+AVATAR_B BITMAP "rc/avatar_b.bmp" /* 默认大头像 */
+AVATAR_S BITMAP "rc/avatar_s.bmp" /* 默认小头像 */
 ST_IDLE BITMAP "rc/st_idle2.bmp" /* 发呆状态图标 */
 ST_BUSY  BITMAP "rc/st_busy2.bmp" /* 忙碌状态图标 */
 

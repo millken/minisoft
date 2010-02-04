@@ -1,17 +1,9 @@
 /*
- * cbutton 我的按钮控件
+ * batton 按钮控件
  */
 
 #include "i32.h"
 #include "ctrls.h"
-
-#define DEF_MARGIN 4
-#define TITLE_MARGIN 4
-#define DEF_BCOLOR 0xffffff
-#define DEF_BCOLOR_HOVER RGB(241,245,252)
-#define DEF_BCOLOR_PUSHED RGB(239,242,248)
-#define DEF_FCOLOR RGB(178,289,204)
-#define DEF_RADIUS 4
 
 static
 enum {
@@ -20,9 +12,23 @@ enum {
 	PUSHED
 };
 
+static enum {
+	LEFT = 0,
+	RIGHT
+};
+
+#define DEF_MARGIN 1
+#define DEF_TITLEMARGIN 4
+#define DEF_BCOLOR 0xff00ff
+#define DEF_BCOLOR_HOVER 0xff00ff
+#define DEF_BCOLOR_PUSHED 0xff00ff
+#define DEF_FCOLOR 0xff00ff
+#define DEF_RADIUS 0
+#define DEF_ICONALIGN RIGHT
+
 #define BTSIZE 64
 
-static struct button {
+static struct batton {
 	HWND hwnd;
 
 	HBITMAP hbmp;
@@ -30,30 +36,33 @@ static struct button {
 	int rad; /* 圆角半径 */
 
 	int margin; /* 左右边距 */
+	int titlemargin; /* 图标与文字的距离 */
+	int iconalign; /* 图标居左0还是居右1 */
 
 	DWORD bcolor; /* 默认背景色 */
 	DWORD bcolor_h; /* 经过时背景色 */
 	DWORD bcolor_p; /* 按下后背景色 */
 	DWORD fcolor; /* 边框色 */
+	DWORD textcolor; /* 字体颜色 */
 
 	int status; /* 鼠标经过状态 0:none, 1:经过, 2:按下 */
 	int oldstatus;
 
-	struct button *next;
+	struct batton *next;
 
-} *g_buttontable[BTSIZE]; /* 哈系表 */
+} *g_battontable[BTSIZE]; /* 哈系表 */
 
 
 static void init ()
 {
-	memset(g_buttontable, 0, sizeof(g_buttontable));
+	memset(g_battontable, 0, sizeof(g_battontable));
 }
 
-static void button_new (HWND hwnd)
+static void batton_new (HWND hwnd)
 {
-	struct button **lp, *p;
+	struct batton **lp, *p;
 
-	lp = &g_buttontable[(unsigned)hwnd%BTSIZE];
+	lp = &g_battontable[(unsigned)hwnd%BTSIZE];
 	while (*lp) {
 		p = *lp;
 		if (p->hwnd == hwnd)
@@ -61,9 +70,9 @@ static void button_new (HWND hwnd)
 		lp = &p->next;
 	}
 
-	*lp = (struct button *)i32malloc(sizeof(struct button));
+	*lp = (struct batton *)i32malloc(sizeof(struct batton));
 	p = *lp;
-	memset(p, 0, sizeof(struct button));
+	memset(p, 0, sizeof(struct batton));
 	p->hwnd = hwnd;
 	p->bcolor = DEF_BCOLOR;
 	p->bcolor_h = DEF_BCOLOR_HOVER;
@@ -71,27 +80,29 @@ static void button_new (HWND hwnd)
 	p->fcolor = DEF_FCOLOR;
 	p->rad = DEF_RADIUS;
 	p->margin = DEF_MARGIN;
+	p->titlemargin = DEF_TITLEMARGIN;
+	p->iconalign = DEF_ICONALIGN;
 }
 
-static struct button *button_get (HWND hwnd)
+static struct batton *batton_get (HWND hwnd)
 {
-	struct button *p;
+	struct batton *p;
 	unsigned hashcode = (unsigned)hwnd % BTSIZE;
 
-	for (p = g_buttontable[hashcode]; p; p = p->next)
+	for (p = g_battontable[hashcode]; p; p = p->next)
 		if (p->hwnd == hwnd)
 			return p;
 	return NULL;
 }
 
-static void button_del (HWND hwnd)
+static void batton_del (HWND hwnd)
 {
-	struct button **lp, *p;
+	struct batton **lp, *p;
 	unsigned hashcode = (unsigned)hwnd % BTSIZE;
 
-	lp = &g_buttontable[hashcode];
+	lp = &g_battontable[hashcode];
 	while (p = *lp) {
-		struct button *next = p->next;
+		struct batton *next = p->next;
 		if (p->hwnd == hwnd) {
 			i32free(p);
 			*lp = next;
@@ -101,38 +112,39 @@ static void button_del (HWND hwnd)
 	}
 }
 
-static void draw_button (HWND hwnd, HDC hdc)
+static void draw_batton (HWND hwnd, HDC hdc)
 {
 	RECT r;
-	int buttonw = DEF_MARGIN*2, buttonh;
-	TCHAR text[32];
-	int titlelen = GetWindowText(hwnd, text, -1);
-	int titlew, titleh, left = 0;
+	int battonw = 0, battonh;
+	TCHAR title[32];
+	int titlelen = GetWindowText(hwnd, title, -1);
+	int titlew, titleh, iconw, left = 0;
 	BITMAP bmp;
-	struct button *b;
+	struct batton *b;
+	int titlex, iconx;
 
-	buttonh = i32clienth(hwnd);
+	battonh = i32clienth(hwnd);
 
-	b = button_get(hwnd);
+	b = batton_get(hwnd);
 	if (!b) return;
 
 	SelectObject(hdc, b->hfont);
 
 	/* 计算按钮宽度 */ {
 	SIZE tsize;
-	left += DEF_MARGIN;
-	GetTextExtentPoint32 (hdc, text, titlelen, &tsize);
+	GetTextExtentPoint32 (hdc, title, titlelen, &tsize);
 	titlew = tsize.cx;
 	titleh = tsize.cy;
-	buttonw += titlew;
-
+	battonw += titlew;
 	if (b->hbmp) {
 		GetObject(b->hbmp, sizeof(bmp), &bmp);
-		buttonw += bmp.bmWidth;
-		buttonw += TITLE_MARGIN;
+		iconw = bmp.bmWidth;
+		battonw += iconw;
+		if (titlew>0)
+			battonw += b->titlemargin;
 	}
-	buttonw += b->margin*2;
-	i32set(hwnd, "w", buttonw);
+	battonw += b->margin*2;
+	i32set(hwnd, "w", battonw);
 	}
 
 	/* 画背景 */
@@ -144,37 +156,52 @@ static void draw_button (HWND hwnd, HDC hdc)
 			inner = 1;
 		SelectObject(hdc, hpen);
 		SelectObject(hdc, hbrush);
-		RoundRect(hdc, inner, inner, buttonw-inner, buttonh-inner, b->rad, DEF_RADIUS);
+		if (b->status==HOVER&&b->bcolor_h!=0xff00ff ||
+			b->status==PUSHED&&b->bcolor_p!=0xff00ff)
+		RoundRect(hdc, inner, inner, battonw-inner, battonh-inner, b->rad, b->rad);
 		DeleteObject(hbrush);
 		DeleteObject(hpen);
 	}
 
 	left += b->margin;
 
+	/* 考虑对齐 */
+	if (b->hbmp) {
+		if (b->iconalign == RIGHT) {
+			titlex = left;
+			iconx = titlex + titlew + b->titlemargin;
+		}
+		else {
+			iconx = left;
+			titlex = iconx + iconw + b->titlemargin;
+		}
+	}
+	else
+		titlex = left;
+
 	/* 画图标 */
 	if (b->hbmp) {
-		i32blt(hdc, b->hbmp, left, (buttonh-bmp.bmHeight)/2);
-		left += bmp.bmWidth;
-		left += TITLE_MARGIN;
+		i32blt(hdc, b->hbmp, iconx, (battonh-bmp.bmHeight)/2);
 	}
 
 	/* 画标题 */
 	SetBkMode(hdc, TRANSPARENT);
-	TextOut (hdc, left, (buttonh-titleh)/2, text, titlelen);
+	SetTextColor(hdc, b->textcolor);
+	TextOut (hdc, titlex, (battonh-titleh)/2, title, titlelen);
 }
 
 static LRESULT CALLBACK
 win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-	struct button *b = button_get(hwnd);
+	struct batton *b = batton_get(hwnd);
 
 	switch (msg) {
 		case WM_CREATE:
-			button_new(hwnd);
+			batton_new(hwnd);
 		return 0;
 
 		case WM_DESTROY:
-			button_del(hwnd);
+			batton_del(hwnd);
 		return 0;
 
 		case WM_ERASEBKGND:
@@ -214,6 +241,10 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 				InvalidateRect(hwnd, NULL, TRUE);
 				b->oldstatus = b->status;
 			}
+			/* 通知父窗口 */ {
+			int id = GetDlgCtrlID(hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONDOWN<<16)|id, hwnd);
+			}
 		return 0;
 
 		case WM_LBUTTONUP:
@@ -224,14 +255,22 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 			}
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CBM_LCLICK<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONUP<<16)|id, hwnd);
 			}
+		return 0;
+
+		case WM_RBUTTONDOWN: {
+			/* 通知父窗口 */ {
+			int id = GetDlgCtrlID(hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONDOWN<<16)|id, hwnd);
+			}
+		}
 		return 0;
 
 		case WM_RBUTTONUP: {
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CBM_RCLICK<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONUP<<16)|id, hwnd);
 			}
 		}
 		return 0;
@@ -239,26 +278,14 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		case WM_PAINT: {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-			HDC hmem;
-			HBITMAP hbmp;
-			RECT r, dr;
+			RECT r;
 
 			GetClientRect (hwnd, &r);
 
-			hbmp = CreateCompatibleBitmap (hdc, r.right, r.bottom);
-			hmem = CreateCompatibleDC (hdc);
-			SelectObject (hmem, hbmp);
+			if (b->bcolor != 0xff00ff)
+				i32fillrect(hdc, &r, b->bcolor);
+			draw_batton(hwnd, hdc);
 
-			/* 把遮住的父窗口再画一遍实现透明背景 */
-			i32dadrect (hwnd, &dr);
-			BitBlt (hmem, 0, 0, r.right, r.bottom, hdc, dr.left, dr.top, SRCCOPY);
-
-			i32fillrect(hmem, &r, b->bcolor);
-			draw_button(hwnd, hmem);
-			BitBlt (hdc, 0, 0, r.right, r.bottom, hmem, 0, 0, SRCCOPY);
-
-			DeleteObject(hbmp);
-			DeleteObject(hmem);
 			EndPaint(hwnd, &ps);
 		}
 		return 0;
@@ -279,43 +306,50 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
-		case CBM_SETRADIUS:
+		case BM_SETRADIUS:
 			b->rad = (int)wp;
 		return 0;
 
-		case CBM_SETMARGIN:
+		case BM_SETMARGIN:
 			b->margin = (int)wp;
 		return 0;
 
-		case CBM_SETBCOLOR:
+		case BM_SETTITLEMARGIN:
+			b->titlemargin = (int)wp;
+		return 0;
+
+		case BM_SETBCOLOR:
 			b->bcolor = (DWORD)wp;
 		return 0;
 
-		case CBM_SETBCOLOR_HOVER:
+		case BM_SETBCOLOR_HOVER:
 			b->bcolor_h = (DWORD)wp;
 		return 0;
 
-		case CBM_SETBCOLOR_PUSHED:
+		case BM_SETBCOLOR_PUSHED:
 			b->bcolor_p = (DWORD)wp;
 		return 0;
 
-		case CBM_SETFCOLOR:
+		case BM_SETFCOLOR:
 			b->fcolor = (DWORD)wp;
 		return 0;
 
+		case BM_SETTEXTCOLOR:
+			b->textcolor = (DWORD)wp;
+		return 0;
 	}
 
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
 
-void reg_cbutton ()
+void reg_batton ()
 {
     WNDCLASSEX wincl;
 
     /* The Window structure */
     wincl.hInstance = GetModuleHandle(0);
-    wincl.lpszClassName = TEXT("cbutton");
+    wincl.lpszClassName = TEXT("batton");
     wincl.lpfnWndProc = win_proc;      /* This function is called by windows */
     wincl.style = CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
     wincl.cbSize = sizeof (WNDCLASSEX);

@@ -397,7 +397,7 @@ void i32debug ()
 static char *
 token (char *buf, char *s, char dot)
 {
-	assert (buf && s);
+	if (!buf || !s) return;
 
 	/* isalpha比手工判断慢2倍以上 */
 	while (*s && *s!=dot && *s!=' ')
@@ -641,7 +641,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 
 			v = token(buf, v, ',');
 #ifdef UNICODE
-			MultiByteToWideChar (CP_UTF8, 0, family, -1, buf, strlen(buf));
+			MultiByteToWideChar (CP_UTF8, 0, family, -1, buf, strlen(buf)); /* 源文件必须是utf8 */
 #else
 			strcpy(family, buf);
 #endif
@@ -686,6 +686,9 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
 		}
 
+		/* 遇到不认识的必须马上挂掉,否则不知道怎么解读以后的参数 */
+		else break;
+
 	} while (*format != '\0');
 }
 
@@ -704,7 +707,10 @@ HWND i32create (TCHAR *classname, char *format, ...)
 	HWND hwnd;
 	va_list p;
 
+	if (!classname) return NULL;
+
 	init();
+
 	hwnd = CreateWindow (
            classname,         	/* Classname */
            NULL,       			/* Title Text */
@@ -719,9 +725,11 @@ HWND i32create (TCHAR *classname, char *format, ...)
            NULL                 /* No Window Creation data */
 	);
 
-	va_start (p, format);
-	i32vset(hwnd, format, p);
-	va_end(p);
+	if (format) {
+		va_start (p, format);
+		i32vset(hwnd, format, p);
+		va_end(p);
+	}
 
 	UpdateWindow (hwnd);
 	return hwnd;

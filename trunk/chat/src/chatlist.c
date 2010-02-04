@@ -11,7 +11,7 @@
 
 /* CSS */
 #define GROUP_H 23 /* 分组条高度*/
-#define BUDDYPIC_H 40 /* 大头像高度 */
+#define BUDDYPIC_H 41 /* 大头像高度 */
 #define BUDDY_H 26 /* 小头像和无头像的高度 */
 
 #define LIST_BGCOLOR 0xffffff
@@ -32,7 +32,7 @@
 #define BUDDY_LINE_COLOR 0xf0f0f0
 
 #define GROUP_NAME_MARGIN 4
-#define GROUP_NAME_Y 3
+#define GROUP_NAME_Y 6
 #define GROUP_NOTE_MARGIN 20
 #define GROUP_ARROW_MARGIN 6
 #define GROUP_ARROW_Y 6
@@ -42,17 +42,17 @@
 #define BBUDDY_PIC_W 32
 #define BBUDDY_PIC_H 32
 #define BBUDDY_NAME_X 8
-#define BBUDDY_NAME_Y 3
+#define BBUDDY_NAME_Y 6
 #define BUDDY_NOTE_MARGIN 5
 #define BBUDDY_SIGN_X 8
-#define BBUDDY_SIGN_Y 21
+#define BBUDDY_SIGN_Y 24
 
 #define SBUDDY_PIC_X 6
 #define SBUDDY_PIC_Y 3
 #define SBUDDY_PIC_W 20
 #define SBUDDY_PIC_H 20
 #define SBUDDY_NAME_X 6
-#define SBUDDY_NAME_Y 5
+#define SBUDDY_NAME_Y 7
 #define SBUDDY_SIGN_MARGIN 5
 #define SBUDDY_SIGN_Y SBUDDY_NAME_Y
 
@@ -571,11 +571,11 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 	hbfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
@@ -868,9 +868,6 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("CHAT_THUMB"));
 			b->sign = TEXT("只缘身在此山中Эучены");
 			b->note = TEXT("哈哈");
-			TCHAR *buf = (TCHAR *)i32malloc(lstrlen(b->note)*sizeof(TCHAR)+4);
-			wsprintf (buf, TEXT("(%s)"), b->note);
-			b->note = buf;
 			b->status = 3;
 			new_chatbuddy(g, 2);
 			b = new_chatbuddy(g, 3);
@@ -1082,7 +1079,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			GetClientRect (hwnd, &cr);
 			i32mousepos(hwnd, &p);
 			if (PtInRect(&cr, p))
-				SetCursor(LoadCursor(NULL, IDC_HAND));
+				SetCursor(LoadCursor(NULL, IDC_ARROW));
 			else
 				SetCursor(LoadCursor(NULL, IDC_ARROW));
 		}
@@ -1251,7 +1248,7 @@ static void reg (TCHAR *classname, WNDPROC f)
     wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
 
     /* Register the window class, and if it fails quit the program */
-    RegisterClassEx (&wincl);
+	RegisterClassEx (&wincl);
 }
 
 void reg_chatlist ()
