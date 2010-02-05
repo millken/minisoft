@@ -105,6 +105,44 @@ void bltBtn4 (HDC hdc, HBITMAP hbmp, int x, int y, int index)
 	DeleteObject(hmem);
 }
 
+/* 画横向n个状态拼成的按钮类图片 */
+static
+void bltBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int index, int n)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+	int tilew = 0;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	tilew = bmp.bmWidth / n;
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
+	TransparentBlt (hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
+
+	DeleteObject(hmem);
+}
+
+/* 横向拉伸n个状态拼成的按钮类图片 */
+static
+void stretchBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh, int index, int n)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+	int tilew = 0;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	tilew = bmp.bmWidth / n;
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
+	TransparentBlt (hdc, x, y, neww, newh, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
+
+	DeleteObject(hmem);
+}
+
 static
 void getNcRect (HWND hwnd, RECT *r)
 {
@@ -384,7 +422,8 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			SetBkMode (hmem, TRANSPARENT);
 
 			//i32fillrect (hmem, &r, 0xff00ff);
-			stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
+			stretchBtnN (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP, 1, 1);
+			//stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
 			stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
 			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
 			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
@@ -412,6 +451,16 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			DeleteObject(hmem);
 
 			ReleaseDC (hwnd, hdc);
+		}
+		return 0;
+
+		case WM_SETFOCUS: {
+			printf ("set focus\n");
+		}
+		return 0;
+
+		case WM_KILLFOCUS: {
+			printf ("kill focus\n");
 		}
 		return 0;
 

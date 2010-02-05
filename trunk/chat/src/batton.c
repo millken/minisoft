@@ -1,5 +1,5 @@
 /*
- * batton 按钮控件
+ * butten 按钮控件
  */
 
 #include "i32.h"
@@ -14,27 +14,28 @@ enum {
 
 static enum {
 	LEFT = 0,
-	RIGHT
+	RIGHT,
+	CENTER
 };
 
-#define DEF_MARGIN 1
+#define DEF_MARGIN 0
 #define DEF_TITLEMARGIN 4
 #define DEF_BCOLOR 0xff00ff
 #define DEF_BCOLOR_HOVER 0xff00ff
 #define DEF_BCOLOR_PUSHED 0xff00ff
 #define DEF_FCOLOR 0xff00ff
 #define DEF_RADIUS 0
-#define DEF_ICONALIGN RIGHT
+#define DEF_ICONALIGN LEFT
 
 #define BTSIZE 64
 
-static struct batton {
+static struct butten {
 	HWND hwnd;
 
 	HBITMAP hbmp;
 	HFONT hfont; /* 自定义控件貌似要自己做WM_SETFONT */
 	int rad; /* 圆角半径 */
-
+	int align; /* 内容对齐 */
 	int margin; /* 左右边距 */
 	int titlemargin; /* 图标与文字的距离 */
 	int iconalign; /* 图标居左0还是居右1 */
@@ -48,21 +49,21 @@ static struct batton {
 	int status; /* 鼠标经过状态 0:none, 1:经过, 2:按下 */
 	int oldstatus;
 
-	struct batton *next;
+	struct butten *next;
 
-} *g_battontable[BTSIZE]; /* 哈系表 */
+} *g_buttentable[BTSIZE]; /* 哈系表 */
 
 
 static void init ()
 {
-	memset(g_battontable, 0, sizeof(g_battontable));
+	memset(g_buttentable, 0, sizeof(g_buttentable));
 }
 
-static void batton_new (HWND hwnd)
+static void butten_new (HWND hwnd)
 {
-	struct batton **lp, *p;
+	struct butten **lp, *p;
 
-	lp = &g_battontable[(unsigned)hwnd%BTSIZE];
+	lp = &g_buttentable[(unsigned)hwnd%BTSIZE];
 	while (*lp) {
 		p = *lp;
 		if (p->hwnd == hwnd)
@@ -70,9 +71,9 @@ static void batton_new (HWND hwnd)
 		lp = &p->next;
 	}
 
-	*lp = (struct batton *)i32malloc(sizeof(struct batton));
+	*lp = (struct butten *)i32malloc(sizeof(struct butten));
 	p = *lp;
-	memset(p, 0, sizeof(struct batton));
+	memset(p, 0, sizeof(struct butten));
 	p->hwnd = hwnd;
 	p->bcolor = DEF_BCOLOR;
 	p->bcolor_h = DEF_BCOLOR_HOVER;
@@ -82,27 +83,28 @@ static void batton_new (HWND hwnd)
 	p->margin = DEF_MARGIN;
 	p->titlemargin = DEF_TITLEMARGIN;
 	p->iconalign = DEF_ICONALIGN;
+	p->align = CENTER;
 }
 
-static struct batton *batton_get (HWND hwnd)
+static struct butten *butten_get (HWND hwnd)
 {
-	struct batton *p;
+	struct butten *p;
 	unsigned hashcode = (unsigned)hwnd % BTSIZE;
 
-	for (p = g_battontable[hashcode]; p; p = p->next)
+	for (p = g_buttentable[hashcode]; p; p = p->next)
 		if (p->hwnd == hwnd)
 			return p;
 	return NULL;
 }
 
-static void batton_del (HWND hwnd)
+static void butten_del (HWND hwnd)
 {
-	struct batton **lp, *p;
+	struct butten **lp, *p;
 	unsigned hashcode = (unsigned)hwnd % BTSIZE;
 
-	lp = &g_battontable[hashcode];
+	lp = &g_buttentable[hashcode];
 	while (p = *lp) {
-		struct batton *next = p->next;
+		struct butten *next = p->next;
 		if (p->hwnd == hwnd) {
 			i32free(p);
 			*lp = next;
@@ -112,39 +114,40 @@ static void batton_del (HWND hwnd)
 	}
 }
 
-static void draw_batton (HWND hwnd, HDC hdc)
+static void draw_butten (HWND hwnd, HDC hdc)
 {
 	RECT r;
-	int battonw = 0, battonh;
+	int buttenw = 0, buttenh;
 	TCHAR title[32];
 	int titlelen = GetWindowText(hwnd, title, -1);
 	int titlew, titleh, iconw, left = 0;
 	BITMAP bmp;
-	struct batton *b;
+	struct butten *b;
 	int titlex, iconx;
+	int contentw = 0; /* 图标+文字的宽度 */
 
-	battonh = i32clienth(hwnd);
+	buttenh = i32clienth(hwnd);
+	buttenw = i32clientw(hwnd);
 
-	b = batton_get(hwnd);
+	b = butten_get(hwnd);
 	if (!b) return;
 
 	SelectObject(hdc, b->hfont);
 
 	/* 计算按钮宽度 */ {
-	SIZE tsize;
-	GetTextExtentPoint32 (hdc, title, titlelen, &tsize);
-	titlew = tsize.cx;
-	titleh = tsize.cy;
-	battonw += titlew;
-	if (b->hbmp) {
-		GetObject(b->hbmp, sizeof(bmp), &bmp);
-		iconw = bmp.bmWidth;
-		battonw += iconw;
-		if (titlew>0)
-			battonw += b->titlemargin;
-	}
-	battonw += b->margin*2;
-	i32set(hwnd, "w", battonw);
+		SIZE tsize;
+		GetTextExtentPoint32 (hdc, title, titlelen, &tsize);
+		titlew = tsize.cx;
+		titleh = tsize.cy;
+		contentw += titlew;
+		if (b->hbmp) {
+			GetObject(b->hbmp, sizeof(bmp), &bmp);
+			iconw = bmp.bmWidth;
+			contentw += iconw;
+			if (titlew>0)
+				contentw += b->titlemargin;
+		}
+		contentw += 2*b->margin;
 	}
 
 	/* 画背景 */
@@ -158,14 +161,20 @@ static void draw_batton (HWND hwnd, HDC hdc)
 		SelectObject(hdc, hbrush);
 		if (b->status==HOVER&&b->bcolor_h!=0xff00ff ||
 			b->status==PUSHED&&b->bcolor_p!=0xff00ff)
-		RoundRect(hdc, inner, inner, battonw-inner, battonh-inner, b->rad, b->rad);
+		RoundRect(hdc, inner, inner, buttenw-inner, buttenh-inner, b->rad, b->rad);
 		DeleteObject(hbrush);
 		DeleteObject(hpen);
 	}
 
-	left += b->margin;
+	/* 内容对齐 */
+	if (b->align == CENTER)
+		left = (buttenw-contentw)/2; /* 居中 */
+	else if (b->align == LEFT)
+		left = b->margin;
+	else
+		left = buttenw - contentw;
 
-	/* 考虑对齐 */
+	/* 图标对齐 */
 	if (b->hbmp) {
 		if (b->iconalign == RIGHT) {
 			titlex = left;
@@ -179,29 +188,29 @@ static void draw_batton (HWND hwnd, HDC hdc)
 	else
 		titlex = left;
 
-	/* 画图标 */
-	if (b->hbmp) {
-		i32blt(hdc, b->hbmp, iconx, (battonh-bmp.bmHeight)/2);
-	}
-
 	/* 画标题 */
 	SetBkMode(hdc, TRANSPARENT);
 	SetTextColor(hdc, b->textcolor);
-	TextOut (hdc, titlex, (battonh-titleh)/2, title, titlelen);
+	TextOut (hdc, titlex, (buttenh-titleh)/2, title, titlelen);
+
+	/* 画图标 */
+	if (b->hbmp) {
+		i32blt(hdc, b->hbmp, iconx, (buttenh-bmp.bmHeight)/2);
+	}
 }
 
 static LRESULT CALLBACK
 win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-	struct batton *b = batton_get(hwnd);
+	struct butten *b = butten_get(hwnd);
 
 	switch (msg) {
 		case WM_CREATE:
-			batton_new(hwnd);
+			butten_new(hwnd);
 		return 0;
 
 		case WM_DESTROY:
-			batton_del(hwnd);
+			butten_del(hwnd);
 		return 0;
 
 		case WM_ERASEBKGND:
@@ -284,19 +293,28 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 			if (b->bcolor != 0xff00ff)
 				i32fillrect(hdc, &r, b->bcolor);
-			draw_batton(hwnd, hdc);
+			draw_butten(hwnd, hdc);
 
 			EndPaint(hwnd, &ps);
 		}
 		return 0;
 
+
 		/* 输入接口 */
 
-		case WM_SETICON: {
+		case BM_SETALIGN:
+			b->align = (int)wp;
+		return 0;
+
+		case BM_SETICON: {
 			if (b->hbmp)
 				DeleteObject(b->hbmp);
 			b->hbmp = (HBITMAP)wp;
 		}
+		return 0;
+
+		case BM_SETICONALIGN:
+			b->iconalign = RIGHT;
 		return 0;
 
 		case WM_SETFONT: {
@@ -343,13 +361,13 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 
-void reg_batton ()
+void reg_butten ()
 {
     WNDCLASSEX wincl;
 
     /* The Window structure */
     wincl.hInstance = GetModuleHandle(0);
-    wincl.lpszClassName = TEXT("batton");
+    wincl.lpszClassName = TEXT("butten");
     wincl.lpfnWndProc = win_proc;      /* This function is called by windows */
     wincl.style = CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
     wincl.cbSize = sizeof (WNDCLASSEX);

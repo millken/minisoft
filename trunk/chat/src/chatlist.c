@@ -11,12 +11,12 @@
 
 /* CSS */
 #define GROUP_H 23 /* 分组条高度*/
-#define BUDDYPIC_H 41 /* 大头像高度 */
+#define BUDDYPIC_H 43 /* 大头像高度 */
 #define BUDDY_H 26 /* 小头像和无头像的高度 */
 
 #define LIST_BGCOLOR 0xffffff
 
-#define GROUP_BGCOLOR 0xCCFFFF
+#define GROUP_BGCOLOR 0xFFFFFF
 #define GROUP_HOVER_BGCOLOR RGB(208, 223, 242)
 #define GROUP_PUSHED_BGCOLOR RGB(232, 238, 245)
 #define GROUP_NAME_COLOR 0x999999 /* 文字颜色 */
@@ -28,21 +28,21 @@
 #define BUDDY_PUSHED_BGCOLOR RGB(232, 238, 245)
 #define BUDDY_NAME_COLOR 0x000000
 #define BUDDY_NOTE_COLOR 0x999999
-#define BUDDY_SIGN_COLOR 0x999999
-#define BUDDY_LINE_COLOR 0xf0f0f0
+#define BUDDY_SIGN_COLOR 0xbbbbbb
+#define BUDDY_LINE_COLOR 0xdddddd
 
 #define GROUP_NAME_MARGIN 4
-#define GROUP_NAME_Y 6
+#define GROUP_NAME_Y 5
 #define GROUP_NOTE_MARGIN 20
 #define GROUP_ARROW_MARGIN 6
 #define GROUP_ARROW_Y 6
 
 #define BBUDDY_PIC_X 6
-#define BBUDDY_PIC_Y 4
+#define BBUDDY_PIC_Y 7
 #define BBUDDY_PIC_W 32
 #define BBUDDY_PIC_H 32
 #define BBUDDY_NAME_X 8
-#define BBUDDY_NAME_Y 6
+#define BBUDDY_NAME_Y 5
 #define BUDDY_NOTE_MARGIN 5
 #define BBUDDY_SIGN_X 8
 #define BBUDDY_SIGN_Y 24
@@ -52,7 +52,7 @@
 #define SBUDDY_PIC_W 20
 #define SBUDDY_PIC_H 20
 #define SBUDDY_NAME_X 6
-#define SBUDDY_NAME_Y 7
+#define SBUDDY_NAME_Y 6
 #define SBUDDY_SIGN_MARGIN 5
 #define SBUDDY_SIGN_Y SBUDDY_NAME_Y
 
@@ -571,11 +571,11 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
 	hbfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
 
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
@@ -1048,6 +1048,8 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			ChatBuddy *b;
 			POINT p;
 			int r;
+			int cmd, id;
+
 			i32mousepos (hwnd, &p);
 			p.y -= cl->top;
 			r = feedback (cl, &p, &g, &b);
@@ -1063,6 +1065,9 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			cl->select_state = HOVER;
 			InvalidateRect (hwnd, NULL, TRUE);
+
+			/* 反馈 */
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LUP<<16)|GetDlgCtrlID(hwnd), hwnd);
 		}
 		return 0;
 
@@ -1070,7 +1075,19 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			if (cl->select_id != 0)
 				cl->select_state = PUSHED;
 			InvalidateRect (hwnd, NULL, TRUE);
+			/* 反馈 */
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LDOWN<<16)|GetDlgCtrlID(hwnd), hwnd);
 		}
+		return 0;
+
+		case WM_RBUTTONDOWN:
+			/* 反馈 */
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RDOWN<<16)|GetDlgCtrlID(hwnd), hwnd);
+		return 0;
+
+		case WM_RBUTTONUP:
+			/* 反馈 */
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RUP<<16)|GetDlgCtrlID(hwnd), hwnd);
 		return 0;
 
 		case WM_SETCURSOR: {
@@ -1220,6 +1237,10 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			buddylist_qsort(&g->buddylist, NULL, buddycmp);
 		}
 		return 0;
+
+		case CM_GETSELECT:
+		return cl->select_id;
+
 	}
 
 	return DefWindowProc(hwnd, message, wp, lp);
