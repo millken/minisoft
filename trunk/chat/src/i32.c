@@ -397,7 +397,7 @@ void i32debug ()
 static char *
 token (char *buf, char *s, char dot)
 {
-	if (!buf || !s) return;
+	if (!buf || !s) return NULL;
 
 	/* isalpha比手工判断慢2倍以上 */
 	while (*s && *s!=dot && *s!=' ')
@@ -562,6 +562,8 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			int w, h, dw, dh;
 			char pos[16];
 
+			if (!v) continue;
+
 			if (dad) {
 				GetClientRect (dad, &dr);
 				dw = dr.right - dr.left;
@@ -639,9 +641,11 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			BOOL strikeout = FALSE;
 			HFONT hfont;
 
+			if (!v) continue;
+
 			v = token(buf, v, ',');
 #ifdef UNICODE
-			MultiByteToWideChar (CP_UTF8, 0, family, -1, buf, strlen(buf)); /* 源文件必须是utf8 */
+			MultiByteToWideChar (CP_UTF8, 0, buf, -1, family, sizeof(family)); /* 源文件必须是utf8 */
 #else
 			strcpy(family, buf);
 #endif
@@ -686,7 +690,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
 		}
 
-		/* 遇到不认识的必须马上挂掉,否则不知道怎么解读以后的参数 */
+		/* 遇到不认识的必须马上退出,否则不知道怎么解读以后的参数 */
 		else break;
 
 	} while (*format != '\0');

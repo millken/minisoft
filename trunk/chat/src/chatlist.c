@@ -461,15 +461,6 @@ static ChatBuddy *new_chatbuddy (ChatGroup *group, int uid)
 	return p;
 }
 
-static ChatBuddy *get_chatbuddy (ChatList *cl, int uid)
-{
-	ChatBuddy *p;
-
-	if (!cl) return NULL;
-	p = buddytable_get(cl, uid);
-
-	return p;
-}
 
 /* 从链表中和hash表中删除好友 */
 static void del_chatbuddy (ChatList *cl, int uid)
@@ -571,11 +562,11 @@ draw_chatlist (HWND hwnd, HDC hdc, ChatList *cl)
 	hfont = CreateFont (15, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 	hbfont = CreateFont (15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		BALTIC_CHARSET, OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		 VARIABLE_PITCH|FF_SWISS, TEXT("Arial"));
+		 VARIABLE_PITCH|FF_SWISS, TEXT("Verdana"));
 
 	SelectObject (hdc, hfont);
 	SetBkMode(hdc, TRANSPARENT);
@@ -1048,7 +1039,6 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			ChatBuddy *b;
 			POINT p;
 			int r;
-			int cmd, id;
 
 			i32mousepos (hwnd, &p);
 			p.y -= cl->top;
@@ -1067,7 +1057,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			InvalidateRect (hwnd, NULL, TRUE);
 
 			/* 反馈 */
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LUP<<16)|GetDlgCtrlID(hwnd), hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LUP<<16)|GetDlgCtrlID(hwnd), (LPARAM)hwnd);
 		}
 		return 0;
 
@@ -1076,18 +1066,18 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				cl->select_state = PUSHED;
 			InvalidateRect (hwnd, NULL, TRUE);
 			/* 反馈 */
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LDOWN<<16)|GetDlgCtrlID(hwnd), hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_LDOWN<<16)|GetDlgCtrlID(hwnd), (LPARAM)hwnd);
 		}
 		return 0;
 
 		case WM_RBUTTONDOWN:
 			/* 反馈 */
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RDOWN<<16)|GetDlgCtrlID(hwnd), hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RDOWN<<16)|GetDlgCtrlID(hwnd), (LPARAM)hwnd);
 		return 0;
 
 		case WM_RBUTTONUP:
 			/* 反馈 */
-			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RUP<<16)|GetDlgCtrlID(hwnd), hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (CM_RUP<<16)|GetDlgCtrlID(hwnd), (LPARAM)hwnd);
 		return 0;
 
 		case WM_SETCURSOR: {

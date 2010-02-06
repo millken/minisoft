@@ -43,7 +43,7 @@
 			<Add library="kernel32" />
 			<Add library="msimg32" />
 		</Linker>
-		<Unit filename="src\batton.c">
+		<Unit filename="src\butten.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="controls\" />
 		</Unit>

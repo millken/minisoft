@@ -32,7 +32,7 @@ enum BUTTON_STATE {
 	BS_NORMAL,
 	BS_HOVER,
 	BS_DOWN,
-	BS_BLUR
+	BS_BLUR  /* 失去激活 */
 };
 
 /* Logo图标css */
@@ -82,6 +82,25 @@ void stretchBmp (HDC hdc, HBITMAP hbmp, int x, int y, int w, int h)
 	SelectObject(hmem, hbmp);
 
 	StretchBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+	/*TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	*/
+	DeleteObject(hmem);
+}
+
+/* 横向拉伸n个状态拼成的按钮类图片 */
+static
+void stretchBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh, int index, int n)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+	int titlew;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+	titlew = bmp.bmWidth / n;
+
+	StretchBlt (hdc, x, y, neww, newh, hmem, index*titlew, 0, titlew, bmp.bmHeight, SRCCOPY);
 	//TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
 	DeleteObject(hmem);
 }
@@ -105,43 +124,6 @@ void bltBtn4 (HDC hdc, HBITMAP hbmp, int x, int y, int index)
 	DeleteObject(hmem);
 }
 
-/* 画横向n个状态拼成的按钮类图片 */
-static
-void bltBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int index, int n)
-{
-	BITMAP bmp;
-	HDC hmem = 0;
-	int tilew = 0;
-
-	GetObject (hbmp, sizeof(bmp), &bmp);
-	tilew = bmp.bmWidth / n;
-	hmem = CreateCompatibleDC(hdc);
-	SelectObject(hmem, hbmp);
-
-	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
-	TransparentBlt (hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
-
-	DeleteObject(hmem);
-}
-
-/* 横向拉伸n个状态拼成的按钮类图片 */
-static
-void stretchBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh, int index, int n)
-{
-	BITMAP bmp;
-	HDC hmem = 0;
-	int tilew = 0;
-
-	GetObject (hbmp, sizeof(bmp), &bmp);
-	tilew = bmp.bmWidth / n;
-	hmem = CreateCompatibleDC(hdc);
-	SelectObject(hmem, hbmp);
-
-	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
-	TransparentBlt (hdc, x, y, neww, newh, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
-
-	DeleteObject(hmem);
-}
 
 static
 void getNcRect (HWND hwnd, RECT *r)
@@ -307,6 +289,60 @@ HRGN createFormRgn (HWND hwnd)
 	return rgn1;
 }
 
+/* 绘制NC区域
+   state=0:激活, 1:失去激活
+ */
+static void drawnc (HWND hwnd, int state)
+{
+	HDC hdc = GetWindowDC(hwnd);
+	RECT r;
+	HBITMAP hbmp;
+	HDC hmem;
+
+	getNcRect (hwnd, &r);
+
+	hbmp = CreateCompatibleBitmap(hdc, r.right, r.bottom);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	SetBkMode (hmem, TRANSPARENT);
+
+	/* 画四个边框 */
+	stretchBtnN (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP, state, 2); /* head */
+	//stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
+	stretchBtnN (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM, state, 2);
+	//stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
+	stretchBtnN (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2, state, 2);
+	//stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
+	stretchBtnN (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2,
+				state, 2);
+	//stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
+
+	drawHeadIcon (hmem);
+	drawTitle (hwnd, hmem);
+
+	drawMin (hwnd, hmem, state==0?BS_NORMAL:BS_BLUR);
+	drawClose (hwnd, hmem, state==0?BS_NORMAL:BS_BLUR);
+
+	FormRgn = createFormRgn(hwnd);
+	drawFormFrame (hmem);
+
+	/* 绕着客户区分4块画 */
+	BitBlt (hdc, 0, 0, r.right, NCPADDING_TOP,
+			hmem, 0, 0, SRCCOPY);
+	BitBlt (hdc, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM,
+			hmem, 0, r.bottom-NCPADDING_BOTTOM, SRCCOPY);
+	BitBlt (hdc, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP,
+			hmem, 0, NCPADDING_TOP, SRCCOPY);
+	BitBlt (hdc, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP,
+			hmem, r.right-NCPADDING_RIGHT, NCPADDING_TOP, SRCCOPY);
+
+	DeleteObject(hbmp);
+	DeleteObject(hmem);
+
+	ReleaseDC (hwnd, hdc);
+}
+
 static LRESULT CALLBACK
 form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
@@ -338,9 +374,9 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			GetObject (bmpfoot, sizeof(BITMAP), &bmp);
 			NCPADDING_BOTTOM = bmp.bmHeight;
 			GetObject (bmpleft, sizeof(BITMAP), &bmp);
-			NCPADDING_LEFT = bmp.bmWidth;
+			NCPADDING_LEFT = bmp.bmWidth/2;
 			GetObject (bmpright, sizeof(BITMAP), &bmp);
-			NCPADDING_RIGHT = bmp.bmWidth;
+			NCPADDING_RIGHT = bmp.bmWidth/2;
 			GetObject (bmpmin, sizeof(BITMAP), &bmp);
 			MinRect.bottom = bmp.bmHeight;
 			MinRect.right = bmp.bmWidth/4;
@@ -362,17 +398,25 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		break;
 
+
 		case WM_NCACTIVATE:
 			/* 自己重画窗体非客户区域之后，就不能再调用defproc了。
-			   否则窗体又会被重新画成原来的样子。*/
+			   否则窗体又会被重新画成原来的样子。返回TRUE表示允许激活它的窗体。*/
 			/* TODO: 重绘非激活状态 */
 		return TRUE;
+
+		case WM_ACTIVATE:
+			if (wp == WA_INACTIVE)
+				drawnc (hwnd, 1);
+			else
+				drawnc (hwnd, 0);
+		return 0;
 
 		case WM_EXITSIZEMOVE:
 		case WM_MOVE:
 		case WM_MOVING:
 		case WM_SIZING:
-		case WM_ACTIVATE:
+		//case WM_ACTIVATE:
 		case WM_SIZE: {
 			static int oldw = 0;
 			static int oldh = 0;
@@ -407,61 +451,8 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
-		case WM_NCPAINT: {
-			HDC hdc = GetWindowDC(hwnd);
-			RECT r;
-			HBITMAP hbmp;
-			HDC hmem;
-
-			getNcRect (hwnd, &r);
-
-			hbmp = CreateCompatibleBitmap(hdc, r.right, r.bottom);
-			hmem = CreateCompatibleDC(hdc);
-			SelectObject(hmem, hbmp);
-
-			SetBkMode (hmem, TRANSPARENT);
-
-			//i32fillrect (hmem, &r, 0xff00ff);
-			stretchBtnN (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP, 1, 1);
-			//stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
-			stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
-			stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
-			stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
-
-			drawHeadIcon (hmem);
-			drawTitle (hwnd, hmem);
-
-			drawMin (hwnd, hmem, BS_NORMAL);
-			drawClose (hwnd, hmem, BS_NORMAL);
-
-			FormRgn = createFormRgn(hwnd);
-			drawFormFrame (hmem);
-
-			/* 绕着客户区分4块画 */
-			BitBlt (hdc, 0, 0, r.right, NCPADDING_TOP,
-					hmem, 0, 0, SRCCOPY);
-			BitBlt (hdc, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM,
-					hmem, 0, r.bottom-NCPADDING_BOTTOM, SRCCOPY);
-			BitBlt (hdc, 0, NCPADDING_TOP, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP,
-					hmem, 0, NCPADDING_TOP, SRCCOPY);
-			BitBlt (hdc, r.right-NCPADDING_RIGHT, NCPADDING_TOP, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP,
-					hmem, r.right-NCPADDING_RIGHT, NCPADDING_TOP, SRCCOPY);
-
-			DeleteObject(hbmp);
-			DeleteObject(hmem);
-
-			ReleaseDC (hwnd, hdc);
-		}
-		return 0;
-
-		case WM_SETFOCUS: {
-			printf ("set focus\n");
-		}
-		return 0;
-
-		case WM_KILLFOCUS: {
-			printf ("kill focus\n");
-		}
+		case WM_NCPAINT:
+			drawnc(hwnd, GetActiveWindow()!=hwnd);
 		return 0;
 
 		case WM_NCLBUTTONDOWN: {
@@ -516,7 +507,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 			else {
 				if (bInClose) {
-					drawClose (hwnd, hdc, BS_NORMAL);
+					drawClose (hwnd, hdc, GetActiveWindow()==hwnd?BS_NORMAL:BS_BLUR);
 					bInClose = FALSE;
 				}
 				bCloseDown = FALSE;
@@ -530,7 +521,7 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 			else {
 				if (bInMin) {
-					drawMin (hwnd, hdc, BS_NORMAL);
+					drawMin (hwnd, hdc, GetActiveWindow()==hwnd?BS_NORMAL:BS_BLUR);
 					bInMin = FALSE;
 				}
 				bMinDown = FALSE;
