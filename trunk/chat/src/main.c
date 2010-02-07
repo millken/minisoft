@@ -251,13 +251,21 @@ void create_dlg (char *name)
 	ShowWindow (hwnd, SW_SHOW);
 }
 
+
+
+void create_richedit ()
+{
+
+
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
 	reg_myctl ();
 
 	create_form ();
 	create_dlg ("11004");
-	create_dlg ("11004");
+
 
 	i32loop();
 	return 0;

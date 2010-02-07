@@ -63,7 +63,7 @@ enum SELECT_STATE {
 	PUSHED
 };
 
-/* feedback返回值 */
+/* hittest返回值 */
 enum SELECT_OBJECT {
 	SELECT_NONE = 0,
 	SELECT_GROUP,
@@ -765,7 +765,7 @@ static void CursorPos (HWND hwnd, POINT *p)
 /* 获得鼠标经过的条目(组,人)
  * 返回0,没东西; 返回1,out出来是个ChatGroup; 返回2,是ChatBuddy;
  */
-static int feedback (ChatList *cl, POINT *p, ChatGroup **group, ChatBuddy **buddy)
+static int hittest (ChatList *cl, POINT *p, ChatGroup **group, ChatBuddy **buddy)
 {
 	int x, y;
 	ChatGroup *g;
@@ -823,7 +823,7 @@ static void whichishover (ChatList *cl)
 
 	CursorPos (cl->hwnd, &p);
 	p.y -= cl->top; /* 转化成列表坐标 */
-	r = feedback (cl, &p, &g, &b);
+	r = hittest (cl, &p, &g, &b);
 	if (cl->select_state == PUSHED)
 		return;
 	if (r == SELECT_GROUP && !(cl->select_id==-g->gid && cl->select_state==PUSHED)) {
@@ -1042,7 +1042,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			i32mousepos (hwnd, &p);
 			p.y -= cl->top;
-			r = feedback (cl, &p, &g, &b);
+			r = hittest (cl, &p, &g, &b);
 			if (r == SELECT_GROUP) {
 				SCROLLINFO si;
 				g->fold = !g->fold;

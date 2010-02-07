@@ -9,6 +9,7 @@
 #define WINVER 0x0500
 
 #include <windows.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
