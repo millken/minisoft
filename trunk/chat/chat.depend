@@ -34,11 +34,11 @@
 	"i32.h"
 	"ctrls.h"
 
-1265437912 source:f:\dev\minisoft\chat\src\i32.c
+1265611924 source:f:\dev\minisoft\chat\src\i32.c
 	"i32.h"
 	<ctype.h>
 
-1265518172 f:\dev\minisoft\chat\src\i32.h
+1265611990 f:\dev\minisoft\chat\src\i32.h
 	<windows.h>
 	<commctrl.h>
 	<stdio.h>
@@ -46,7 +46,7 @@
 	<string.h>
 	<assert.h>
 
-1265518526 source:f:\dev\minisoft\chat\src\main.c
+1265620628 source:f:\dev\minisoft\chat\src\main.c
 	"i32.h"
 	"ctrls.h"
 
@@ -57,7 +57,7 @@
 1264236208 source:f:\dev\minisoft\chat\src\myctl.c
 	"myctl.h"
 
-1265506202 source:f:\dev\minisoft\chat\src\chatlist.c
+1265606816 source:f:\dev\minisoft\chat\src\chatlist.c
 	"i32.h"
 	"ctrls.h"
 
@@ -125,7 +125,9 @@
 1265351916 source:f:\dev\minisoft\chat\src\ctrls.rc
 	<windows.h>
 
-1265358480 f:\dev\minisoft\chat\src\ctrls.h
+1265618712 f:\dev\minisoft\chat\src\ctrls.h
+	<windows.h>
+	<richedit.h>
 
 1264855102 source:e:\dev\minisoft\chat\src\ctrls.rc
 	<windows.h>
@@ -145,6 +147,11 @@
 	"ctrls.h"
 
 1265355354 source:f:\dev\minisoft\chat\src\butten.c
+	"i32.h"
+	"ctrls.h"
+
+1265620702 source:f:\dev\minisoft\chat\src\richedit.c
+	<windows.h>
 	"i32.h"
 	"ctrls.h"
 

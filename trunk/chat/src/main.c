@@ -24,7 +24,7 @@ int mainform_onclose (I32E e)
 
 int mainform_oncmd (I32E e)
 {
-	if ((HWND)e.lp == i32("friendlist")) {
+	if (HIWORD(e.wp)==CM_LUP && (HWND)e.lp == i32("friendlist")) {
 		int id = SendMessage (e.lp, CM_GETSELECT, 0, 0);
 		if (id > 0) {
 			char buf[32];
@@ -199,6 +199,7 @@ int dlg_onsize (I32E e)
 	i32vfill (e.hwnd,
 		hpanel_top, 40,
 		hpanel_mid, -1,
+		i32id(e.hwnd, 1500), -1,
 		hpanel_foot, 40,
 		NULL);
 	return 0;
@@ -215,12 +216,12 @@ int dlgpnt_onsize (I32E e)
 
 void create_dlg (char *name)
 {
-	HWND hwnd, hpanel, hbutten[3];
+	HWND hwnd, hpanel, hbutten[3], hrich;
 	int i;
 	if (!name || i32(name)) return;
 
 	hwnd = i32create(TEXT("form"), "n|t|s|w|h|a|x|y|bc", name,
-			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, rand()%350+100, rand()%350+40,
+			TEXT("对话 Dog"), WS_OVERLAPPEDWINDOW, rand()%350+100, rand()%350+300,
 			"l|b", rand()%500, rand()%500, -1);
 	i32setproc (hwnd, WM_SIZE, dlg_onsize);
 	i32setproc (hwnd, WM_CLOSE, dlg_onclose);
@@ -248,16 +249,11 @@ void create_dlg (char *name)
 	/* foot panel */
 	i32create(TEXT("box"), "s|d|id|bc", WS_CTRL, hwnd, 3000, 0xEE9C59);
 
+	hrich = new_richedit (hwnd, "id|w|h|a|t", 1500, 100, 100, "c", TEXT("反对"));
+	richedit_setfont (hrich, "facename|size|bold", TEXT("Arial"), 9, FALSE);
 	ShowWindow (hwnd, SW_SHOW);
 }
 
-
-
-void create_richedit ()
-{
-
-
-}
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {

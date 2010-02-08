@@ -73,7 +73,7 @@ void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col);
 void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
-
+void i32vset (HWND hwnd, char *format, va_list p);
 
 #ifdef __cplusplus
 }

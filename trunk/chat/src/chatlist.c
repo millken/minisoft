@@ -6,8 +6,8 @@
 #include "ctrls.h"
 
 /* 哈西表大小 */
-#define CHATTSIZE 10
-#define BUDDYTSIZE 128
+#define CHATTSIZE 64
+#define BUDDYTSIZE 256
 
 /* CSS */
 #define GROUP_H 23 /* 分组条高度*/
@@ -856,7 +856,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			g = new_chatgroup(cl, 0);
 			b = new_chatbuddy(g, 1);
 			b->name = TEXT("지Cat 못한");
-			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("CHAT_THUMB"));
+			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("AVATAR_B"));
 			b->sign = TEXT("只缘身在此山中Эучены");
 			b->note = TEXT("哈哈");
 			b->status = 3;
@@ -864,6 +864,7 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			b = new_chatbuddy(g, 3);
 			b->name = TEXT("sdны");
 			b->status = ST_BUSY;
+			b->pic = LoadBitmap(GetModuleHandle(0), TEXT("AVATAR_S"));
 
 			b = new_chatbuddy(g, 4);
 			b->name = TEXT("a");

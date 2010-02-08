@@ -1,6 +1,9 @@
 #ifndef _CTRLS_H
 #define _CTRLS_H
 
+#include <windows.h>
+#include <richedit.h>
+
 /* 好友列表控件的消息 */
 enum CHATLIST_MSG {
 
@@ -63,5 +66,9 @@ enum {
 	IM_SETFCOLOR_HOVER
 };
 
+/* richedit控件 */
+#define RICHEDIT_STYLE (WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | ENM_LINK)
+HWND new_richedit (HWND dad, char *format, ...);
+void richedit_setfont (HWND hwnd, char *format, ...);
 
 #endif
