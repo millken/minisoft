@@ -5,6 +5,12 @@
 #include "i32.h"
 #include <ctype.h>
 
+#define I32NAMETABLE_SIZE 128
+#define I32MSGTABLE_SIZE 512
+#define I32ATTRTABLE_SIZE 128
+
+#define I32DOT '|'
+
 #define msghash(hwnd, msg) ((unsigned)hwnd ^ (unsigned)msg)
 #define STRSAME(a, b) (strcmp((a),(b))==0)
 

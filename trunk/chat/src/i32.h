@@ -19,11 +19,6 @@
 extern "C" {
 #endif
 
-#define I32NAMETABLE_SIZE 128
-#define I32MSGTABLE_SIZE 512
-#define I32ATTRTABLE_SIZE 128
-
-#define I32DOT '|'
 #define WS_CTRL (WS_CHILD|WS_VISIBLE)
 
 /* 暂用 */

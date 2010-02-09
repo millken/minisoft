@@ -16,7 +16,7 @@ HWND new_richedit (HWND dad, char *format, ...)
 		dllloaded = TRUE;
     }
 
-	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP |ES_AUTOVSCROLL | ENM_LINK |ES_WANTRETURN; /* ES_READONLY */
+	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP |ES_AUTOVSCROLL |ES_WANTRETURN; /* ES_READONLY */
 
 	hwnd= CreateWindowEx(0, RICHEDIT_CLASS, "",
 		style,
@@ -35,7 +35,6 @@ token (char *buf, char *s, char dot)
 {
 	if (!buf || !s) return NULL;
 
-	/* isalpha比手工判断慢2倍以上 */
 	while (*s && *s!=dot && *s!=' ')
 		*buf++ = *s++;
 	*buf = '\0';
@@ -53,7 +52,6 @@ void richedit_setfont (HWND hwnd, char *format, ...)
 
 	memset(&cf, 0, sizeof(cf));
 	cf.cbSize = sizeof(cf);
-	//cf.dwMask = CFM_SIZE;
 
 	va_start (p, format);
 	do {
@@ -74,7 +72,14 @@ void richedit_setfont (HWND hwnd, char *format, ...)
 		else
 		if (strsame("bold", buf)) {
 			BOOL bold = va_arg(p, BOOL);
-			cf.dwMask |= CFM_BOLD;
+			if (bold) {
+				cf.dwMask |= CFM_BOLD;
+				cf.dwEffects |= CFE_BOLD;
+			}
+			else {
+				cf.dwMask |= CFM_BOLD;
+				cf.dwEffects &= ~CFE_BOLD;
+			}
 		}
 		else
 		if (strsame("color", buf)) {
@@ -85,9 +90,22 @@ void richedit_setfont (HWND hwnd, char *format, ...)
 
 		else break;
 
-
 	} while (*format);
 	va_end(p);
 
 	SendMessage (hwnd, EM_SETCHARFORMAT, SCF_ALL, (WPARAM)&cf);
+}
+
+void richedit_textout (HWND hrich, TCHAR *text)
+{
+	if (!text) return;
+
+	SendMessage(hrich, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)text);
+}
+
+void richedit_autolink (HWND hrich, BOOL isauto)
+{
+	unsigned mask = SendMessage(hrich, EM_GETEVENTMASK, 0, 0);
+	SendMessage(hrich, EM_SETEVENTMASK, 0, isauto?mask|ENM_LINK:mask&(~ENM_LINK));
+	SendMessage (hrich, EM_AUTOURLDETECT, isauto, 0);
 }

@@ -70,5 +70,7 @@ enum {
 #define RICHEDIT_STYLE (WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | ENM_LINK)
 HWND new_richedit (HWND dad, char *format, ...);
 void richedit_setfont (HWND hwnd, char *format, ...);
+void richedit_textout (HWND hrich, TCHAR *text);
+void richedit_autolink (HWND hrich, BOOL isauto);
 
 #endif

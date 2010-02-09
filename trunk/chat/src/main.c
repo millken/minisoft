@@ -199,7 +199,6 @@ int dlg_onsize (I32E e)
 	i32vfill (e.hwnd,
 		hpanel_top, 40,
 		hpanel_mid, -1,
-		i32id(e.hwnd, 1500), -1,
 		hpanel_foot, 40,
 		NULL);
 	return 0;
@@ -211,6 +210,28 @@ int dlgpnt_onsize (I32E e)
 	i32set(i32id(e.hwnd, 200), "a|x", "c", 90);
 	i32set(i32id(e.hwnd, 300), "a|x", "c", 160);
 
+	return 0;
+}
+
+int dlg_onnote (I32E e)
+{
+			TCHAR buf[320] = {0};
+	if (e.wp == 2000) {
+		ENLINK *el = (ENLINK *)e.lp;
+		if (el && el->nmhdr.code == EN_LINK) {
+			if (el->msg == WM_LBUTTONDOWN) {
+				GETTEXTEX tt;
+				int len;
+				memset(&tt, 0, sizeof(tt));
+				tt.cb = sizeof(buf);
+				tt.flags = GT_DEFAULT;
+				tt.codepage = 65001;
+				len = SendMessage (e.hwnd, EM_GETTEXTEX, &tt, buf);
+				printf ("%d\n", len);
+			}
+		}
+
+	}
 	return 0;
 }
 
@@ -244,13 +265,20 @@ void create_dlg (char *name)
 		SendMessage (hbutten[i], BM_SETRADIUS, 2, 0);
 	}
 
-	/* middle panel */
-	i32create(TEXT("box"), "s|d|id|bc", WS_CTRL, hwnd, 2000, 0xffffff);
 	/* foot panel */
 	i32create(TEXT("box"), "s|d|id|bc", WS_CTRL, hwnd, 3000, 0xEE9C59);
 
-	hrich = new_richedit (hwnd, "id|w|h|a|t", 1500, 100, 100, "c", TEXT("反对"));
-	richedit_setfont (hrich, "facename|size|bold", TEXT("Arial"), 9, FALSE);
+	hrich = new_richedit (hwnd, "id|w|h|a", 2000, 100, 100, "c");
+	richedit_autolink (hrich, TRUE);
+	richedit_setfont (hrich, "facename|size|bold|color", TEXT("Verdana"), 9, FALSE, 0x0000aa, TRUE);
+	richedit_textout (hrich, TEXT("Go! http://cnal.com\n haha_"));
+	{
+		TCHAR buf[320];
+		SendMessage (hrich, WM_GETTEXT, sizeof(buf)/sizeof(TCHAR), buf);
+		wprintf (lstrlen(buf));
+	}
+	i32setproc (hwnd, WM_NOTIFY, dlg_onnote);
+
 	ShowWindow (hwnd, SW_SHOW);
 }
 
@@ -261,7 +289,6 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 
 	create_form ();
 	create_dlg ("11004");
-
 
 	i32loop();
 	return 0;
