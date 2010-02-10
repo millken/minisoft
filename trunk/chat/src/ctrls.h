@@ -69,8 +69,10 @@ enum {
 /* richedit控件 */
 #define RICHEDIT_STYLE (WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | ENM_LINK)
 HWND new_richedit (HWND dad, char *format, ...);
-void richedit_setfont (HWND hwnd, char *format, ...);
+void richedit_setfont (HWND hwnd, BOOL isall, char *format, ...);
 void richedit_textout (HWND hrich, TCHAR *text);
 void richedit_autolink (HWND hrich, BOOL isauto);
+void richedit_clear (HWND hrich);
+void richedit_gettext (HWND hrich, TCHAR *buf);
 
 #endif

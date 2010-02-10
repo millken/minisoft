@@ -554,11 +554,39 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			MoveWindow (hwnd, r.left, r.top, w, r.bottom, TRUE);
 		}
 		else
+		if (STRSAME("+w", a)) {
+			int dw = va_arg(p, int);
+			RECT r;
+			ScreenToDad(hwnd, &r);
+			MoveWindow (hwnd, r.left, r.top, r.right+dw, r.bottom, TRUE);
+		}
+		else
+		if (STRSAME("-w", a)) {
+			int dw = va_arg(p, int);
+			RECT r;
+			ScreenToDad(hwnd, &r);
+			MoveWindow (hwnd, r.left, r.top, r.right-dw, r.bottom, TRUE);
+		}
+		else
 		if (STRSAME("h", a) || STRSAME("height", a)) {
 			int h = va_arg(p, int);
 			RECT r;
 			ScreenToDad(hwnd, &r);
 			MoveWindow (hwnd, r.left, r.top, r.right, h, TRUE);
+		}
+		else
+		if (STRSAME("+h", a)) {
+			int dh = va_arg(p, int);
+			RECT r;
+			ScreenToDad(hwnd, &r);
+			MoveWindow (hwnd, r.left, r.top, r.right, r.bottom+dh, TRUE);
+		}
+		else
+		if (STRSAME("-h", a)) {
+			int dh = va_arg(p, int);
+			RECT r;
+			ScreenToDad(hwnd, &r);
+			MoveWindow (hwnd, r.left, r.top, r.right, r.bottom-dh, TRUE);
 		}
 		else
 		if (STRSAME("a", a) || STRSAME("align", a)) {
@@ -746,14 +774,20 @@ HWND i32create (TCHAR *classname, char *format, ...)
 }
 
 
-HWND i32box (char *name, HWND dad)
+HWND i32box (HWND dad, char *format, ...)
 {
 	HWND hbox;
+	va_list p;
 
-	hbox = i32create(TEXT("box"), "d|n|s|x|y|w|h",
-		dad, name,
-		WS_CHILD|WS_VISIBLE,
-		0,0,0,0);
+	hbox = i32create(TEXT("box"), "d|s",
+		dad,
+		WS_CHILD|WS_VISIBLE);
+
+	if (format) {
+		va_start(p, format);
+		i32vset(hbox, format, p);
+		va_end(p);
+	}
 
 	return hbox;
 }

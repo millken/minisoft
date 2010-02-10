@@ -125,12 +125,12 @@ void create_form ()
 	i32setproc (hwnd, WM_MOUSEWHEEL, mainform_onwheel);
 	i32setproc (hwnd, WM_SETFOCUS, mainform_onfocus);
 
-	i32box ("panel-t", hwnd);
+	i32box (hwnd, "n", "panel-t");
 	i32set (i32("panel-t"), "bc", 0xEE9C59);
 	i32setproc (i32("panel-t"), WM_SIZE, panelt_onsize);
 	i32setproc (i32("panel-t"), WM_LBUTTONDOWN, panelt_lbuttondown);
 
-	i32box ("panel-b", hwnd);
+	i32box (hwnd, "n", "panel-b");
 	i32set (i32("panel-b"), "bc", RGB(229, 239, 254));
 	i32setproc (i32("panel-b"), WM_SIZE, panelb_onsize);
 
@@ -199,15 +199,15 @@ int dlg_onsize (I32E e)
 	i32vfill (e.hwnd,
 		hpanel_top, 40,
 		hpanel_mid, -1,
-		hpanel_foot, 40,
+		hpanel_foot, 0,
 		NULL);
 	return 0;
 }
 
 int dlgpnt_onsize (I32E e)
 {
-	i32set(i32id(e.hwnd, 100), "a|x", "c", 10);
-	i32set(i32id(e.hwnd, 200), "a|x", "c", 90);
+	i32set(i32id(e.hwnd, 100), "a|x", "c", 3);
+	i32set(i32id(e.hwnd, 200), "a|x", "c", 88);
 	i32set(i32id(e.hwnd, 300), "a|x", "c", 160);
 
 	return 0;
@@ -215,19 +215,17 @@ int dlgpnt_onsize (I32E e)
 
 int dlg_onnote (I32E e)
 {
-			TCHAR buf[320] = {0};
-	if (e.wp == 2000) {
+	if (e.wp == 2100) {
 		ENLINK *el = (ENLINK *)e.lp;
 		if (el && el->nmhdr.code == EN_LINK) {
+			HWND hrich = el->nmhdr.hwndFrom;
 			if (el->msg == WM_LBUTTONDOWN) {
-				GETTEXTEX tt;
+				TCHAR buf[320] = {0};
 				int len;
-				memset(&tt, 0, sizeof(tt));
-				tt.cb = sizeof(buf);
-				tt.flags = GT_DEFAULT;
-				tt.codepage = 65001;
-				len = SendMessage (e.hwnd, EM_GETTEXTEX, &tt, buf);
-				printf ("%d\n", len);
+				SendMessage (hrich, EM_EXSETSEL, 0, &el->chrg);
+				len = SendMessage (hrich, EM_GETSELTEXT, 0, buf);
+				if (len > 0)
+					ShellExecute (NULL, TEXT("open"), buf, NULL, NULL, SW_SHOW);
 			}
 		}
 
@@ -235,9 +233,125 @@ int dlg_onnote (I32E e)
 	return 0;
 }
 
+int footpnl_onsize (I32E e)
+{
+	HWND hinput = i32id(e.hwnd, 3100);
+	i32vfill (e.hwnd,
+		hinput, -1,
+		NULL);
+	i32set(hinput, "-w|-h|a|+y", 10, 18, "c", 3);
+	return 0;
+}
+
+int input_onkeydown (I32E e)
+{
+	printf ("vk:%u %u\n", e.wp, e.lp);
+	int st = GetKeyState(VK_SHIFT);
+	printf ("st:%d\n", st);
+	if (GetKeyState(VK_SHIFT)<0 && e.wp==VK_RETURN) {
+		i32set(GetParent(e.hwnd), "+h|-y", 19, 19);
+		SendMessage(GetParent(GetParent(e.hwnd)), WM_SIZE, 0, 0);
+		//richedit_clear(e.hwnd);
+	}
+	else
+	if (e.wp == VK_RETURN) {
+		TCHAR buf[1024];
+		CHARRANGE cr = {0, -1};
+		HWND chatview = i32id(i32id(GetParent(GetParent(e.hwnd)), 2000), 2100);
+
+		richedit_gettext (e.hwnd, buf);
+		richedit_clear(e.hwnd);
+		richedit_setfont (chatview, FALSE, "bold|offset", TRUE, 10);
+		richedit_textout (chatview, TEXT("\nCat仙:\n"));
+		richedit_setfont (chatview, FALSE, "offset", 100);
+		richedit_textout (chatview, buf);
+
+		/* 滚动条加高度(估测) */
+		{
+			SCROLLINFO si;
+			si.cbSize = sizeof(si);
+			si.fMask = SIF_ALL;
+			GetScrollInfo (chatview, SB_VERT, &si);
+			si.fMask = SIF_RANGE|SIF_PAGE;
+			si.nMin = 0;
+			si.nMax += 50;
+			si.nPage = max(i32clienth(chatview), 1);
+			SetScrollInfo (chatview, SB_VERT, &si, TRUE);
+		}
+
+		SendMessage (chatview, WM_VSCROLL, SB_BOTTOM, 0);
+		return 0;
+	}
+
+
+	return -1;
+}
+
+int midpnl_onsize (I32E e)
+{
+	HWND chatview = i32id(e.hwnd, 2100);
+	i32vfill (e.hwnd,
+		chatview, -1,
+		NULL);
+	i32set(chatview, "-w|-h|a", 6, 6, "c");
+	return 0;
+}
+
+int chatview_onsize (I32E e)
+{
+	int clienth = i32clienth(e.hwnd);
+	SCROLLINFO si;
+
+	GetScrollInfo (e.hwnd, SB_VERT, &si);
+	return -1;
+}
+
+int chatview_vscroll (I32E e)
+{
+	SCROLLINFO si;
+	int clienth = i32clienth(e.hwnd);
+
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_ALL;
+	GetScrollInfo (e.hwnd, SB_VERT, &si);
+	switch (LOWORD(e.wp)) {
+		case SB_TOP:
+			si.nPos = si.nMin;
+		break;
+
+		case SB_BOTTOM:
+			si.nPos = si.nMax;
+		break;
+
+		case SB_LINEUP:
+			si.nPos -= si.nMax/4;
+		break;
+
+		case SB_LINEDOWN:
+			si.nPos += si.nMax/4;
+		break;
+
+		case SB_PAGEUP:
+			si.nPos -= clienth;
+		break;
+
+		case SB_PAGEDOWN:
+			si.nPos += clienth;
+		break;
+
+		case SB_THUMBTRACK:
+			si.nPos = si.nTrackPos;
+		break;
+	}
+
+	si.fMask = SIF_POS;
+	SetScrollInfo (e.hwnd, SB_VERT, &si, TRUE);
+	return -1;
+}
+
 void create_dlg (char *name)
 {
-	HWND hwnd, hpanel, hbutten[3], hrich;
+	HWND hwnd, hpanel, hfoot, hbutten[3], hrich, hinput;
 	int i;
 	if (!name || i32(name)) return;
 
@@ -265,19 +379,29 @@ void create_dlg (char *name)
 		SendMessage (hbutten[i], BM_SETRADIUS, 2, 0);
 	}
 
-	/* foot panel */
-	i32create(TEXT("box"), "s|d|id|bc", WS_CTRL, hwnd, 3000, 0xEE9C59);
 
-	hrich = new_richedit (hwnd, "id|w|h|a", 2000, 100, 100, "c");
+	/* middle panel */
+	hpanel = i32box(hwnd, "id|bc", 2000, 0xffffff);
+	i32setproc (hpanel, WM_SIZE, midpnl_onsize);
+	i32setproc (hpanel, WM_NOTIFY, dlg_onnote);
+
+	/* chat view */
+	hrich = new_richedit (hpanel, "id|+s|w|h|a", 2100, WS_VSCROLL, 100, 100, "c");
 	richedit_autolink (hrich, TRUE);
-	richedit_setfont (hrich, "facename|size|bold|color", TEXT("Verdana"), 9, FALSE, 0x0000aa, TRUE);
+	richedit_setfont (hrich, TRUE, "facename|size|bold|color", TEXT("Verdana"), 9, FALSE, 0x000000, TRUE);
 	richedit_textout (hrich, TEXT("Go! http://cnal.com\n haha_"));
-	{
-		TCHAR buf[320];
-		SendMessage (hrich, WM_GETTEXT, sizeof(buf)/sizeof(TCHAR), buf);
-		wprintf (lstrlen(buf));
-	}
-	i32setproc (hwnd, WM_NOTIFY, dlg_onnote);
+	i32setproc (hrich, WM_SIZE, chatview_onsize);
+	i32setproc (hrich, WM_VSCROLL, chatview_vscroll);
+
+	/* foot panel */
+	hfoot = i32create(TEXT("box"), "s|d|id|bc|h", WS_CTRL, hwnd, 3000, 0xEE9C59, 40);
+	i32setproc (hfoot, WM_SIZE, footpnl_onsize);
+	/* input box */
+	hinput = new_richedit(hfoot, "id|+s", 3100, WS_BORDER);
+	richedit_setfont (hinput, TRUE, "facename|size|bold|color|offset", TEXT("Verdana"), 9, FALSE, 0x000000, -50);
+	i32setproc (hinput, WM_KEYDOWN, input_onkeydown);
+
+	SetFocus (hinput);
 
 	ShowWindow (hwnd, SW_SHOW);
 }

@@ -16,16 +16,27 @@ HWND new_richedit (HWND dad, char *format, ...)
 		dllloaded = TRUE;
     }
 
-	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP |ES_AUTOVSCROLL |ES_WANTRETURN; /* ES_READONLY */
+	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP  |ES_WANTRETURN; /* ES_READONLY */
 
 	hwnd= CreateWindowEx(0, RICHEDIT_CLASS, "",
 		style,
 		0, 0, 0, 0,
 		dad, (HMENU)0, GetModuleHandle(NULL), NULL);
 
-	va_start (p, format);
-	i32vset (hwnd, format, p);
-	va_end (p);
+	if (format) {
+		va_start (p, format);
+		i32vset (hwnd, format, p);
+		va_end (p);
+	}
+
+	/* 滚动条高度清零,原来默认是100 */
+	{
+		SCROLLINFO si;
+		si.fMask = SIF_RANGE;
+		si.nMin = 0;
+		si.nMax = 0;
+		SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
+	}
 
     return hwnd;
 }
@@ -42,7 +53,7 @@ token (char *buf, char *s, char dot)
 	return s;
 }
 
-void richedit_setfont (HWND hwnd, char *format, ...)
+void richedit_setfont (HWND hwnd, BOOL isall, char *format, ...)
 {
 	CHARFORMAT2 cf;
 	char buf[32] = {0};
@@ -87,13 +98,19 @@ void richedit_setfont (HWND hwnd, char *format, ...)
 			cf.dwMask |= CFM_COLOR;
 			cf.crTextColor = color;
 		}
+		else
+		if (strsame("offset", buf)) {
+			int offset = va_arg(p, int);
+			cf.dwMask |= CFM_OFFSET;
+			cf.yOffset = offset;
+		}
 
 		else break;
 
 	} while (*format);
 	va_end(p);
 
-	SendMessage (hwnd, EM_SETCHARFORMAT, SCF_ALL, (WPARAM)&cf);
+	SendMessage (hwnd, EM_SETCHARFORMAT, isall?SCF_ALL:SCF_SELECTION, (WPARAM)&cf);
 }
 
 void richedit_textout (HWND hrich, TCHAR *text)
@@ -101,6 +118,23 @@ void richedit_textout (HWND hrich, TCHAR *text)
 	if (!text) return;
 
 	SendMessage(hrich, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)text);
+}
+
+/* 获得所有内容 */
+void richedit_gettext (HWND hrich, TCHAR *buf)
+{
+	CHARRANGE cr = {0, -1};
+
+	if (!hrich || !buf) return;
+
+	SendMessage (hrich, EM_EXSETSEL, 0, &cr);
+	SendMessage (hrich, EM_GETSELTEXT, 0, buf);
+}
+
+/* 清除所有内容 */
+void richedit_clear (HWND hrich)
+{
+	SetWindowText (hrich, TEXT(""));
 }
 
 void richedit_autolink (HWND hrich, BOOL isauto)

@@ -47,7 +47,7 @@ int i32callold (I32EVENT e);
 int i32loop ();
 
 /* 布局 */
-HWND i32box (char *name, HWND dad);
+HWND i32box (HWND dad, char *format, ...);
 void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
