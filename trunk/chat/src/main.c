@@ -7,6 +7,8 @@ void reg_chatlist ();
 void create_dlg (char *name);
 
 
+char *pagename = "friendlist"; /* 选中了哪个tabpage */
+
 void reg_myctl ()
 {
 	reg_form();
@@ -37,9 +39,13 @@ int mainform_oncmd (I32E e)
 
 int mainform_onsize (I32E e)
 {
-	i32vfill ( e.hwnd,
+	ShowWindow (i32("friendlist"), SW_HIDE);
+	ShowWindow (i32("grouplist"), SW_HIDE);
+	ShowWindow (i32(pagename), SW_SHOW);
+
+	i32vfill (e.hwnd,
 		i32("panel-t"), 90,
-		i32("friendlist"), -1,
+		i32(pagename), -1,
 		i32("panel-b"), 28,
 		NULL
 	);
@@ -109,6 +115,35 @@ int mainform_onfocus (I32E e)
 	return -1;
 }
 
+int panelb_oncmd (I32E e)
+{
+	HWND hbutton;
+	int i;
+
+	if (HIWORD(e.wp)==BM_LBUTTONUP) {
+		hbutton = i32id(e.hwnd, LOWORD(e.wp));
+		for (i = 101; i <= 104; i++) {
+			HWND htmp = i32id(e.hwnd, i);
+			SendMessage (htmp, BM_SETBCOLOR, RGB(229, 239, 254), 0);
+		}
+		switch (LOWORD(e.wp)) {
+			case 101:
+				pagename = "friendlist";
+				break;
+			case 102:
+				pagename = "grouplist";
+				break;
+		}
+		SendMessage (hbutton, BM_SETBCOLOR, 0xffffff, 0);
+	}
+	ShowWindow (i32("friendlist"), SW_HIDE);
+	ShowWindow (i32("grouplist"), SW_HIDE);
+	ShowWindow (i32(pagename), SW_SHOW);
+	SendMessage (i32("mainform"), WM_SIZE, 0, 0);
+	InvalidateRect (i32("mainform"), NULL, TRUE);
+	return 0;
+}
+
 void create_form ()
 {
 	int i;
@@ -133,9 +168,16 @@ void create_form ()
 	i32box (hwnd, "n", "panel-b");
 	i32set (i32("panel-b"), "bc", RGB(229, 239, 254));
 	i32setproc (i32("panel-b"), WM_SIZE, panelb_onsize);
+	i32setproc (i32("panel-b"), WM_COMMAND, panelb_oncmd);
 
+	/* 好友列表 */
 	i32create (TEXT("chatlist"), "d|n|s|w|h|a|show", hwnd, "friendlist",
 				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y");
+
+	/* 群组列表 */
+	i32create (TEXT("chatlist"), "d|n|s|w|h|a|show", hwnd, "grouplist",
+				WS_CTRL|WS_VSCROLL, 100, 100, "c", "y");
+	SendMessage (i32("grouplist"), CM_SETVIEWMODE, 1, 0);
 
 	hbutten = i32create(TEXT("butten"), "d|n|t|s|id|w|h|a|f|show", i32("panel-t"), "signbutton", TEXT("지 못한哈哈Эучены"),
 				WS_CTRL, 101, 140, 22, "c|t", "Verdana,15", "y");
@@ -143,11 +185,11 @@ void create_form ()
 	SendMessage (hbutten, BM_SETFCOLOR, 0xeeeeee, 0);
 	SendMessage (hbutten, BM_SETBCOLOR_HOVER, RGB(160,199,245), 0);
 	SendMessage (hbutten, BM_SETBCOLOR_PUSHED, RGB(160,199,245), 0);
-	SendMessage (hbutten, BM_SETRADIUS, 0, 0);
+	SendMessage (hbutten, BM_SETRADIUS, 2, 0);
 	SendMessage (hbutten, BM_SETMARGIN, 5, 0);
 	SendMessage (hbutten, BM_SETTEXTCOLOR, 0x565656, 0);
 	SendMessage (hbutten, BM_SETALIGN, 0, 0);
-	i32setproc (hbutten, WM_LBUTTONUP, signbutton_lbuttonup);
+	//i32setproc (hbutten, WM_LBUTTONUP, signbutton_lbuttonup);
 	//SendMessage (hbutten, BM_SETICON, LoadBitmap(GetModuleHandle(0), TEXT("NAME_FLAG")), 0);
 
 	himage = i32create(TEXT("image"), "d|s|id|w|h", i32("panel-t"), WS_CTRL, 102, 37, 37);
@@ -161,8 +203,6 @@ void create_form ()
 	SendMessage (hmyname, BM_SETICON, LoadBitmap(GetModuleHandle(0), TEXT("NAME_FLAG")), 0);
 	SendMessage (hmyname, BM_SETALIGN, 0, 0);
 
-	/* 签名框 */
-	i32create (TEXT("edit"), "n|s|d|w|h|show", "signeditor", WS_CTRL, i32("panel-t"), 100, 22, "no");
 	/* 搜索框 */
 	i32create (TEXT("edit"), "n|s|d|h|f", "searchbox", WS_CTRL|WS_BORDER, i32("panel-t"), 22, "Verdana,15");
 
@@ -245,9 +285,7 @@ int footpnl_onsize (I32E e)
 
 int input_onkeydown (I32E e)
 {
-	printf ("vk:%u %u\n", e.wp, e.lp);
 	int st = GetKeyState(VK_SHIFT);
-	printf ("st:%d\n", st);
 	if (GetKeyState(VK_SHIFT)<0 && e.wp==VK_RETURN) {
 		i32set(GetParent(e.hwnd), "+h|-y", 19, 19);
 		SendMessage(GetParent(GetParent(e.hwnd)), WM_SIZE, 0, 0);
@@ -406,6 +444,82 @@ void create_dlg (char *name)
 	ShowWindow (hwnd, SW_SHOW);
 }
 
+/*GROUP DLG*/
+int Gmidpnl_onsize (I32E e)
+{
+	HWND hchatview = i32id(e.hwnd, 2100);
+	HWND hlist = i32id(e.hwnd, 2200);
+	HWND hsplit = i32id(e.hwnd, 2300);
+
+ 	i32hfill (e.hwnd,
+		hchatview, -1,
+		hsplit, 2,
+		hlist, 150,
+		NULL);
+}
+
+void create_groupdlg (char *name)
+{
+	HWND hwnd, hpanel, hfoot, hbutten[3], hrich, hinput, hlist;
+	int i;
+	if (!name || i32(name)) return;
+
+	hwnd = i32create(TEXT("form"), "n|t|s|w|h|a|x|y|bc", name,
+			TEXT("群对话 - 独立游戏制作"), WS_OVERLAPPEDWINDOW, 400, 400,
+			"l|b", 300, 300, -1);
+	i32setproc (hwnd, WM_SIZE, dlg_onsize);
+	i32setproc (hwnd, WM_CLOSE, dlg_onclose);
+
+	/* top panel */
+	hpanel = i32create(TEXT("box"), "s|d|id|bc", WS_CTRL, hwnd, 1000, 0xEE9C59);
+	i32setproc (hpanel, WM_SIZE, dlgpnt_onsize);
+	hbutten[0] = i32create(TEXT("butten"), "s|d|id|t|w|h|f|show", WS_CTRL, hpanel, 100,
+				TEXT("传送文件"), 80, 22, "Arial,15", "y");
+	hbutten[1] = i32create(TEXT("butten"), "s|d|id|t|w|h|f|show", WS_CTRL, hpanel, 200,
+				TEXT("视频"), 64, 22, "Arial,15", "y");
+	hbutten[2] = i32create(TEXT("butten"), "s|d|id|t|w|h|f|show", WS_CTRL, hpanel, 300,
+				TEXT("聊天记录"), 80, 22, "Arial,15", "y");
+	for (i = 0; i < 3; i++) {
+		SendMessage (hbutten[i], BM_SETICON, LoadBitmap(GetModuleHandle(0), TEXT("ICON_FILE")), 0);
+		SendMessage (hbutten[i], BM_SETBCOLOR, 0xEE9C59, 0);
+		SendMessage (hbutten[i], BM_SETBCOLOR_HOVER, RGB(160,199,245), 0);
+		SendMessage (hbutten[i], BM_SETBCOLOR_PUSHED, RGB(160,199,245), 0);
+		SendMessage (hbutten[i], BM_SETFCOLOR, 0xeeeeee, 0);
+		SendMessage (hbutten[i], BM_SETRADIUS, 2, 0);
+	}
+
+	/* middle panel */
+	hpanel = i32box(hwnd, "id|bc", 2000, -1);
+	i32setproc (hpanel, WM_SIZE, Gmidpnl_onsize);
+	i32setproc (hpanel, WM_NOTIFY, dlg_onnote);
+
+	/* chat view */
+	hrich = new_richedit (hpanel, "id|+s|w|h|a", 2100, WS_VSCROLL, 100, 100, "c");
+	richedit_autolink (hrich, TRUE);
+	richedit_setfont (hrich, TRUE, "facename|size|bold|color", TEXT("Verdana"), 9, FALSE, 0x000000, TRUE);
+	richedit_textout (hrich, TEXT("Go! http://cnal.com\n haha_"));
+	i32setproc (hrich, WM_SIZE, chatview_onsize);
+	i32setproc (hrich, WM_VSCROLL, chatview_vscroll);
+
+	/* split */
+	i32box (hpanel, "id|bc", 2300, 0x000000);
+
+	/* member list */
+	hlist = i32create(TEXT("chatlist"), "s|d|id", WS_CTRL|WS_VSCROLL, hpanel, 2200);
+	SendMessage (hlist, CM_SETVIEWMODE, 1, 0);
+
+	/* foot panel */
+	hfoot = i32create(TEXT("box"), "s|d|id|bc|h", WS_CTRL, hwnd, 3000, 0xEE9C59, 40);
+	i32setproc (hfoot, WM_SIZE, footpnl_onsize);
+	/* input box */
+	hinput = new_richedit(hfoot, "id|+s", 3100, WS_BORDER);
+	richedit_setfont (hinput, TRUE, "facename|size|bold|color|offset", TEXT("Verdana"), 9, FALSE, 0x000000, -50);
+	i32setproc (hinput, WM_KEYDOWN, input_onkeydown);
+
+	SetFocus (hinput);
+
+	ShowWindow (hwnd, SW_SHOW);
+}
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 {
@@ -413,6 +527,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiold, PSTR param, int cmd)
 
 	create_form ();
 	create_dlg ("11004");
+	create_groupdlg("g001");
 
 	i32loop();
 	return 0;
