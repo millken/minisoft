@@ -1,0 +1,38 @@
+# depslib dependency file v1.0
+1266999892 source:f:\dev\server\main.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<winsock2.h>
+	<process.h>
+	"net.h"
+
+1267000272 f:\dev\server\net.h
+	<windows.h>
+	<winsock2.h>
+	<process.h>
+
+1267001050 source:f:\dev\server\net.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<winsock2.h>
+	<process.h>
+	"net.h"
+
+1267001050 source:f:\dev\minisoft\server\net.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<winsock2.h>
+	<process.h>
+	"net.h"
+
+1267000272 f:\dev\minisoft\server\net.h
+	<windows.h>
+	<winsock2.h>
+	<process.h>
+
+1267001454 source:f:\dev\minisoft\server\main.c
+	"net.h"
+

@@ -47,7 +47,7 @@
 	<string.h>
 	<assert.h>
 
-1265780472 source:f:\dev\minisoft\chat\src\main.c
+1266627826 source:f:\dev\minisoft\chat\src\main.c
 	"i32.h"
 	"ctrls.h"
 
@@ -58,7 +58,7 @@
 1264236208 source:f:\dev\minisoft\chat\src\myctl.c
 	"myctl.h"
 
-1265606816 source:f:\dev\minisoft\chat\src\chatlist.c
+1266627826 source:f:\dev\minisoft\chat\src\chatlist.c
 	"i32.h"
 	"ctrls.h"
 
