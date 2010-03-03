@@ -5,14 +5,13 @@
 #include "i32.h"
 #include "ctrls.h"
 
-static
 enum {
 	NONE = 0,
 	HOVER,
 	PUSHED
 };
 
-static enum {
+enum {
 	LEFT = 0,
 	RIGHT,
 	CENTER
@@ -103,7 +102,7 @@ static void butten_del (HWND hwnd)
 	unsigned hashcode = (unsigned)hwnd % BTSIZE;
 
 	lp = &g_buttentable[hashcode];
-	while (p = *lp) {
+	while ((p = *lp)) {
 		struct butten *next = p->next;
 		if (p->hwnd == hwnd) {
 			i32free(p);
@@ -116,7 +115,6 @@ static void butten_del (HWND hwnd)
 
 static void draw_butten (HWND hwnd, HDC hdc)
 {
-	RECT r;
 	int buttenw = 0, buttenh;
 	TCHAR title[32];
 	int titlelen = GetWindowText(hwnd, title, -1);
@@ -159,8 +157,8 @@ static void draw_butten (HWND hwnd, HDC hdc)
 			inner = 1;
 		SelectObject(hdc, hpen);
 		SelectObject(hdc, hbrush);
-		if (b->status==HOVER&&b->bcolor_h!=0xff00ff ||
-			b->status==PUSHED&&b->bcolor_p!=0xff00ff)
+		if ((b->status==HOVER&&b->bcolor_h!=0xff00ff) ||
+			(b->status==PUSHED&&b->bcolor_p!=0xff00ff))
 		RoundRect(hdc, inner, inner, buttenw-inner, buttenh-inner, b->rad, b->rad);
 		DeleteObject(hbrush);
 		DeleteObject(hpen);
@@ -252,7 +250,7 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 			}
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONDOWN<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONDOWN<<16)|id, (LPARAM)hwnd);
 			}
 		return 0;
 
@@ -264,14 +262,14 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 			}
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONUP<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONUP<<16)|id, (LPARAM)hwnd);
 			}
 		return 0;
 
 		case WM_RBUTTONDOWN: {
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONDOWN<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONDOWN<<16)|id, (LPARAM)hwnd);
 			}
 		}
 		return 0;
@@ -279,7 +277,7 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		case WM_RBUTTONUP: {
 			/* 通知父窗口 */ {
 			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONUP<<16)|id, hwnd);
+			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONUP<<16)|id, (LPARAM)hwnd);
 			}
 		}
 		return 0;

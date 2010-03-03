@@ -39,7 +39,7 @@ static struct hwndattr {
 } *attrtable[I32ATTRTABLE_SIZE];
 
 
-/* 提供一个空控件,作为容器 */
+/* 提供一个空控件,作为布局容器 */
 static LRESULT CALLBACK
 box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
@@ -298,7 +298,8 @@ static void destroy_procs (HWND hwnd)
 				i32free(p);
 				*hm = next;
 			}
-			hm = &p->next;
+			else /* 因为前面没有return,这里必须加个else */
+				hm = &p->next;
 		}
 	}
 }
@@ -333,8 +334,24 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	oldproc = (WNDPROC)i32getproc (hwnd, 0);
 	r = oldproc ? CallWindowProc (oldproc, hwnd, message, wp, lp) : 0;
 
-	if (message == WM_DESTROY)
+	if (message == WM_DESTROY) {
 		destroy_hwnd (hwnd);
+		return 0;
+	}
+
+	/* 公共控件背景透明 */
+	switch (message) {
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORLISTBOX:
+		case WM_CTLCOLORSTATIC:
+		case WM_CTLCOLORBTN: {
+			HDC hdc = (HDC)wp;
+			SetBkMode(hdc, TRANSPARENT);
+			//SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+			return 0;
+		}
+		break;
+	}
 
 	return r;
 }
@@ -443,6 +460,22 @@ void i32dadrect (HWND hwnd, RECT *r)
 	r->bottom -= r->top;
 	r->left -= dr.left;
 	r->top -= dr.top;
+}
+
+int i32clientx (HWND hwnd)
+{
+	RECT r;
+
+	i32dadrect(hwnd, &r);
+	return r.left;
+}
+
+int i32clienty (HWND hwnd)
+{
+	RECT r;
+
+	i32dadrect(hwnd, &r);
+	return r.top;
 }
 
 /* 画背景色 */
@@ -1111,4 +1144,79 @@ void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col)
 {
 	SetTextColor (hdc, col);
 	TextOut (hdc, x, y, text, lstrlen(text));
+}
+
+
+
+
+/*
+ * 常用控件
+ */
+
+static HWND creatctl (TCHAR *classname, HWND dad, unsigned style)
+{
+	HWND hwnd;
+	va_list p;
+
+	hwnd = CreateWindow (
+           classname,         	/* Classname */
+           NULL,       			/* Title Text */
+           style, /*WS_OVERLAPPEDWINDOW,*/					/* default window */
+           0,		/* Windows decides the position */
+           0,		/* where the window ends up on the screen */
+           0,		/* The programs width */
+           0,		/* and height in pixels */
+           dad,        /* The window is a child-window to desktop */
+           NULL,                /* No menu */
+           GetModuleHandle(NULL),       /* Program Instance handler */
+           NULL                 /* No Window Creation data */
+	);
+	return hwnd;
+}
+
+
+#define _vset(hwnd, format) \
+	i32set(hwnd, "f|bc", "Arial,15", -1); \
+	if (format) { \
+		va_list p; \
+		va_start(p, format); \
+		i32vset(hwnd, format, p); \
+		va_end(p); \
+	}
+
+
+HWND i32static (HWND dad, char *format, ...)
+{
+	HWND hwnd;
+
+	hwnd = creatctl(TEXT("static"), dad, WS_CTRL|SS_SIMPLE);
+	i32set(hwnd, "f", "Arial,15");
+	_vset(hwnd, format);
+
+	return hwnd;
+}
+
+
+HWND i32edit (HWND dad, char *format, ...)
+{
+	HWND hwnd;
+
+	hwnd = creatctl(TEXT("edit"), dad, WS_CTRL|WS_BORDER|ES_AUTOHSCROLL);
+	_vset(hwnd, format);
+
+	return hwnd;
+}
+
+
+HWND i32checkbox (HWND dad, char *format, ...)
+{
+	HWND hwnd;
+	va_list p;
+
+	hwnd = creatctl(TEXT("button"), dad, WS_CTRL|BS_FLAT|BS_CHECKBOX);
+	//i32setproc (hwnd, WM_SIZE, on_ctlcolor);
+	i32set (hwnd, "w|h", 13, 13);
+	_vset(hwnd, format);
+
+	return hwnd;
 }

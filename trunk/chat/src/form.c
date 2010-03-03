@@ -71,22 +71,6 @@ void bltBmp (HDC hdc, HBITMAP hbmp, int x, int y)
 	DeleteObject(hmem);
 }
 
-static
-void stretchBmp (HDC hdc, HBITMAP hbmp, int x, int y, int w, int h)
-{
-	BITMAP bmp;
-	HDC hmem = 0;
-
-	GetObject (hbmp, sizeof(bmp), &bmp);
-	hmem = CreateCompatibleDC(hdc);
-	SelectObject(hmem, hbmp);
-
-	StretchBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-	/*TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
-	*/
-	DeleteObject(hmem);
-}
-
 /* 横向拉伸n个状态拼成的按钮类图片 */
 static
 void stretchBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh, int index, int n)
@@ -101,7 +85,8 @@ void stretchBtnN (HDC hdc, HBITMAP hbmp, int x, int y, int neww, int newh, int i
 	titlew = bmp.bmWidth / n;
 
 	StretchBlt (hdc, x, y, neww, newh, hmem, index*titlew, 0, titlew, bmp.bmHeight, SRCCOPY);
-	//TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	/*TransparentBlt (hdc, x, y, w, h, hmem, 0, 0, bmp.bmWidth, bmp.bmHeight, RGB(255, 0, 255));
+	*/
 	DeleteObject(hmem);
 }
 
@@ -118,7 +103,7 @@ void bltBtn4 (HDC hdc, HBITMAP hbmp, int x, int y, int index)
 	hmem = CreateCompatibleDC(hdc);
 	SelectObject(hmem, hbmp);
 
-	//BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);
+	/*BitBlt(hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, SRCCOPY);*/
 	TransparentBlt (hdc, x, y, tilew, bmp.bmHeight, hmem, index*tilew, 0, tilew, bmp.bmHeight, RGB(255, 0, 255));
 
 	DeleteObject(hmem);
@@ -309,14 +294,10 @@ static void drawnc (HWND hwnd, int state)
 
 	/* 画四个边框 */
 	stretchBtnN (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP, state, 2); /* head */
-	//stretchBmp (hmem, bmphead, 0, 0, r.right, NCPADDING_TOP);
 	stretchBtnN (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM, state, 2);
-	//stretchBmp (hmem, bmpfoot, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM);
 	stretchBtnN (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2, state, 2);
-	//stretchBmp (hmem, bmpleft, 0, NCPADDING_TOP-1, NCPADDING_LEFT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
 	stretchBtnN (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2,
 				state, 2);
-	//stretchBmp (hmem, bmpright, r.right-NCPADDING_RIGHT, NCPADDING_TOP-1, NCPADDING_RIGHT, r.bottom-NCPADDING_BOTTOM-NCPADDING_TOP+2);
 
 	drawHeadIcon (hmem);
 	drawTitle (hwnd, hmem);
@@ -391,10 +372,12 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_DESTROY: {
-			//DeleteObject(bmphead);
-			//DeleteObject(bmpfoot);
-			//DeleteObject(bmpleft);
-			//DeleteObject(bmpright);
+			/*
+			DeleteObject(bmphead);
+			DeleteObject(bmpfoot);
+			DeleteObject(bmpleft);
+			DeleteObject(bmpright);
+			*/
 		}
 		break;
 
@@ -416,7 +399,6 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		case WM_MOVE:
 		case WM_MOVING:
 		case WM_SIZING:
-		//case WM_ACTIVATE:
 		case WM_SIZE: {
 			static int oldw = 0;
 			static int oldh = 0;

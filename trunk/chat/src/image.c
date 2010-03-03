@@ -11,8 +11,7 @@
 #define DEF_FCOLOR 0x777777
 #define DEF_FCOLOR_HOVER 0x777777
 
-static
-enum status {
+enum {
 	NONE = 0,
 	HOVER,
 	PUSHED
@@ -72,8 +71,9 @@ static struct inode *image_get (HWND hwnd)
 	struct inode *p;
 
 	for (p = g_itable[(unsigned)hwnd%IMGTABLESIZE]; p; p = p->next)
-		if (p->hwnd = hwnd)
-	return p;
+		if (p->hwnd == hwnd)
+			return p;
+	return NULL;
 }
 
 static void draw_image (HWND hwnd, HDC hdc, struct inode *img)

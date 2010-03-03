@@ -38,7 +38,7 @@
 #define GROUP_ARROW_Y 6
 
 #define BBUDDY_PIC_X 6
-#define BBUDDY_PIC_Y 7
+#define BBUDDY_PIC_Y 6
 #define BBUDDY_PIC_W 32
 #define BBUDDY_PIC_H 32
 #define BBUDDY_NAME_X 8
@@ -890,17 +890,24 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			new_chatbuddy(g, 15);
 			new_chatbuddy(g, 16);
 			b = new_chatbuddy(g, 17);
-			int r = buddytable_add (cl, b);
+			buddytable_add (cl, b);
+			{
 			ChatBuddy *p = buddytable_get (cl, 17);
 
 			printf ("%d\n", p?p->uid:0);
 			buddytable_del(cl, 17);
 			p = buddytable_get (cl, 1);
 			printf ("%d\n", p?lstrlen(p->name):0);
+			}
 			del_chatgroup(cl, 1);
 
 			}
 		break;
+
+		case WM_DESTROY:
+			del_chatlist (hwnd);
+			printf ("del chatlist\n");
+		return 0;
 
 		case WM_PAINT: {
 			PAINTSTRUCT ps;

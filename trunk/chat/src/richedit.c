@@ -18,7 +18,7 @@ HWND new_richedit (HWND dad, char *format, ...)
 
 	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP  |ES_WANTRETURN; /* ES_READONLY */
 
-	hwnd= CreateWindowEx(0, RICHEDIT_CLASS, "",
+	hwnd= CreateWindowEx(0, RICHEDIT_CLASS, TEXT(""),
 		style,
 		0, 0, 0, 0,
 		dad, (HMENU)0, GetModuleHandle(NULL), NULL);
@@ -127,8 +127,8 @@ void richedit_gettext (HWND hrich, TCHAR *buf)
 
 	if (!hrich || !buf) return;
 
-	SendMessage (hrich, EM_EXSETSEL, 0, &cr);
-	SendMessage (hrich, EM_GETSELTEXT, 0, buf);
+	SendMessage (hrich, EM_EXSETSEL, 0, (LPARAM)&cr);
+	SendMessage (hrich, EM_GETSELTEXT, 0, (LPARAM)buf);
 }
 
 /* 清除所有内容 */

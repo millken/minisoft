@@ -27,6 +27,7 @@ extern "C" {
 #define i32free(p) do{if(p)free(p);}while(0)
 
 #define i32id GetDlgItem
+#define i32sendmsg(h,m,wp,lp) SendMessage((HWND)h, m, (WPARAM)wp, (LPARAM)lp)
 
 typedef struct {
 	HWND hwnd;
@@ -52,11 +53,14 @@ void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
 /* GDI */
+#define i32loadbmp(rcname) LoadBitmap(GetModuleHandle(0), TEXT(rcname))
 void i32dadrect (HWND hwnd, RECT *r);
 void i32mousepos (HWND hwnd, POINT *p); /* 获得光标位置 */
 void i32framerect (HDC hdc, RECT *r, DWORD col);
 void i32fillrect (HDC hdc, RECT *r, DWORD col);
 void i32line (HDC hdc, int x, int y, int tox, int toy, DWORD col);
+int i32clientx (HWND hwnd);
+int i32clienty (HWND hwnd);
 int i32clientw (HWND hwnd);
 int i32clienth (HWND hwnd);
 void i32blt (HDC hdc, HBITMAP hbmp, int x, int y);
@@ -69,6 +73,11 @@ void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
 void i32vset (HWND hwnd, char *format, va_list p);
+
+/* 常用控件 */
+HWND i32static (HWND dad, char *format, ...);
+HWND i32edit (HWND dad, char *format, ...);
+HWND i32checkbox (HWND dad, char *format, ...);
 
 #ifdef __cplusplus
 }

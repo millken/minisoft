@@ -17,6 +17,28 @@ chatview\'d6\'bb\'b8\'ba\'d4\'f0\'b6\'c1,\'cb\'f9\'d2\'d4\'d3\'c3richedit\'bb\'f
 \'ca\'e4\'c8\'eb\'bf\'f2\'d2\'b2\'d6\'bb\'c4\'dc\'ca\'c7richedit, \'cb\'f9\'d2\'d4\'b9\'d8\'bc\'fc\'ca\'c7\'cf\'fb\'cf\'a2\'d3\'c3\'ca\'b2\'c3\'b4\'b8\'f1\'ca\'bd\'c0\'b4\'b1\'a3\'b4\'e6,\'d2\'aa\'bf\'bc\'c2\'c7\'ba\'ac\'cd\'bc\'c6\'ac\'b5\'c4\'c7\'e9\'bf\'f6.\par
 \'d5\'e2\'d1\'f9\'a3\'ac\'d0\'b4-\'b4\'e6-\'b6\'c1\'c8\'ab\'b2\'bf\'b6\'bc\'d3\'c3rtf\'b8\'f1\'ca\'bd,\'cd\'bc\'c6\'ac\'ca\'fd\'be\'dd\'c8\'ab\'b6\'bc\'d3\'c3\'c1\'f7\'b4\'e6\'b5\'bd\'cf\'fb\'cf\'a2\'d6\'d0,\'b2\'bb\'b5\'a5\'b6\'c0\'b4\'e6\'b7\'c5. \'d5\'e2\'d1\'f9\'c1\'c4\'cc\'ec\'bc\'c7\'c2\'bc\'bf\'c9\'c4\'dc\'b4\'f3\'b5\'e3,\'b4\'ab\'ca\'e4\'bf\'c9\'c4\'dc\'ba\'dc\'b6\'d9.\'d6\'bb\'d3\'d0\'b1\'ed\'c7\'e9\'ba\'cd\'bd\'d8\'cd\'bc\'ca\'c7\'bf\'c9\'d2\'d4\'bb\'ec\'ba\'cf\'d4\'da\'ce\'c4\'d7\'d6\'d6\'d0\'b5\'c4,\'c9\'e8\'bc\'c6\'c9\'cf\'d2\'d4\'ce\'aa\'b1\'ed\'c7\'e9\'b6\'bc\'ca\'c7\'ba\'dc\'d0\'a1\'b5\'c4,\'ba\'dc\'c9\'d9\'b3\'f6\'cf\'d6\'ba\'dc\'b6\'d9\'b5\'c4\'c7\'e9\'bf\'f6,\'bd\'d8\'cd\'bc\'b4\'f3\'b2\'bb\'c1\'cb\'b7\'d6\'bf\'aa\'c0\'b4\'b4\'ab. \'b5\'a5\'b6\'c0\'b7\'a2\'cd\'bc\'c6\'ac\'d4\'f2\'d7\'f7\'ce\'aa\'ce\'c4\'bc\'fe\'c0\'b4\'b4\'ab\'ca\'e4. \'b4\'ab\'ce\'c4\'bc\'fe\'b5\'c4\'b7\'bd\'ca\'bd,\'bf\'c9\'d2\'d4\'d0\'c2\'bf\'aa\'d2\'bb\'b8\'f6\b docking\'cd\'a3\'b2\'b4\'bf\'f2\b0\'bb\'f2\'d5\'df\'b5\'a5\'b6\'c0\'c9\'e8\'d2\'bb\'b8\'f6\'ce\'c4\'bc\'fe\'b9\'dc\'c0\'ed\'b4\'b0\'bf\'da,\'bb\'f2\'d5\'df\'bf\'aa\'b8\'f6tab\'d2\'b3,\'b5\'ab\'c8\'ba\'c0\'ef\'b2\'bb\'d0\'ed\'c8\'ba\'b7\'a2\'ce\'c4\'bc\'fe,\'d6\'bb\'c4\'dc\'b9\'b2\'cf\'ed.\'d5\'e2\'d1\'f9\'bf\'c9\'d2\'d4\'b1\'a3\'d6\'a4\'c8\'ab\'b2\'bf\'b6\'bc\'d3\'c3richedit\'c0\'b4\'d7\'f6.\'d4\'dd\'ca\'b1\'cf\'c8\'d7\'f6\'b4\'bf\'ce\'c4\'d7\'d6\'c4\'a3\'ca\'bd,\'cd\'bc\'c6\'ac\'d2\'d4\'ba\'f3\'bc\'d3\'d2\'b2\'c8\'dd\'d2\'d7. \'d6\'f7\'d2\'aa\'c4\'d1\'b5\'e3\'d4\'da\'d3\'da\'cd\'bc\'c6\'ac\'b5\'c4\'b2\'e5\'c8\'eb\'ba\'cd\'cc\'e6\'bb\'bb.\par
 \par
+\par
+2010-3-3 richedit2\'b5\'e3\'b3\'ac\'c1\'b4\'bd\'d3\'ca\'c2\'bc\'fe:\par
+int dlg_onnote (I32E e)\par
+\{\par
+\tab if (e.wp == 2100) \{\par
+\tab\tab ENLINK *el = (ENLINK *)e.lp;\par
+\tab\tab if (el && el->nmhdr.code == EN_LINK) \{\par
+\tab\tab\tab HWND hrich = el->nmhdr.hwndFrom;\par
+\tab\tab\tab if (el->msg == WM_LBUTTONDOWN) \{\par
+\tab\tab\tab\tab TCHAR buf[320] = \{0\};\par
+\tab\tab\tab\tab int len;\par
+\tab\tab\tab\tab SendMessage (hrich, EM_EXSETSEL, 0, &el->chrg);\par
+\tab\tab\tab\tab len = SendMessage (hrich, EM_GETSELTEXT, 0, buf);\par
+\tab\tab\tab\tab if (len > 0)\par
+\tab\tab\tab\tab\tab ShellExecute (NULL, TEXT("open"), buf, NULL, NULL, SW_SHOW);\par
+\tab\tab\tab\}\par
+\tab\tab\}\par
+\par
+\tab\}\par
+\tab return 0;\par
+\}\par
+\par
 2010-2-6\par
 xp\'cf\'c2\'bf\'b4\'c0\'b4\'d6\'bb\'d3\'d0gb2312\'bc\'af\'c4\'dc\'cf\'d4\'ba\'ab\'ce\'c4,\'b5\'ab\'d7\'d6\'cc\'e5\'ba\'dc\'c4\'d1\'bf\'b4,\'bb\'b9\'ca\'c7\'d3\'c3BALTIC.\par
 \par
@@ -25,7 +47,7 @@ i32set\'b2\'ce\'ca\'fd, style\'d2\'bb\'b6\'a8\'d2\'aa\'d4\'dadad\'d6\'ae\'c7\'b0
 \par
 2010-2-4 15:24:16 \b\'b4\'b4\'bd\'a8\'d7\'d6\'cc\'e5\par
 \'d7\'d6\'b7\'fb\'bc\'af\'d2\'b2\'ba\'dc\'d6\'d8\'d2\'aa\par
-\b0 i32set\'b2\'ce\'ca\'fd\'cc\'ab\'b6\'e0\'c8\'dd\'d2\'d7\'b6\'d4\'b4\'ed,\'cf\'c8\'ba\'f3\'cb\'b3\'d0\'f2\'d2\'b2\'ba\'dc\'d6\'d8\'d2\'aa\par
+\b0 i32set\'b2\'ce\'ca\'fd\'cc\'ab\'b6\'e0\'c8\'dd\'d2\'d7\'b6\'d4\'b4\'ed,\'cf\'c8\'ba\'f3\'cb\'b3\'d0\'f2\'d2\'b2\'ba\'dc\'d6\'d8\'d2\'aa, \'b1\'c8\'c8\'e7d|s|id\par
 \par
 2010-1-28 7:55:43 \'c4\'ac\'c8\'cfpanel\'d1\'d5\'c9\'ab: RGB(89,156,238)=0xEE9C59\par
 \par

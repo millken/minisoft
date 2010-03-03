@@ -75,4 +75,16 @@ void richedit_autolink (HWND hrich, BOOL isauto);
 void richedit_clear (HWND hrich);
 void richedit_gettext (HWND hrich, TCHAR *buf);
 
+/* 注册所有控件 */
+void reg_form();
+void reg_chatlist();
+void reg_butten();
+void reg_image();
+#define reg_ctrls() { \
+	reg_form(); \
+	reg_chatlist(); \
+	reg_butten(); \
+	reg_image();\
+	}
+
 #endif
