@@ -21,5 +21,7 @@ ST_BUSY  BITMAP "rc/st_busy2.bmp" /* 忙碌状态图标 */
 GROUP_ARROW BITMAP "rc/grouparrow.bmp" /* 分组下拉箭头 */
 NAME_FLAG BITMAP "rc/flag.bmp" /* 名字右边的下拉箭头 */
 
+LONGBUTTON BITMAP "rc/longbutton.bmp" /* 长按钮 */
+
 /* 各种图标 */
 ICON_FILE BITMAP "rc/icon_file.bmp"

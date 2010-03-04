@@ -4,10 +4,17 @@
 #include <windows.h>
 #include <richedit.h>
 
+/* 对齐参数 */
+enum {
+	LEFT = 0,
+	RIGHT,
+	CENTER
+};
+
 /* 好友列表控件的消息 */
 enum CHATLIST_MSG {
 
-	CM_SETVIEWMODE = WM_USER+1,
+	CM_SETVIEWMODE = WM_USER,
 	CM_GETVIEWMODE,
 	CM_ADDGROUP,
 	CM_SETGROUP_NAME,
@@ -37,19 +44,20 @@ enum CHATLIST_MSG {
 
 /* 按钮控件消息 */
 enum {
-	BM_SETRADIUS = WM_USER + 1,
-	BM_SETALIGN,
-	BM_SETICON,
-	BM_SETICONALIGN,
-	BM_SETMARGIN,
-	BM_SETTITLEMARGIN,
-	BM_SETBCOLOR,
+	BM_SETRADIUS = WM_USER,  /* 半径: int wp */
+	BM_SETALIGN,  /* 对齐: const wp={LEFT,RIGHT,CENTER} */
+	BM_SETICON,  /* 图标: HBITMAP wp */
+	BM_SETICONALIGN,  /* 图标对齐: const wp={LEFT,RIGHT} */
+	BM_SETMARGIN,  /* 左右边距: int wp */
+	BM_SETTITLEMARGIN,  /* 文字边距: int wp */
+	BM_SETBCOLOR,  /* 背景色: DWORD wp */
 	BM_SETBCOLOR_HOVER,
 	BM_SETBCOLOR_PUSHED,
-	BM_SETFCOLOR,
-	BM_SETTEXTCOLOR,
+	BM_SETFCOLOR,  /* 边框色: DWORD wp */
+	BM_SETTEXTCOLOR,  /* 文字色: DWORD wp */
 
-	/* 输出消息 */
+	/* 反馈给父窗口的消息 */
+	/* WM_COMMAND HIWORD=下面的消息 LOWORD=控件id */
 	BM_LBUTTONDOWN,
 	BM_LBUTTONUP,
 	BM_RBUTTONDOWN,
@@ -58,13 +66,14 @@ enum {
 
 /* 图片控件消息 */
 enum {
-	IM_SETIMAGE = WM_USER + 1,
+	IM_SETIMAGE = WM_USER,
 	IM_SETPADDING,
 	IM_SETBCOLOR,
 	IM_SETBCOLOR_HOVER,
 	IM_SETFCOLOR,
 	IM_SETFCOLOR_HOVER
 };
+
 
 /* richedit控件 */
 #define RICHEDIT_STYLE (WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | ENM_LINK)
@@ -74,6 +83,7 @@ void richedit_textout (HWND hrich, TCHAR *text);
 void richedit_autolink (HWND hrich, BOOL isauto);
 void richedit_clear (HWND hrich);
 void richedit_gettext (HWND hrich, TCHAR *buf);
+
 
 /* 注册所有控件 */
 void reg_form();

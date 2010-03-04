@@ -35,9 +35,17 @@ static struct hwndmsg {
 static struct hwndattr {
 	HWND hwnd;
 	DWORD bgcolor;
+	DWORD color;
+	HCURSOR cursor;
 	struct hwndattr *next;
 } *attrtable[I32ATTRTABLE_SIZE];
 
+HWND g_prehwnd = NULL; /* 上一个创建的句柄 */
+
+HWND i32pre ()
+{
+	return g_prehwnd;
+}
 
 /* 提供一个空控件,作为布局容器 */
 static LRESULT CALLBACK
@@ -92,6 +100,7 @@ static int init ()
 	memset(msgtable, 0, sizeof(msgtable));
 	memset(attrtable, 0, sizeof(attrtable));
 	reg_box ();
+	g_prehwnd = NULL;
 	inited = TRUE;
 	return 1;
 }
@@ -189,9 +198,11 @@ static void set_attr (struct hwndattr *data)
 	hash = (unsigned)data->hwnd;
 	hm = &attrtable[hash%I32ATTRTABLE_SIZE];
 	while (*hm) {
-		struct hwndattr *p = *hm;
+		struct hwndattr *p = *hm, *next;
 		if (p->hwnd==data->hwnd) {
+			next = p->next;
 			memcpy (p, data, sizeof(struct hwndattr));
+			p->next = next;
 			return;
 		}
 		hm = &p->next;
@@ -339,16 +350,41 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		return 0;
 	}
 
-	/* 公共控件背景透明 */
+	/* 公共控件背景和文字颜色 */
 	switch (message) {
+		case WM_CTLCOLORDLG:
+		case WM_CTLCOLORMSGBOX:
 		case WM_CTLCOLOREDIT:
 		case WM_CTLCOLORLISTBOX:
 		case WM_CTLCOLORSTATIC:
+		case WM_CTLCOLORSCROLLBAR:
 		case WM_CTLCOLORBTN: {
+			struct hwndattr *a;
 			HDC hdc = (HDC)wp;
+			HWND hctrl = (HWND)lp;
+			HBRUSH hbrush = GetStockObject(NULL_BRUSH);
+
 			SetBkMode(hdc, TRANSPARENT);
-			//SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-			return 0;
+
+			a = get_attr(hctrl);
+			if (!a) return hbrush;
+
+			if (a->bgcolor != -1)
+				hbrush = CreateSolidBrush(a->bgcolor);
+
+			SetTextColor(hdc, a->color);
+			return hbrush;
+		}
+		break;
+
+		case WM_SETCURSOR: {
+			struct hwndattr *a;
+
+			a = get_attr(hwnd);
+			if (!a || !a->cursor) break;
+
+			SetCursor(a->cursor);
+			return TRUE;
 		}
 		break;
 	}
@@ -682,17 +718,49 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				struct hwndattr at;
 				memset(&at, 0, sizeof(struct hwndattr));
 				at.hwnd = hwnd;
+				at.bgcolor = v;
 				a = &at;
+				set_attr (a);
 			}
 			a->bgcolor = v;
-			set_attr (a);
 			i32setproc (hwnd, WM_ERASEBKGND, on_erasebg);
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		else
+		if (STRSAME("color", a) || STRSAME("fc", a)) {
+			DWORD v = va_arg(p, DWORD);
+			struct hwndattr *a = get_attr(hwnd);
+			/* alloc new attribute */
+			if (!a) {
+				struct hwndattr at;
+				memset(&at, 0, sizeof(struct hwndattr));
+				at.hwnd = hwnd;
+				at.color = v;
+				a = &at;
+				set_attr (&at);
+			}
+			a->color = v;
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		else
 		if (STRSAME("id", a)) {
 			LONG id = va_arg(p, LONG);
 			SetWindowLong (hwnd, GWL_ID, id);
+		}
+		else
+		if (STRSAME("cur", a) || STRSAME("cursor", a)) {
+			HCURSOR v = va_arg(p, HCURSOR);
+			struct hwndattr *a = get_attr(hwnd);
+			/* alloc new attribute */
+			if (!a) {
+				struct hwndattr at;
+				memset(&at, 0, sizeof(struct hwndattr));
+				at.hwnd = hwnd;
+				at.cursor = v;
+				a = &at;
+				set_attr (&at);
+			}
+			a->cursor = v;
 		}
 
 		/* 设置字体 */
@@ -757,7 +825,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 			SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
 		}
 
-		/* 遇到不认识的必须马上退出,否则不知道怎么解读以后的参数 */
+		/* 遇到不认识的tag必须马上退出,否则不知道怎么解读以后的参数 */
 		else break;
 
 	} while (*format != '\0');
@@ -801,6 +869,9 @@ HWND i32create (TCHAR *classname, char *format, ...)
 		i32vset(hwnd, format, p);
 		va_end(p);
 	}
+
+	if (hwnd)
+		g_prehwnd = hwnd;
 
 	UpdateWindow (hwnd);
 	return hwnd;
@@ -1140,6 +1211,31 @@ void i32hblt (HDC hdc, HBITMAP hbmp, int x, int y, int index, int pagen)
 	DeleteObject(hmem);
 }
 
+/* 画纵向第i贞 */
+void i32vblt (HDC hdc, HBITMAP hbmp, int x, int y, int index, int pagen)
+{
+	BITMAP bmp;
+	HDC hmem = 0;
+	int left, top, w, h;
+
+	GetObject (hbmp, sizeof(bmp), &bmp);
+	hmem = CreateCompatibleDC(hdc);
+	SelectObject(hmem, hbmp);
+
+	index = index % pagen;
+	h = bmp.bmHeight / pagen;
+	w = bmp.bmWidth;
+	left = 0;
+	top = index * h;
+
+	/*BitBlt(hdc, x, y, bmp.bmWidth, bmp.bmHeight, hmem, 0, 0, SRCCOPY);*/
+	/* 需要连接库 - msimg32.a */
+	TransparentBlt (hdc, x, y, w, h, hmem,
+		left, top, w, h, RGB(255, 0, 255));
+
+	DeleteObject(hmem);
+}
+
 void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col)
 {
 	SetTextColor (hdc, col);
@@ -1171,6 +1267,10 @@ static HWND creatctl (TCHAR *classname, HWND dad, unsigned style)
            GetModuleHandle(NULL),       /* Program Instance handler */
            NULL                 /* No Window Creation data */
 	);
+
+	if (hwnd)
+		g_prehwnd = hwnd;
+
 	return hwnd;
 }
 
@@ -1213,10 +1313,19 @@ HWND i32checkbox (HWND dad, char *format, ...)
 	HWND hwnd;
 	va_list p;
 
-	hwnd = creatctl(TEXT("button"), dad, WS_CTRL|BS_FLAT|BS_CHECKBOX);
-	//i32setproc (hwnd, WM_SIZE, on_ctlcolor);
+	hwnd = creatctl(TEXT("button"), dad, WS_CTRL|BS_AUTOCHECKBOX);
 	i32set (hwnd, "w|h", 13, 13);
 	_vset(hwnd, format);
 
 	return hwnd;
+}
+
+BOOL i32getcheck (HWND hcheckbox)
+{
+	return (BOOL)i32send(hcheckbox, BM_GETCHECK, 0, 0);
+}
+
+void i32setcheck (HWND hcheckbox, BOOL v)
+{
+	i32send (hcheckbox, BM_SETCHECK, v, 0);
 }

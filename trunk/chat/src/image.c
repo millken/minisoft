@@ -5,7 +5,7 @@
 #include "i32.h"
 #include "ctrls.h"
 
-#define DEF_PADDING 3
+#define DEF_PADDING 0
 #define DEF_BCOLOR 0xffffff
 #define DEF_BCOLOR_HOVER 0xfafafa
 #define DEF_FCOLOR 0x777777

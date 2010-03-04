@@ -11,18 +11,15 @@ enum {
 	PUSHED
 };
 
-enum {
-	LEFT = 0,
-	RIGHT,
-	CENTER
-};
 
 #define DEF_MARGIN 0
 #define DEF_TITLEMARGIN 4
-#define DEF_BCOLOR 0xff00ff
-#define DEF_BCOLOR_HOVER 0xff00ff
-#define DEF_BCOLOR_PUSHED 0xff00ff
-#define DEF_FCOLOR 0xff00ff
+#define DEF_BCOLOR 0xffffff
+#define DEF_BCOLOR_HOVER 0xffffff
+#define DEF_BCOLOR_PUSHED 0xffffff
+#define DEF_FCOLOR 0x000000
+#define DEF_FCOLOR_HOVER 0x000000
+#define DEF_TEXTCOLOR_DISABLED 0x666666
 #define DEF_RADIUS 0
 #define DEF_ICONALIGN LEFT
 
@@ -31,7 +28,11 @@ enum {
 static struct butten {
 	HWND hwnd;
 
-	HBITMAP hbmp;
+	/* 纯图片模式 */
+	HBITMAP himage; /* 组合图片, 从上到下纵排4个状态: 正常,经过,按下,禁用 */
+
+	/* 文字平坦模式 */
+	HBITMAP hbmp; /* 图标 */
 	HFONT hfont; /* 自定义控件貌似要自己做WM_SETFONT */
 	int rad; /* 圆角半径 */
 	int align; /* 内容对齐 */
@@ -43,9 +44,11 @@ static struct butten {
 	DWORD bcolor_h; /* 经过时背景色 */
 	DWORD bcolor_p; /* 按下后背景色 */
 	DWORD fcolor; /* 边框色 */
+	DWORD fcolor_h; /* 经过时边框色 */
 	DWORD textcolor; /* 字体颜色 */
+	DWORD textcolor_d; /* 禁用后文字颜色 */
 
-	int status; /* 鼠标经过状态 0:none, 1:经过, 2:按下 */
+	int status; /* 鼠标经过状态 0:none, 1:经过, 2:按下, 3:禁用 */
 	int oldstatus;
 
 	struct butten *next;
@@ -78,11 +81,14 @@ static void butten_new (HWND hwnd)
 	p->bcolor_h = DEF_BCOLOR_HOVER;
 	p->bcolor_p = DEF_BCOLOR_PUSHED;
 	p->fcolor = DEF_FCOLOR;
+	p->fcolor_h = DEF_FCOLOR_HOVER;
 	p->rad = DEF_RADIUS;
 	p->margin = DEF_MARGIN;
 	p->titlemargin = DEF_TITLEMARGIN;
 	p->iconalign = DEF_ICONALIGN;
 	p->align = CENTER;
+	p->textcolor_d = DEF_TEXTCOLOR_DISABLED;
+	p->himage = i32loadbmp("LONGBUTTON");
 }
 
 static struct butten *butten_get (HWND hwnd)
@@ -149,7 +155,10 @@ static void draw_butten (HWND hwnd, HDC hdc)
 	}
 
 	/* 画背景 */
-	if (b->status > 0) {
+	if (b->himage) {
+		i32vblt (hdc, b->himage, 0, 0, b->status, 4);
+	}
+	else if (b->status > 0) {
 		HPEN hpen = CreatePen(PS_SOLID, 1, b->fcolor);
 		HBRUSH hbrush = CreateSolidBrush(b->status==HOVER?b->bcolor_h:b->bcolor_p);
 		int inner = 0;
@@ -157,9 +166,9 @@ static void draw_butten (HWND hwnd, HDC hdc)
 			inner = 1;
 		SelectObject(hdc, hpen);
 		SelectObject(hdc, hbrush);
-		if ((b->status==HOVER&&b->bcolor_h!=0xff00ff) ||
-			(b->status==PUSHED&&b->bcolor_p!=0xff00ff))
-		RoundRect(hdc, inner, inner, buttenw-inner, buttenh-inner, b->rad, b->rad);
+		if ((b->status==HOVER&&b->bcolor_h!=0xffffffff) ||
+			(b->status==PUSHED&&b->bcolor_p!=0xffffffff))
+			RoundRect(hdc, inner, inner, buttenw-inner, buttenh-inner, b->rad, b->rad);
 		DeleteObject(hbrush);
 		DeleteObject(hpen);
 	}
@@ -188,7 +197,10 @@ static void draw_butten (HWND hwnd, HDC hdc)
 
 	/* 画标题 */
 	SetBkMode(hdc, TRANSPARENT);
-	SetTextColor(hdc, b->textcolor);
+	if (b->status == 3)
+		SetTextColor(hdc, b->textcolor_d);
+	else
+		SetTextColor(hdc, b->textcolor);
 	TextOut (hdc, titlex, (buttenh-titleh)/2, title, titlelen);
 
 	/* 画图标 */
@@ -267,18 +279,16 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_RBUTTONDOWN: {
-			/* 通知父窗口 */ {
+			/* 通知父窗口 */
 			int id = GetDlgCtrlID(hwnd);
 			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONDOWN<<16)|id, (LPARAM)hwnd);
-			}
 		}
 		return 0;
 
 		case WM_RBUTTONUP: {
-			/* 通知父窗口 */ {
+			/* 通知父窗口 */
 			int id = GetDlgCtrlID(hwnd);
 			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_RBUTTONUP<<16)|id, (LPARAM)hwnd);
-			}
 		}
 		return 0;
 
@@ -289,7 +299,7 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 			GetClientRect (hwnd, &r);
 
-			if (b->bcolor != 0xff00ff)
+			if (b->bcolor != 0xffffffff)
 				i32fillrect(hdc, &r, b->bcolor);
 			draw_butten(hwnd, hdc);
 
@@ -297,6 +307,9 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		}
 		return 0;
 
+		case WM_ENABLE:
+			b->status = wp?0:3;
+		break;
 
 		/* 输入接口 */
 
@@ -312,7 +325,7 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case BM_SETICONALIGN:
-			b->iconalign = RIGHT;
+			b->iconalign = (int)wp;
 		return 0;
 
 		case WM_SETFONT: {
