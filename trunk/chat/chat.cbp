@@ -70,6 +70,10 @@
 			<Option compilerVar="CC" />
 			<Option virtualFolder="controls\" />
 		</Unit>
+		<Unit filename="src\link.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="controls\" />
+		</Unit>
 		<Unit filename="src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -80,9 +84,6 @@
 		<Unit filename="src\richedit.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="controls\" />
-		</Unit>
-		<Unit filename="src\wins.c">
-			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
 			<code_completion />

@@ -8,7 +8,8 @@
 enum {
 	NONE = 0,
 	HOVER,
-	PUSHED
+	PUSHED,
+	DISABLED
 };
 
 
@@ -19,7 +20,7 @@ enum {
 #define DEF_BCOLOR_PUSHED 0xffffff
 #define DEF_FCOLOR 0x000000
 #define DEF_FCOLOR_HOVER 0x000000
-#define DEF_TEXTCOLOR_DISABLED 0x666666
+#define DEF_TEXTCOLOR_DISABLED 0x999999
 #define DEF_RADIUS 0
 #define DEF_ICONALIGN LEFT
 
@@ -88,7 +89,6 @@ static void butten_new (HWND hwnd)
 	p->iconalign = DEF_ICONALIGN;
 	p->align = CENTER;
 	p->textcolor_d = DEF_TEXTCOLOR_DISABLED;
-	p->himage = i32loadbmp("LONGBUTTON");
 }
 
 static struct butten *butten_get (HWND hwnd)
@@ -227,7 +227,7 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_MOUSEMOVE: {
-			if (b->status != PUSHED)
+			if (b->status!=DISABLED && b->status!=PUSHED)
 				b->status = HOVER;
 			if (b->oldstatus != b->status) {
 				InvalidateRect(hwnd, NULL, TRUE);
@@ -246,7 +246,8 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_MOUSELEAVE: {
-			b->status = NONE;
+			if (b->status != DISABLED)
+				b->status = NONE;
 			if (b->oldstatus != b->status) {
 				InvalidateRect(hwnd, NULL, TRUE);
 				b->oldstatus = b->status;
@@ -255,26 +256,30 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_LBUTTONDOWN:
-			b->status = PUSHED;
+			if (b->status != DISABLED)
+				b->status = PUSHED;
 			if (b->oldstatus != b->status) {
 				InvalidateRect(hwnd, NULL, TRUE);
 				b->oldstatus = b->status;
 			}
-			/* 通知父窗口 */ {
-			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONDOWN<<16)|id, (LPARAM)hwnd);
+			/* 通知父窗口 */
+			if (b->status != DISABLED) {
+				int id = GetDlgCtrlID(hwnd);
+				SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONDOWN<<16)|id, (LPARAM)hwnd);
 			}
 		return 0;
 
 		case WM_LBUTTONUP:
-			if (b) b->status = HOVER;
+			if (b->status != DISABLED)
+				b->status = HOVER;
 			if (b->oldstatus != b->status) {
 				InvalidateRect(hwnd, NULL, TRUE);
 				b->oldstatus = b->status;
 			}
-			/* 通知父窗口 */ {
-			int id = GetDlgCtrlID(hwnd);
-			SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONUP<<16)|id, (LPARAM)hwnd);
+			/* 通知父窗口 */
+			if (b->status != DISABLED) {
+				int id = GetDlgCtrlID(hwnd);
+				SendMessage (GetParent(hwnd), WM_COMMAND, (BM_LBUTTONUP<<16)|id, (LPARAM)hwnd);
 			}
 		return 0;
 
@@ -308,7 +313,11 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case WM_ENABLE:
-			b->status = wp?0:3;
+			b->status = wp?NONE:DISABLED;
+			if (b->oldstatus != b->status) {
+				InvalidateRect(hwnd, NULL, TRUE);
+				b->oldstatus = b->status;
+			}
 		break;
 
 		/* 输入接口 */
@@ -366,6 +375,12 @@ win_proc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		case BM_SETTEXTCOLOR:
 			b->textcolor = (DWORD)wp;
 		return 0;
+
+		case BM_SETIMG:
+			if (b->himage)
+				DeleteObject(b->himage);
+			b->himage = (HBITMAP)wp;
+		return 0;
 	}
 
 	return DefWindowProc(hwnd, msg, wp, lp);
@@ -397,4 +412,28 @@ void reg_butten ()
     RegisterClassEx (&wincl);
 
 	init();
+}
+
+HWND create_butten (HWND dad, TCHAR *imagercname, char *format, ...)
+{
+	HWND hwnd = i32create(TEXT("butten"), "d|s|w|h|f",
+		dad, WS_CTRL, 80, 23, "Arial,15");
+	if (!hwnd) return NULL;
+
+	if (imagercname) {
+		HBITMAP hbmp = i32loadbmp(imagercname);
+		BITMAP bmp;
+		GetObject(hbmp, sizeof(bmp), &bmp);
+		i32set (hwnd, "w|h", bmp.bmWidth, bmp.bmHeight/4);
+		i32send (hwnd, BM_SETIMG, hbmp, 0);
+	}
+
+	if (format) {
+		va_list p;
+		va_start (p, format);
+		i32vset (hwnd, format, p);
+		va_end(p);
+	}
+
+	return hwnd;
 }

@@ -41,7 +41,8 @@ typedef int (*I32PROC) (I32EVENT);
 
 /* 核心 */
 HWND i32create (TCHAR *classname, char *format, ...);
-inline HWND i32pre (); /* 上一个创建的hwnd */
+inline HWND i32pre (); /* 取得上一个创建的hwnd */
+void i32setpre (HWND hwnd);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
@@ -54,7 +55,7 @@ void i32vfill (HWND hwnd, ...);
 void i32hfill (HWND hwnd, ...);
 
 /* GDI */
-#define i32loadbmp(rcname) LoadBitmap(GetModuleHandle(0), TEXT(rcname))
+#define i32loadbmp(rcname) LoadBitmap(GetModuleHandle(0), rcname)
 void i32dadrect (HWND hwnd, RECT *r);
 void i32mousepos (HWND hwnd, POINT *p); /* 获得光标位置 */
 void i32framerect (HDC hdc, RECT *r, DWORD col);
@@ -79,6 +80,7 @@ void i32vset (HWND hwnd, char *format, va_list p);
 /* 常用控件 */
 HWND i32static (HWND dad, char *format, ...);
 HWND i32edit (HWND dad, char *format, ...);
+HWND i32pwdedit (HWND dad, char *format, ...);
 HWND i32checkbox (HWND dad, char *format, ...);
 inline BOOL i32getcheck (HWND hcheckbox);
 inline void i32setcheck (HWND hcheckbox, BOOL v);

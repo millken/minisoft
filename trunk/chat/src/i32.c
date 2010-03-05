@@ -47,6 +47,11 @@ HWND i32pre ()
 	return g_prehwnd;
 }
 
+void i32setpre (HWND hwnd)
+{
+	g_prehwnd = hwnd;
+}
+
 /* 提供一个空控件,作为布局容器 */
 static LRESULT CALLBACK
 box_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
@@ -352,17 +357,17 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 	/* 公共控件背景和文字颜色 */
 	switch (message) {
-		case WM_CTLCOLORDLG:
-		case WM_CTLCOLORMSGBOX:
+		//case WM_CTLCOLORDLG:
+		//case WM_CTLCOLORMSGBOX:
 		case WM_CTLCOLOREDIT:
-		case WM_CTLCOLORLISTBOX:
+		//case WM_CTLCOLORLISTBOX:
 		case WM_CTLCOLORSTATIC:
-		case WM_CTLCOLORSCROLLBAR:
+		//case WM_CTLCOLORSCROLLBAR:
 		case WM_CTLCOLORBTN: {
 			struct hwndattr *a;
 			HDC hdc = (HDC)wp;
 			HWND hctrl = (HWND)lp;
-			HBRUSH hbrush = GetStockObject(NULL_BRUSH);
+			HBRUSH hbrush = GetStockObject(WHITE_BRUSH);
 
 			SetBkMode(hdc, TRANSPARENT);
 
@@ -371,20 +376,11 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 			if (a->bgcolor != -1)
 				hbrush = CreateSolidBrush(a->bgcolor);
+			else
+				hbrush = GetStockObject(NULL_BRUSH);
 
 			SetTextColor(hdc, a->color);
 			return hbrush;
-		}
-		break;
-
-		case WM_SETCURSOR: {
-			struct hwndattr *a;
-
-			a = get_attr(hwnd);
-			if (!a || !a->cursor) break;
-
-			SetCursor(a->cursor);
-			return TRUE;
 		}
 		break;
 	}
@@ -534,6 +530,19 @@ static int on_erasebg (I32EVENT e)
 	}
 
 	return 0;
+}
+
+/* 设置光标 */
+static int on_setcursor (I32EVENT e)
+{
+	struct hwndattr *a;
+
+	a = get_attr(e.hwnd);
+	if (!a || !a->cursor)
+		return TRUE;
+
+	SetCursor(a->cursor);
+	return TRUE;
 }
 
 void i32vset (HWND hwnd, char *format, va_list p)
@@ -761,6 +770,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 				set_attr (&at);
 			}
 			a->cursor = v;
+			i32setproc (hwnd, WM_SETCURSOR, on_setcursor);
 		}
 
 		/* 设置字体 */
@@ -1244,7 +1254,6 @@ void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col)
 
 
 
-
 /*
  * 常用控件
  */
@@ -1260,8 +1269,8 @@ static HWND creatctl (TCHAR *classname, HWND dad, unsigned style)
            style, /*WS_OVERLAPPEDWINDOW,*/					/* default window */
            0,		/* Windows decides the position */
            0,		/* where the window ends up on the screen */
-           0,		/* The programs width */
-           0,		/* and height in pixels */
+           110,		/* The programs width */
+           20,		/* and height in pixels */
            dad,        /* The window is a child-window to desktop */
            NULL,                /* No menu */
            GetModuleHandle(NULL),       /* Program Instance handler */
@@ -1276,7 +1285,6 @@ static HWND creatctl (TCHAR *classname, HWND dad, unsigned style)
 
 
 #define _vset(hwnd, format) \
-	i32set(hwnd, "f|bc", "Arial,15", -1); \
 	if (format) { \
 		va_list p; \
 		va_start(p, format); \
@@ -1290,7 +1298,7 @@ HWND i32static (HWND dad, char *format, ...)
 	HWND hwnd;
 
 	hwnd = creatctl(TEXT("static"), dad, WS_CTRL|SS_SIMPLE);
-	i32set(hwnd, "f", "Arial,15");
+	i32set(hwnd, "f|bc", "Arial,15", -1);
 	_vset(hwnd, format);
 
 	return hwnd;
@@ -1302,11 +1310,22 @@ HWND i32edit (HWND dad, char *format, ...)
 	HWND hwnd;
 
 	hwnd = creatctl(TEXT("edit"), dad, WS_CTRL|WS_BORDER|ES_AUTOHSCROLL);
+	i32set(hwnd, "f", "Arial,15");
 	_vset(hwnd, format);
 
 	return hwnd;
 }
 
+HWND i32pwdedit (HWND dad, char *format, ...)
+{
+	HWND hwnd;
+
+	hwnd = creatctl(TEXT("edit"), dad, WS_CTRL|WS_BORDER|ES_PASSWORD|ES_AUTOHSCROLL);
+	i32set(hwnd, "f", "Arial,15");
+	_vset(hwnd, format);
+
+	return hwnd;
+}
 
 HWND i32checkbox (HWND dad, char *format, ...)
 {
@@ -1314,7 +1333,7 @@ HWND i32checkbox (HWND dad, char *format, ...)
 	va_list p;
 
 	hwnd = creatctl(TEXT("button"), dad, WS_CTRL|BS_AUTOCHECKBOX);
-	i32set (hwnd, "w|h", 13, 13);
+	i32set (hwnd, "w|h|f", 13, 13, "Arial,15");
 	_vset(hwnd, format);
 
 	return hwnd;

@@ -55,6 +55,7 @@ enum {
 	BM_SETBCOLOR_PUSHED,
 	BM_SETFCOLOR,  /* 边框色: DWORD wp */
 	BM_SETTEXTCOLOR,  /* 文字色: DWORD wp */
+	BM_SETIMG, /* 状态图片, 从上到下纵排4个状态: 正常,经过,按下,禁用 */
 
 	/* 反馈给父窗口的消息 */
 	/* WM_COMMAND HIWORD=下面的消息 LOWORD=控件id */
@@ -63,6 +64,13 @@ enum {
 	BM_RBUTTONDOWN,
 	BM_RBUTTONUP
 };
+
+HWND create_butten (HWND dad, TCHAR *imagercname, char *format, ...);
+
+
+/* 超链接控件 */
+HWND create_hyperlink (HWND dad, char *format, ...);
+
 
 /* 图片控件消息 */
 enum {
@@ -90,11 +98,13 @@ void reg_form();
 void reg_chatlist();
 void reg_butten();
 void reg_image();
+void reg_hyperlink();
 #define reg_ctrls() { \
 	reg_form(); \
 	reg_chatlist(); \
 	reg_butten(); \
 	reg_image();\
+	reg_hyperlink();\
 	}
 
 #endif

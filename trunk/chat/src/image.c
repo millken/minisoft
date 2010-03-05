@@ -222,7 +222,7 @@ void reg_image ()
     /* Use default icon and mouse-pointer */
     wincl.hIcon = NULL;
     wincl.hIconSm = NULL;
-    wincl.hCursor = LoadCursor (NULL, IDC_HAND);
+    wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;                 /* No menu */
     wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
