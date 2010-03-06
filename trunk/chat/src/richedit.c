@@ -4,7 +4,7 @@
 
 #define strsame(a, b) (strcmp(a,b)==0)
 
-HWND new_richedit (HWND dad, char *format, ...)
+HWND create_richedit (HWND dad, char *format, ...)
 {
 	static int dllloaded = FALSE;
 	HWND  hwnd;
@@ -22,6 +22,7 @@ HWND new_richedit (HWND dad, char *format, ...)
 		style,
 		0, 0, 0, 0,
 		dad, (HMENU)0, GetModuleHandle(NULL), NULL);
+	if (!hwnd) return NULL;
 
 	if (format) {
 		va_start (p, format);
@@ -38,6 +39,7 @@ HWND new_richedit (HWND dad, char *format, ...)
 		SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
 	}
 
+	i32setpre(hwnd);
     return hwnd;
 }
 

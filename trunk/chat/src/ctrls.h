@@ -42,6 +42,8 @@ enum CHATLIST_MSG {
 	CM_RUP
 };
 
+
+
 /* 按钮控件消息 */
 enum {
 	BM_SETRADIUS = WM_USER,  /* 半径: int wp */
@@ -64,12 +66,18 @@ enum {
 	BM_RBUTTONDOWN,
 	BM_RBUTTONUP
 };
-
 HWND create_butten (HWND dad, TCHAR *imagercname, char *format, ...);
 
 
+
 /* 超链接控件 */
-HWND create_hyperlink (HWND dad, char *format, ...);
+enum {
+	LM_SETCOLOR = WM_USER, /* DWORD wp = 默认文字颜色 */
+	LM_SETCOLOR_HOVER,
+	LM_SETCOLOR_PUSH
+};
+HWND create_link (HWND dad, char *format, ...);
+void set_linkcolor (HWND hwnd, DWORD color, DWORD colorh, DWORD colorp);
 
 
 /* 图片控件消息 */
@@ -81,16 +89,19 @@ enum {
 	IM_SETFCOLOR,
 	IM_SETFCOLOR_HOVER
 };
+HWND create_image (HWND dad, TCHAR *rcname, char *format, ...);
+
 
 
 /* richedit控件 */
 #define RICHEDIT_STYLE (WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | ENM_LINK)
-HWND new_richedit (HWND dad, char *format, ...);
+HWND create_richedit (HWND dad, char *format, ...);
 void richedit_setfont (HWND hwnd, BOOL isall, char *format, ...);
 void richedit_textout (HWND hrich, TCHAR *text);
 void richedit_autolink (HWND hrich, BOOL isauto);
 void richedit_clear (HWND hrich);
 void richedit_gettext (HWND hrich, TCHAR *buf);
+
 
 
 /* 注册所有控件 */
@@ -106,5 +117,6 @@ void reg_hyperlink();
 	reg_image();\
 	reg_hyperlink();\
 	}
+
 
 #endif

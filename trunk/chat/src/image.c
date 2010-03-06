@@ -234,3 +234,29 @@ void reg_image ()
 
 	init();
 }
+
+HWND create_image (HWND dad, TCHAR *rcname, char *format, ...)
+{
+	HWND hwnd;
+	HBITMAP hbmp;
+	BITMAP bmp;
+
+	hwnd = i32create (TEXT("image"), "d|s", dad, WS_CTRL);
+	if (!hwnd) return NULL;
+
+	if (rcname) {
+		hbmp = i32loadbmp(rcname);
+		GetObject(hbmp, sizeof(bmp), &bmp);
+		i32set (hwnd, "w|h", bmp.bmWidth, bmp.bmHeight);
+		i32send (hwnd, IM_SETIMAGE, hbmp, 0);
+	}
+
+	if (format) {
+		va_list p;
+		va_start(p, format);
+		i32vset(hwnd, format, p);
+		va_end(p);
+	}
+
+	return hwnd;
+}
