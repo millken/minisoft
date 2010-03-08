@@ -121,13 +121,13 @@ static void butten_del (HWND hwnd)
 
 static void draw_butten (HWND hwnd, HDC hdc)
 {
-	int buttenw = 0, buttenh;
+	int buttenw = 0, buttenh=0;
 	TCHAR title[32];
 	int titlelen = GetWindowText(hwnd, title, -1);
-	int titlew, titleh, iconw, left = 0;
+	int titlew=0, titleh=0, iconw=0, left = 0;
 	BITMAP bmp;
 	struct butten *b;
-	int titlex, iconx;
+	int titlex=0, iconx=0;
 	int contentw = 0; /* 图标+文字的宽度 */
 
 	buttenh = i32clienth(hwnd);

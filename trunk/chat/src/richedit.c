@@ -4,6 +4,12 @@
 
 #define strsame(a, b) (strcmp(a,b)==0)
 
+static int redit_onvscroll (I32E e)
+{
+
+	return -1;
+}
+
 HWND create_richedit (HWND dad, char *format, ...)
 {
 	static int dllloaded = FALSE;
@@ -16,9 +22,9 @@ HWND create_richedit (HWND dad, char *format, ...)
 		dllloaded = TRUE;
     }
 
-	style = ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP  |ES_WANTRETURN; /* ES_READONLY */
+	style = ES_AUTOVSCROLL|ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_TABSTOP|ES_WANTRETURN; /* ES_READONLY */
 
-	hwnd= CreateWindowEx(0, RICHEDIT_CLASS, TEXT(""),
+	hwnd = CreateWindowEx(0, RICHEDIT_CLASS, TEXT(""),
 		style,
 		0, 0, 0, 0,
 		dad, (HMENU)0, GetModuleHandle(NULL), NULL);
@@ -30,7 +36,9 @@ HWND create_richedit (HWND dad, char *format, ...)
 		va_end (p);
 	}
 
-	/* 滚动条高度清零,原来默认是100 */
+	i32setproc (hwnd, WM_VSCROLL, redit_onvscroll);
+
+	/* 滚动条高度清零,原来默认是100
 	{
 		SCROLLINFO si;
 		si.fMask = SIF_RANGE;
@@ -38,6 +46,7 @@ HWND create_richedit (HWND dad, char *format, ...)
 		si.nMax = 0;
 		SetScrollInfo (hwnd, SB_VERT, &si, TRUE);
 	}
+	*/
 
 	i32setpre(hwnd);
     return hwnd;

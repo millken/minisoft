@@ -4,12 +4,7 @@
 
 #include "i32.h"
 #include "ctrls.h"
-
-/* main pages */
-enum {
-	ID_LOGPAD = 1,
-	ID_LOGEDPAD
-};
+#include "wins.h"
 
 /* 登录面板控件ID */
 enum {
@@ -24,10 +19,6 @@ enum {
 	ID_FORGOTPWD_LINK,
 	ID_REGISTER_LINK
 };
-
-/* 登录框顶部定位 */
-#define YBASE 86
-
 
 /* 正式面板控件ID */
 enum {
@@ -44,6 +35,9 @@ enum {
 	ID_TAB_CONTACT,
 	ID_TAB_APP
 };
+
+/* 登录框顶部定位 */
+#define YBASE 86
 
 static HWND g_hwnd;
 static int g_toppad = 1;
@@ -141,6 +135,7 @@ static int logedpad_onsize (I32E e)
 		i32id(e.hwnd, ID_BOTPAD), 0,
 		NULL
 	);
+	return 0;
 }
 
 static int toppad_onsize (I32E e)
@@ -151,6 +146,8 @@ static int toppad_onsize (I32E e)
 	i32set(i32id(e.hwnd, ID_NAME), "x|y", 11, 10);
 	i32set(i32id(e.hwnd, ID_SIGN), "x|y", 6, 33);
 	i32set(i32id(e.hwnd, ID_SEARCHBOX), "x|y|w", 8, 62, w-16);
+
+	return 0;
 }
 
 /* 主面板
@@ -260,10 +257,6 @@ void create_mainform ()
 	create_logedpad (hwnd);
 
 	mainform_set_toppad (ID_LOGPAD);
-	/*
-	i32create(TEXT("chatlist"), "n|d|s|w|h|a",
-		"friendlist", hwnd, WS_CTRL, 100, 200, "c");
-	*/
 
 	ShowWindow (hwnd, SW_SHOW);
 }

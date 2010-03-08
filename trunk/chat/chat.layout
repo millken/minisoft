@@ -1,40 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Release" />
-	<File name="src\butten.c" open="1" top="0" tabpos="9">
-		<Cursor position="9704" topLine="390" />
+	<ActiveTarget name="Debug" />
+	<File name="src\butten.c" open="0" top="0" tabpos="9">
+		<Cursor position="2749" topLine="107" />
 	</File>
-	<File name="src\chatlist.c" open="1" top="0" tabpos="13">
-		<Cursor position="19845" topLine="884" />
+	<File name="src\chatlist.c" open="1" top="0" tabpos="9">
+		<Cursor position="19663" topLine="877" />
 	</File>
-	<File name="src\ctrls.h" open="1" top="0" tabpos="5">
-		<Cursor position="2466" topLine="82" />
+	<File name="src\chatview.c" open="1" top="0" tabpos="3">
+		<Cursor position="2265" topLine="97" />
+	</File>
+	<File name="src\ctrls.h" open="1" top="0" tabpos="6">
+		<Cursor position="1627" topLine="0" />
 	</File>
 	<File name="src\ctrls.rc" open="1" top="0" tabpos="7">
 		<Cursor position="510" topLine="0" />
 	</File>
-	<File name="src\form.c" open="1" top="0" tabpos="10">
+	<File name="src\form.c" open="1" top="0" tabpos="8">
 		<Cursor position="11053" topLine="314" />
 	</File>
-	<File name="src\i32.c" open="1" top="0" tabpos="3">
-		<Cursor position="18027" topLine="725" />
+	<File name="src\i32.c" open="1" top="0" tabpos="4">
+		<Cursor position="28133" topLine="1310" />
 	</File>
-	<File name="src\i32.h" open="1" top="0" tabpos="4">
+	<File name="src\i32.h" open="1" top="0" tabpos="5">
 		<Cursor position="2292" topLine="52" />
 	</File>
-	<File name="src\image.c" open="1" top="0" tabpos="8">
+	<File name="src\image.c" open="0" top="0" tabpos="8">
 		<Cursor position="5199" topLine="213" />
 	</File>
-	<File name="src\link.c" open="1" top="0" tabpos="11">
-		<Cursor position="4455" topLine="155" />
+	<File name="src\link.c" open="0" top="0" tabpos="11">
+		<Cursor position="1078" topLine="41" />
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="1">
-		<Cursor position="156" topLine="0" />
+	<File name="src\main.c" open="1" top="1" tabpos="1">
+		<Cursor position="202" topLine="0" />
 	</File>
-	<File name="src\mainform.c" open="1" top="1" tabpos="2">
-		<Cursor position="489" topLine="19" />
+	<File name="src\mainform.c" open="1" top="0" tabpos="2">
+		<Cursor position="6601" topLine="221" />
 	</File>
-	<File name="src\richedit.c" open="1" top="0" tabpos="6">
-		<Cursor position="2252" topLine="68" />
+	<File name="src\richedit.c" open="1" top="0" tabpos="10">
+		<Cursor position="3213" topLine="117" />
+	</File>
+	<File name="src\wins.h" open="1" top="0" tabpos="14">
+		<Cursor position="362" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

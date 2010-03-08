@@ -357,12 +357,13 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
 	/* 公共控件背景和文字颜色 */
 	switch (message) {
-		//case WM_CTLCOLORDLG:
-		//case WM_CTLCOLORMSGBOX:
+		/*case WM_CTLCOLORDLG:
+		case WM_CTLCOLORMSGBOX:
+		case WM_CTLCOLORLISTBOX:
+		case WM_CTLCOLORSCROLLBAR:
+		*/
 		case WM_CTLCOLOREDIT:
-		//case WM_CTLCOLORLISTBOX:
 		case WM_CTLCOLORSTATIC:
-		//case WM_CTLCOLORSCROLLBAR:
 		case WM_CTLCOLORBTN: {
 			struct hwndattr *a;
 			HDC hdc = (HDC)wp;
@@ -372,7 +373,7 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			SetBkMode(hdc, TRANSPARENT);
 
 			a = get_attr(hctrl);
-			if (!a) return hbrush;
+			if (!a) return (LRESULT)hbrush;
 
 			if (a->bgcolor != -1)
 				hbrush = CreateSolidBrush(a->bgcolor);
@@ -380,7 +381,7 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				hbrush = GetStockObject(NULL_BRUSH);
 
 			SetTextColor(hdc, a->color);
-			return hbrush;
+			return (LRESULT)hbrush;
 		}
 		break;
 	}
@@ -1261,7 +1262,6 @@ void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col)
 static HWND creatctl (TCHAR *classname, HWND dad, unsigned style)
 {
 	HWND hwnd;
-	va_list p;
 
 	hwnd = CreateWindow (
            classname,         	/* Classname */
@@ -1330,7 +1330,6 @@ HWND i32pwdedit (HWND dad, char *format, ...)
 HWND i32checkbox (HWND dad, char *format, ...)
 {
 	HWND hwnd;
-	va_list p;
 
 	hwnd = creatctl(TEXT("button"), dad, WS_CTRL|BS_AUTOCHECKBOX);
 	i32set (hwnd, "w|h|f", 13, 13, "Arial,15");

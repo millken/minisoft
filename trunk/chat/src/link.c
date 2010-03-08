@@ -58,7 +58,7 @@ static struct prop *get_prop (HWND hwnd)
 static void drawtext (HWND hwnd, HDC hdc, int state)
 {
 	struct prop *pp = get_prop(hwnd);
-	DWORD color;
+	DWORD color = 0;
 	TCHAR title[128];
 
 	if (!pp) return;

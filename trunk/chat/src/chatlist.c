@@ -894,10 +894,8 @@ chatlist_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			{
 			ChatBuddy *p = buddytable_get (cl, 17);
 
-			//printf ("%d\n", p?p->uid:0);
 			buddytable_del(cl, 17);
 			p = buddytable_get (cl, 1);
-			//printf ("%d\n", p?lstrlen(p->name):0);
 			}
 			del_chatgroup(cl, 1);
 

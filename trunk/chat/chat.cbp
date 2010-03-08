@@ -51,6 +51,10 @@
 			<Option compilerVar="CC" />
 			<Option virtualFolder="controls\" />
 		</Unit>
+		<Unit filename="src\chatview.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="wins\" />
+		</Unit>
 		<Unit filename="src\ctrls.h">
 			<Option virtualFolder="controls\" />
 		</Unit>
@@ -84,6 +88,9 @@
 		<Unit filename="src\richedit.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="controls\" />
+		</Unit>
+		<Unit filename="src\wins.h">
+			<Option virtualFolder="wins\" />
 		</Unit>
 		<Extensions>
 			<code_completion />

@@ -1,10 +1,13 @@
+/*
+ * 各自独立的自定义控件,相当于模型
+ */
 #ifndef _CTRLS_H
 #define _CTRLS_H
 
 #include <windows.h>
 #include <richedit.h>
 
-/* 对齐参数 */
+/* 全局对齐参数 */
 enum {
 	LEFT = 0,
 	RIGHT,
