@@ -1347,3 +1347,11 @@ void i32setcheck (HWND hcheckbox, BOOL v)
 {
 	i32send (hcheckbox, BM_SETCHECK, v, 0);
 }
+
+void i32error (char *format, ...)
+{
+	va_list p;
+	va_start(p, format);
+		vfprintf (stderr, format, p);
+	va_end(p);
+}

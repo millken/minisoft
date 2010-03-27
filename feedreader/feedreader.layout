@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Release" />
+	<File name="..\chat_client\src\i32.c" open="1" top="0" tabpos="9">
+		<Cursor position="28481" topLine="1318" />
+	</File>
+	<File name="..\chat_client\src\i32.h" open="0" top="0" tabpos="5">
+		<Cursor position="2522" topLine="55" />
+	</File>
+	<File name="src\db.c" open="1" top="0" tabpos="3">
+		<Cursor position="4461" topLine="192" />
+	</File>
+	<File name="src\db.h" open="1" top="0" tabpos="4">
+		<Cursor position="153" topLine="0" />
+	</File>
+	<File name="src\html.cc" open="1" top="0" tabpos="10">
+		<Cursor position="1806" topLine="34" />
+	</File>
+	<File name="src\html.h" open="1" top="0" tabpos="11">
+		<Cursor position="78" topLine="0" />
+	</File>
+	<File name="src\main.cc" open="1" top="0" tabpos="2">
+		<Cursor position="3353" topLine="130" />
+	</File>
+	<File name="src\rc\rc.rc" open="0" top="0" tabpos="0">
+		<Cursor position="45" topLine="0" />
+	</File>
+	<File name="src\tinyxml\tinyxml.cpp" open="0" top="0" tabpos="8">
+		<Cursor position="8120" topLine="385" />
+	</File>
+	<File name="src\tinyxml\tinyxmlparser.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="37185" topLine="1599" />
+	</File>
+	<File name="src\url.c" open="1" top="0" tabpos="7">
+		<Cursor position="2942" topLine="123" />
+	</File>
+	<File name="src\url.h" open="1" top="0" tabpos="8">
+		<Cursor position="210" topLine="0" />
+	</File>
+	<File name="src\xml.cc" open="1" top="0" tabpos="5">
+		<Cursor position="8779" topLine="366" />
+	</File>
+	<File name="src\xml.h" open="1" top="0" tabpos="6">
+		<Cursor position="391" topLine="2" />
+	</File>
+</CodeBlocks_layout_file>

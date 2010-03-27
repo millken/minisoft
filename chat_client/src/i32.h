@@ -1,5 +1,6 @@
 /*
  *   i32: GUI模块
+ *   工程最好预定义UNICODE, 需要msimg32.lib
  */
 
 #ifndef _I32_H
@@ -41,7 +42,7 @@ typedef int (*I32PROC) (I32EVENT);
 
 /* 核心 */
 HWND i32create (TCHAR *classname, char *format, ...);
-inline HWND i32pre (); /* 取得上一个创建的hwnd */
+HWND i32pre (); /* 取得上一个创建的hwnd */
 void i32setpre (HWND hwnd);
 void i32set (HWND hwnd, char *format, ...);
 HWND i32 (char *name);
@@ -76,6 +77,7 @@ void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
 void i32vset (HWND hwnd, char *format, va_list p);
+void i32error (char *format, ...);
 
 /* 常用控件 */
 HWND i32static (HWND dad, char *format, ...);
