@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="feedreader" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Option virtualFolders="i32\;src\;tinyxml\;" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin\_d\feedreader" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin" />
+				<Option object_output="bin\_o\d\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin\_r\feedreader" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin" />
+				<Option object_output="bin\_o\r\" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DUNICODE" />
+			<Add directory="..\chat_client\src" />
+			<Add directory=".\src\include" />
+		</Compiler>
+		<Linker>
+			<Add library="gdi32" />
+			<Add library="user32" />
+			<Add library="kernel32" />
+			<Add library="msimg32" />
+			<Add library="ws2_32" />
+			<Add library="lib\libcurl_imp.lib" />
+			<Add library="lib\iconv.lib" />
+			<Add library="lib\HTMLayout.lib" />
+			<Add library="lib\sqlite3.lib" />
+		</Linker>
+		<Unit filename="..\chat_client\src\i32.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="i32\" />
+		</Unit>
+		<Unit filename="..\chat_client\src\i32.h">
+			<Option virtualFolder="i32\" />
+		</Unit>
+		<Unit filename="src\db.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\db.h">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\html.cc">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\html.h">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\main.cc">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\rc\rc.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="src\tinyxml\tinystr.cpp">
+			<Option virtualFolder="tinyxml\" />
+		</Unit>
+		<Unit filename="src\tinyxml\tinyxml.cpp">
+			<Option virtualFolder="tinyxml\" />
+		</Unit>
+		<Unit filename="src\tinyxml\tinyxmlerror.cpp">
+			<Option virtualFolder="tinyxml\" />
+		</Unit>
+		<Unit filename="src\tinyxml\tinyxmlparser.cpp">
+			<Option virtualFolder="tinyxml\" />
+		</Unit>
+		<Unit filename="src\url.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\url.h">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\xml.cc">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Unit filename="src\xml.h">
+			<Option virtualFolder="src\" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

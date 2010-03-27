@@ -1,0 +1,14 @@
+﻿11:26 2010-3-18
+/* 后台下载循环 */
+void download (void *param)
+{
+	printf ("download...\n\n");
+
+	while (1)
+		db_get_nextbatch ();
+		gurl_download ();
+		feed = parse_xml();
+		update_db (feed);
+
+	endcall ();
+}

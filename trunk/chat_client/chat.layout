@@ -26,7 +26,7 @@
 		<Cursor position="28133" topLine="1310" />
 	</File>
 	<File name="src\i32.h" open="0" top="0" tabpos="5">
-		<Cursor position="2292" topLine="52" />
+		<Cursor position="84" topLine="0" />
 	</File>
 	<File name="src\image.c" open="0" top="0" tabpos="8">
 		<Cursor position="5199" topLine="213" />
@@ -35,7 +35,7 @@
 		<Cursor position="4596" topLine="187" />
 	</File>
 	<File name="src\main.c" open="0" top="0" tabpos="1">
-		<Cursor position="167" topLine="0" />
+		<Cursor position="202" topLine="0" />
 	</File>
 	<File name="src\mainform.c" open="0" top="0" tabpos="2">
 		<Cursor position="621" topLine="6" />
