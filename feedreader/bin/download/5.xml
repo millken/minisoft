@@ -1,0 +1,1192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Tim[后端技术]</title>
+	<atom:link href="http://timyang.net/feed/" rel="self" type="application/rss+xml" />
+	<link>http://timyang.net</link>
+	<description>Tim&#039;s blog, 关于后端架构、互联网技术、分布式、大型网络应用、NoSQL、Key Value等</description>
+	<lastBuildDate>Mon, 08 Mar 2010 11:41:14 +0000</lastBuildDate>
+	<generator>http://wordpress.org/?v=2.9.1</generator>
+	<language>en</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+			<item>
+		<title>FarmVille(美版开心农场)谈架构:所有模块都是一个可降级的服务</title>
+		<link>http://timyang.net/architecture/farmville/</link>
+		<comments>http://timyang.net/architecture/farmville/#comments</comments>
+		<pubDate>Mon, 08 Mar 2010 11:23:00 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[架构]]></category>
+		<category><![CDATA[facebook]]></category>
+		<category><![CDATA[网游服务器]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=577</guid>
+		<description><![CDATA[
+在2009年Facebook Developer Garage Shanghai活动上，Five Minutes程延辉 介绍开心农场架构，让大家了解了SNS game的一些挑战和设计模式。
+由于农场游戏风靡全球，最近highscalability.com网站采访了美版开心农场FarmVille的Luke Rajlich，他介绍了FarmVille的部分架构资料(1)。
+所有模块都是一个可降级的服务
+For any web application, high latency kills your app and highly variable latency eventually kills your app.
+由于大型的网络应用需要依赖各种底层及内部服务，但是服务调用的高延迟是各种应用的最大问题，在竞争激烈的SNS app领域更是如此。解决此问题的方法是将所有的模块设计成一种可降级的服务，包括Memcache, Database, REST API等。将所有可能会发生大延迟的服务进行隔离。这可以通过控制调用超时时间来控制，另外还可以通过应用中的一些开关来关闭某些某些功能避免服务降级造成的影响。
+上面这点我也有一些教训，曾碰到过由于依赖的一些模块阻塞造成服务不稳定的现象。
+1. 某Socket Server使用了ThreadPool来处理所有核心业务。
+2. 不少业务需要访问内网的一个远程的User Service(RPC)来获取用户信息。
+3. User Service需要访问数据库。
+4. 数据库有时候会变慢，一些大查询需要10秒以上才能完成。
+结果4造成3很多调用很久才能执行完，3造成2的RPC调用阻塞，2造成1的ThreadPool堵塞，ThreadPool不断有新任务加入，但是老的任务迟迟不能完成。因此对于最终用户的表现是很多请求没有响应。部分用户认为是网络原因会手工重复提交请求，这样会造成状况并进一步恶化。上面的问题根本是没有意识到远程服务可能会超时或失败，把远程服务RPC调用当成一个本地调用来执行。
+解决思路一：RPC增加Timeout
+解决思路二：将RPC改成异步调用。
+另一分布式大牛James Hamilton谈到(2)上面这种做法就是他论文Designing and Deploying Internet-Scale Services中的graceful degradation mode(优雅降级)。
+FarmVille其他数据
+
+FarmVille基于LAMP架构，运行在EC2上。
+读写比例是3:1。
+使用开源工具来做运维监控，如nagios报警，munin监控，puppet配置。另外还开发了很多内部的程序来监控Facebook DB, Memcache等。
+到Facebook接口的流量峰值达到3Gb/s，同时内部的cache还承担了1.5Gb/s。
+另外可动态调整到Facebook与Cache之间的流量，Facebook接口变慢时，可以利用cache数据直接返回，终极目的是不管发生了那个环节的故障，能够让用户继续游戏。
+
+小结
+尽管FarmVille公布了上面一些技术资料，凭借上面这些资料无法全部了解FarmVille的架构。但是所有模块都是一个可降级服务的概念值得设计大规模应用的同行参考。
+Resource
+
+How FarmVille Scales to Harvest 75 Million Players a Month
+Scaling FarmVille
+
+Similar Posts:Facebook平台设计(一)
+
+Facebook平台设计(二)
+
+Twitter“鲸鱼”故障技术剖析
+
+Twitter架构图(cache篇)
+
+多服务器通讯层应该如何设计—一次code [...]]]></description>
+			<content:encoded><![CDATA[<p><img class="alignnone size-full wp-image-582" title="farmville" src="http://timyang.net/blog/wp-content/uploads/2010/03/farmville.png" alt="" width="240" height="182" align="right" /><br />
+在2009年Facebook Developer Garage Shanghai活动上，<a href="http://www.javaeye.com/wiki/facebook/1766-five-minutes-happy-farm-structure-introduced">Five Minutes程延辉 介绍开心农场架构</a>，让大家了解了SNS game的一些挑战和设计模式。</p>
+<p>由于农场游戏风靡全球，最近<a href="http://highscalability.com/">highscalability.com</a>网站采访了美版开心农场FarmVille的Luke Rajlich，他介绍了FarmVille的部分架构资料(1)。</p>
+<h3>所有模块都是一个可降级的服务</h3>
+<blockquote><p>For any web application, high latency kills your app and highly variable latency eventually kills your app.</p></blockquote>
+<p>由于大型的网络应用需要依赖各种底层及内部服务，但是服务调用的高延迟是各种应用的最大问题，在竞争激烈的SNS app领域更是如此。解决此问题的方法是将所有的模块设计成一种可降级的服务，包括Memcache, Database, REST API等。将所有可能会发生大延迟的服务进行隔离。这可以通过控制调用超时时间来控制，另外还可以通过应用中的一些开关来关闭某些某些功能避免服务降级造成的影响。</p>
+<p>上面这点我也有一些教训，曾碰到过由于依赖的一些模块阻塞造成服务不稳定的现象。</p>
+<p>1. 某Socket Server使用了ThreadPool来处理所有核心业务。<br />
+2. 不少业务需要访问内网的一个远程的User Service(RPC)来获取用户信息。<br />
+3. User Service需要访问数据库。<br />
+4. 数据库有时候会变慢，一些大查询需要10秒以上才能完成。</p>
+<p>结果4造成3很多调用很久才能执行完，3造成2的RPC调用阻塞，2造成1的ThreadPool堵塞，ThreadPool不断有新任务加入，但是老的任务迟迟不能完成。因此对于最终用户的表现是很多请求没有响应。部分用户认为是网络原因会手工重复提交请求，这样会造成状况并进一步恶化。<strong>上面的问题根本是没有意识到远程服务可能会超时或失败，把远程服务RPC调用当成一个本地调用来执行。</strong></p>
+<p>解决思路一：RPC增加Timeout<br />
+解决思路二：将RPC改成异步调用。</p>
+<p>另一分布式大牛<a href="http://perspectives.mvdirona.com/">James Hamilton</a>谈到(2)上面这种做法就是他论文<a href="http://mvdirona.com/jrh/talksAndPapers/JamesRH_Lisa.pdf">Designing and Deploying Internet-Scale Services</a>中的graceful degradation mode(优雅降级)。</p>
+<h3>FarmVille其他数据</h3>
+<ul>
+<li>FarmVille基于LAMP架构，运行在EC2上。</li>
+<li>读写比例是3:1。</li>
+<li>使用开源工具来做运维监控，如nagios报警，munin监控，puppet配置。另外还开发了很多内部的程序来监控Facebook DB, Memcache等。</li>
+<li>到Facebook接口的流量峰值达到3Gb/s，同时内部的cache还承担了1.5Gb/s。</li>
+<li>另外可动态调整到Facebook与Cache之间的流量，Facebook接口变慢时，可以利用cache数据直接返回，终极目的是不管发生了那个环节的故障，能够让用户继续游戏。</li>
+</ul>
+<h3>小结</h3>
+<p>尽管FarmVille公布了上面一些技术资料，凭借上面这些资料无法全部了解FarmVille的架构。但是所有模块都是一个可降级服务的概念值得设计大规模应用的同行参考。</p>
+<h3>Resource</h3>
+<ol>
+<li><a href="http://highscalability.com/blog/2010/2/8/how-farmville-scales-to-harvest-75-million-players-a-month.html">How FarmVille Scales to Harvest 75 Million Players a Month</a></li>
+<li><a href="http://perspectives.mvdirona.com/2010/02/13/ScalingFarmVille.aspx">Scaling FarmVille</a></li>
+</ol>
+Similar Posts:<ul><li><a href="http://timyang.net/sns/facebook-platform-f8-07/" rel="bookmark" title="June 10, 2009">Facebook平台设计(一)</a></li>
+
+<li><a href="http://timyang.net/sns/facebook-f8-0/" rel="bookmark" title="July 1, 2009">Facebook平台设计(二)</a></li>
+
+<li><a href="http://timyang.net/tech/twitter-whale/" rel="bookmark" title="March 8, 2010">Twitter“鲸鱼”故障技术剖析</a></li>
+
+<li><a href="http://timyang.net/architecture/twitter-cache-architecture/" rel="bookmark" title="October 28, 2009">Twitter架构图(cache篇)</a></li>
+
+<li><a href="http://timyang.net/architecture/communication-code-review/" rel="bookmark" title="May 22, 2009">多服务器通讯层应该如何设计—一次code review小记</a></li>
+</ul><!-- Similar Posts took 11.500 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/architecture/farmville/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>Twitter“鲸鱼”故障技术剖析</title>
+		<link>http://timyang.net/tech/twitter-whale/</link>
+		<comments>http://timyang.net/tech/twitter-whale/#comments</comments>
+		<pubDate>Mon, 08 Mar 2010 03:56:53 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[tech]]></category>
+		<category><![CDATA[memcached]]></category>
+		<category><![CDATA[twitter]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=564</guid>
+		<description><![CDATA[很多人都熟悉Twitter访问故障时候那条白色的鲸鱼。今年新推出的Twitter Engineering Blog讲述了Twitter白鲸技术故障的原因及解决思路。这是到目前为止Twitter公开的最底层的一篇技术资料。
+http://engineering.twitter.com/2010/02/anatomy-of-whale.html
+当Web Server发生503错误后，Twitter配置了一个前端鲸鱼的显示页面。Twitter对鲸鱼页面有监控体系，当每秒超过100个鲸鱼就会引起报警。
+
+为什么在单位时间内会有大量的&#8221;fail whale&#8221;呢？Twitter成立了一个小组来专门分析此原因。
+1. 分析背景资料
+“分析性能问题不是一门科学，而是一门艺术”。
+鲸鱼页面实际上是对HTTP 503错误的前端展示，503错误通常是调用后台请求超时产生，为了避免用户长时间等待，Twitter的前端(Tim: 也可能是HTTP反向代理)给请求加了超时，避免用户无限制的等待。超时通常是由于单位时间内访问的用户数过大，也有可能是后台某个服务突然变慢造成。
+由于Twitter网站每个时刻都有海量的数据流过，因此要简单的定位并解决此问题并不容易。
+2. Web page请求分解
+Twitter的页面请求后端分成2个阶段，在Twitter内部称为IO phase及CPU phase。IO phase指通过网络服务获取用户的关注关系及相关的Tweets。第2阶段为CPU phase，指将数据聚合、排序及按用户请求的条件输出。IO及CPU各自在1天内消耗的时间如下。
+
+从图上看到，latency增大时IO是主要瓶颈。IO对应于Network service，因此可以判断是某个网络服务性能降级造成。
+3. 深度分析
+理想情况是网络服务在应答相同参数的请求消耗时间应该基本相同。但实际情况并非如此，我们大胆假设某一网络服务性能下降厉害，于是我们就从统计分析中去寻找这个服务，我们看到Memcached的统计图表如下
+
+4. Memcached 竟然是鲸鱼故障的直接原因
+可提高的空间及解决思路
+
+ 从上图看，Memcached在 latency高峰的性能比低谷相差一倍，因此最简单的判断是增加硬件即可提高50%的性能。
+另外一种思路就是优化Memcached程序，判断程序热点和瓶颈并进行优化。
+
+分析
+
+通过 Google perf-tools project 工具来分析, http://code.google.com/p/google-perftools/ http://github.com/tmm1/perftools.rb
+通过自己些的一段分析代码来监控 http://github.com/eaceaser/ruby-call-graph
+通过上面工具的call graph来分析热点和瓶颈
+
+最后分析数据Memcached请求分布比例如下
+get         0.003s
+get_multi   0.008s
+add         0.003s
+delete      0.003s
+set         0.003s
+incr        0.003s
+prepend     0.002s
+
+get         71.44%
+get_multi    8.98%
+set          8.69%
+delete       5.26%
+incr         3.71%
+add          1.62%
+prepend      0.30%
+
+结论：从上面数据来看，调用热点和瓶颈主要集中在Get操作
+因此回头取看Twitter页面执行流程代码，找出优化方法见注释。
+get(["User:auth:missionhipster",              # 将昵称转换成uid
+get(["User:15460619",                         # 获取user object(用于检查密码)
+get(["limit:count:login_attempts:...",        # 防止密码字典攻击
+set(["limit:count:login_attempts:...",        # 大部分情况不需要, bug
+set(["limit:timestamp:login_attempts:...",    # 大部分情况不需要, bug
+get(["limit:timestamp:login_attempts:...",
+get(["limit:count:login_attempts:...",        [...]]]></description>
+			<content:encoded><![CDATA[<p>很多人都熟悉Twitter访问故障时候那条白色的鲸鱼。今年新推出的<a href="http://engineering.twitter.com/">Twitter Engineering Blog</a>讲述了Twitter白鲸技术故障的原因及解决思路。这是到目前为止Twitter公开的最底层的一篇技术资料。<br />
+<a href="http://engineering.twitter.com/2010/02/anatomy-of-whale.html">http://engineering.twitter.com/2010/02/anatomy-of-whale.html</a></p>
+<p>当Web Server发生503错误后，Twitter配置了一个前端鲸鱼的显示页面。Twitter对鲸鱼页面有监控体系，当每秒超过100个鲸鱼就会引起报警。<br />
+<a href="http://timyang.net/blog/wp-content/uploads/2010/03/whale.png"><img class="alignnone size-full wp-image-565" title="whale" src="http://timyang.net/blog/wp-content/uploads/2010/03/whale.png" alt="" width="391" height="292" /></a></p>
+<p>为什么在单位时间内会有大量的&#8221;fail whale&#8221;呢？Twitter成立了一个小组来专门分析此原因。</p>
+<h3>1. 分析背景资料</h3>
+<blockquote><p>“分析性能问题不是一门科学，而是一门艺术”。</p></blockquote>
+<p>鲸鱼页面实际上是对HTTP 503错误的前端展示，503错误通常是调用后台请求超时产生，为了避免用户长时间等待，Twitter的前端(Tim: 也可能是HTTP反向代理)给请求加了超时，避免用户无限制的等待。超时通常是由于单位时间内访问的用户数过大，也有可能是后台某个服务突然变慢造成。<br />
+由于Twitter网站每个时刻都有海量的数据流过，因此要简单的定位并解决此问题并不容易。</p>
+<h3>2. Web page请求分解</h3>
+<p>Twitter的页面请求后端分成2个阶段，在Twitter内部称为IO phase及CPU phase。IO phase指通过网络服务获取用户的关注关系及相关的Tweets。第2阶段为CPU phase，指将数据聚合、排序及按用户请求的条件输出。IO及CPU各自在1天内消耗的时间如下。<br />
+<a href="http://timyang.net/blog/wp-content/uploads/2010/03/cpulatency.png"><img class="alignnone size-full wp-image-566" title="cpulatency" src="http://timyang.net/blog/wp-content/uploads/2010/03/cpulatency.png" alt="" width="400" height="285" /></a></p>
+<p>从图上看到，latency增大时IO是主要瓶颈。IO对应于Network service，因此可以判断是某个网络服务性能降级造成。</p>
+<h3>3. 深度分析</h3>
+<p>理想情况是网络服务在应答相同参数的请求消耗时间应该基本相同。但实际情况并非如此，我们大胆假设某一网络服务性能下降厉害，于是我们就从统计分析中去寻找这个服务，我们看到Memcached的统计图表如下<br />
+<a href="http://timyang.net/blog/wp-content/uploads/2010/03/networkservice.png"><img class="alignnone size-full wp-image-567" title="networkservice" src="http://timyang.net/blog/wp-content/uploads/2010/03/networkservice.png" alt="" width="400" height="253" /></a></p>
+<h3>4. Memcached 竟然是鲸鱼故障的直接原因</h3>
+<p>可提高的空间及解决思路</p>
+<ol>
+<li> 从上图看，Memcached在 latency高峰的性能比低谷相差一倍，因此最简单的判断是增加硬件即可提高50%的性能。</li>
+<li>另外一种思路就是优化Memcached程序，判断程序热点和瓶颈并进行优化。</li>
+</ol>
+<p>分析</p>
+<ol>
+<li>通过 Google perf-tools project 工具来分析, <a href="http://code.google.com/p/google-perftools/">http://code.google.com/p/google-perftools/</a> <a href="http://github.com/tmm1/perftools.rb">http://github.com/tmm1/perftools.rb</a></li>
+<li>通过自己些的一段分析代码来监控 <a href="http://github.com/eaceaser/ruby-call-graph">http://github.com/eaceaser/ruby-call-graph</a></li>
+<li>通过上面工具的call graph来分析热点和瓶颈</li>
+</ol>
+<p>最后分析数据Memcached请求分布比例如下</p>
+<pre>get         0.003s
+get_multi   0.008s
+add         0.003s
+delete      0.003s
+set         0.003s
+incr        0.003s
+prepend     0.002s
+
+get         71.44%
+get_multi    8.98%
+set          8.69%
+delete       5.26%
+incr         3.71%
+add          1.62%
+prepend      0.30%
+</pre>
+<p>结论：从上面数据来看，调用热点和瓶颈主要集中在Get操作</p>
+<p>因此回头取看Twitter页面执行流程代码，找出优化方法见注释。</p>
+<pre>get(["User:auth:missionhipster",              # 将昵称转换成uid
+get(["User:15460619",                         # 获取user object(用于检查密码)
+get(["limit:count:login_attempts:...",        # 防止密码字典攻击
+set(["limit:count:login_attempts:...",        # 大部分情况不需要, bug
+set(["limit:timestamp:login_attempts:...",    # 大部分情况不需要, bug
+get(["limit:timestamp:login_attempts:...",
+get(["limit:count:login_attempts:...",        # 重复调用，可记住
+get(["limit:count:login_attempts:...",        # 重复调用
+get(["user:basicauth:...",                    # 防止解密的优化
+get(["limit:count:api:...",                   # 请求数限制
+set(["limit:count:api:...",                   # 设置请求数，大部分情况不需要，为什么？
+set(["limit:timestamp:api:...",               # 大部分情况不需要, bug
+get(["limit:timestamp:api:...",
+get(["limit:count:api:...",                   # 重复调用
+get(["home_timeline:15460619",                # home_timeline业务调用
+get(["favorites_timeline:15460619",           # favorites_timeline业务调用
+get_multi([["Status:fragment:json:74736693",  # multi_get所有tweets内容
+</pre>
+<p>上面这段代码将17个请求优化成10个，部分重复调用通过本地cache避免，另外一些没必要的调用直接删除。通过一个简单的优化性能就提高了42%。</p>
+<h3>结论</h3>
+<ol>
+<li>在前文<a href="http://timyang.net/architecture/2010-tech-predictions/">2010年的技术架构建议</a>中提过Cache已经是Web 2.0系统核心元素。从Twitter的故障案例来看Memcached竟然成为了瓶颈并导致了Twitter服务的不稳定。由于在social应用中cache核心化的设计，“RAM is the new disk”，在cache广泛使用后也变得调用成本增加，需要考虑进行系统的规划减少不必要的调用。避免开发人员在代码中随意使用cache</li>
+<li>如何定位瓶颈，可以借鉴Google perf-tools项目及上面其他分析工具的思路。</li>
+<li>Twitter页面执行流程值得参考</li>
+<li>整个故障流程分析图如下</li>
+</ol>
+<p><a href="http://timyang.net/blog/wp-content/uploads/2010/03/twitter_whale_error.png"><img class="alignnone size-full wp-image-569" title="twitter_whale_error" src="http://timyang.net/blog/wp-content/uploads/2010/03/twitter_whale_error.png" alt="" width="412" height="701" /></a></p>
+Similar Posts:<ul><li><a href="http://timyang.net/architecture/twitter-cache-architecture/" rel="bookmark" title="October 28, 2009">Twitter架构图(cache篇)</a></li>
+
+<li><a href="http://timyang.net/web/pagination/" rel="bookmark" title="January 19, 2010">用Twitter的cursor方式进行Web数据分页</a></li>
+
+<li><a href="http://timyang.net/data/mcdb-tt-redis/" rel="bookmark" title="August 11, 2009">MemcacheDB, Tokyo Tyrant, Redis performance test</a></li>
+
+<li><a href="http://timyang.net/sns/twitter-api-changes/" rel="bookmark" title="December 30, 2009">Twitter API最近的一些飞跃</a></li>
+
+<li><a href="http://timyang.net/tech/twitter-operations/" rel="bookmark" title="November 2, 2009">Twitter系统运维经验</a></li>
+</ul><!-- Similar Posts took 12.457 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/tech/twitter-whale/feed/</wfw:commentRss>
+		<slash:comments>4</slash:comments>
+		</item>
+		<item>
+		<title>Dynamo一个缺陷的架构设计(译)</title>
+		<link>http://timyang.net/data/dynamo-flawed-architecture-chinese/</link>
+		<comments>http://timyang.net/data/dynamo-flawed-architecture-chinese/#comments</comments>
+		<pubDate>Mon, 01 Mar 2010 13:46:14 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[data]]></category>
+		<category><![CDATA[dynamo]]></category>
+		<category><![CDATA[key value store]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=557</guid>
+		<description><![CDATA[在云计算的时代，Dynamo可以说是一本实现分布式存储的红宝书，借鉴Dynamo实现的产品如雨后春笋般冒出。前段时间本人曾在Twitter上戏称
+这年头，如果一个号称有“海量数据”的互联网公司，不做一个自己的Dynamo, 出去都不好意思跟人打招呼
+(http://twitter.com/xmpp/status/8023241449)
+另外一方面对于Dynamo设计思想也有不少反对的声音，比如2009/11/1在Hacker News上链接的一篇文章Dynamo: A flawed architecture引起不少争议，最后竟引起Amazon CTO Werner Vogels在Twitter上回应
+Darn, someone figured out that Dynamo is a flawed architecture. Luckily its only use is storing hundreds of millions of shopping carts 
+(http://twitter.com/Werner/statuses/5345892061)
+汗，有人发现Dynamo是一个缺陷的架构，幸运的是，我们只用它来存储了成百上亿的购物篮数据。:-)
+以下是这篇批判Dynamo文章大部分中心观点，所翻译的观点并不代表Tim立场。
+&#8211;译文开始&#8211;
+Dynamo: A flawed architecture 
+在发表此文章之前，我也争论过Dynamo是否适合我们的系统。但是我很清楚这篇论文充满缺陷，它将错误的引导了读者让大家相信其设计，它的很多设计前后自相矛盾。下文会详细介绍这些缺陷。
+Dynamo的最终一致性
+首先，最终一致性对开发者意味什么呢？
+
+写入的数据不能在后续的读操作中获取到。
+写入的数据也有可能在后续的读操作中获取到，但读到后可能下一次又读不到。
+因此对写操作后面的读取没有SLA(Service Level Agreement)保证。
+
+举例说明，由于Dynamo是一个key value存储，我们假设value中存储的是一个list, 当list写入数据之后另外一个client却未读取到，这时候它需要写入数据的话只能重新构建一个新的list，添加要存的值并将新list存入，这就会导致老的list数据丢失。
+(Update: 论坛上一些人指出，由于Vector Clock机制，数据丢失的场景不可能出现，我同意，不过我再提出几个其他问题。)
+
+Cassandra未用vector clock, 而只用client timestamps也达到了同样效果。
+Dynamo依赖合并冲突来解决此问题，一些场合下冲突很难解决。比如从list中错误的截取操作。(if deletion from the list is a valid operation &#8211; then how [...]]]></description>
+			<content:encoded><![CDATA[<p>在云计算的时代，Dynamo可以说是一本实现分布式存储的红宝书，借鉴Dynamo实现的产品如雨后春笋般冒出。前段时间本人曾在Twitter上戏称</p>
+<blockquote><p>这年头，如果一个号称有“海量数据”的互联网公司，不做一个自己的Dynamo, 出去都不好意思跟人打招呼<br />
+(<a href="http://twitter.com/xmpp/status/8023241449">http://twitter.com/xmpp/status/8023241449</a>)</p></blockquote>
+<p>另外一方面对于Dynamo设计思想也有不少反对的声音，比如2009/11/1在<a href="http://news.ycombinator.com/">Hacker News</a>上链接的一篇文章<a href="http://jsensarma.com/blog/2009/11/dynamo-a-flawed-architecture-part-i/">Dynamo: A flawed architecture</a>引起不少争议，最后竟引起Amazon CTO Werner Vogels在Twitter上回应</p>
+<blockquote><p>Darn, someone figured out that Dynamo is a flawed architecture. Luckily its only use is storing hundreds of millions of shopping carts <img src='http://timyang.net/blog/wp-includes/images/smilies/icon_smile.gif' alt=':-)' class='wp-smiley' /><br />
+(<a href="http://twitter.com/Werner/statuses/5345892061">http://twitter.com/Werner/statuses/5345892061</a>)<br />
+汗，有人发现Dynamo是一个缺陷的架构，幸运的是，我们只用它来存储了成百上亿的购物篮数据。:-)</p></blockquote>
+<p>以下是这篇批判Dynamo文章大部分中心观点，所翻译的观点并不代表Tim立场。</p>
+<p><strong>&#8211;译文开始&#8211;</strong></p>
+<h2>Dynamo: A flawed architecture </h2>
+<p>在发表此文章之前，我也争论过Dynamo是否适合我们的系统。但是我很清楚这篇论文充满缺陷，它将错误的引导了读者让大家相信其设计，它的很多设计前后自相矛盾。下文会详细介绍这些缺陷。</p>
+<h3>Dynamo的最终一致性</h3>
+<p>首先，最终一致性对开发者意味什么呢？</p>
+<ol>
+<li>写入的数据不能在后续的读操作中获取到。</li>
+<li>写入的数据也有可能在后续的读操作中获取到，但读到后可能下一次又读不到。</li>
+<li>因此对写操作后面的读取没有SLA(Service Level Agreement)保证。</li>
+</ol>
+<p>举例说明，由于Dynamo是一个key value存储，我们假设value中存储的是一个list, 当list写入数据之后另外一个client却未读取到，这时候它需要写入数据的话只能重新构建一个新的list，添加要存的值并将新list存入，这就会导致老的list数据丢失。</p>
+<p>(Update: 论坛上一些人指出，由于Vector Clock机制，数据丢失的场景不可能出现，我同意，不过我再提出几个其他问题。)</p>
+<ol>
+<li>Cassandra未用vector clock, 而只用client timestamps也达到了同样效果。</li>
+<li>Dynamo依赖合并冲突来解决此问题，一些场合下冲突很难解决。比如从list中错误的截取操作。(if deletion from the list is a valid operation &#8211; then how would one reconcile after mistaken truncation?)</li>
+<li>另外一个场景，读取到脏数据后可能会影响后续的写入。(a stale read may end up affecting writes to other keys)</li>
+</ol>
+<p>一般的常识是读取脏数据是需要避免的，但是Dynamo中无任何措施来避免读取脏数据以及避免读取脏数据的客户端再次写入，这个在单IDC环境其实是完全可以避免的。</p>
+<h3>Quorum一致性</h3>
+<p>(译者注：Quorum是Dynamo的一个核心特性，主要思想是 写最小节点数W + 读最小节点数R &gt; 所有节点数N)<br />
+Dynamo开始就提到系统按最终一致性设计，但是在4.5中却提出用Quorum的方法来实现一定程度的一致性，意思是如果R+W&gt;N, 则读操作就具备(强)一致性了。明显是误导。由于节点会出现不可用的情况，尤其在跨IDC情况下，任一节点随时都有可能离开quorum组，当它离开再加入的时候，R个节点返回的数据就是不一致的，因为故障节点的数据只具备“最终一致性”，而在当时返回的只能是脏数据。</p>
+<p>这就带来一个明显的问题，为什么要让未同步到最新数据的节点加入组？答案是Dynamo中无任何方法来判断一个节点是否数据同步，也无法判断有哪些数据不同步。因此只能做一个完全数据比较才能判断，Dynamo中用一种叫Merkle Tree的方法来实现，这个当然是一个代价昂贵且不灵活的操作，因为为了不影响Dynamo正常的读写业务，同步需要在后台执行。</p>
+<p>实现强一致性也可以用读取所有节点(R=N)的方式来达到，不过有2个问题。</p>
+<ol>
+<li> 一旦有一个节点未同步，读取就会失败。</li>
+<li>读取的代价极高。</li>
+</ol>
+<p>我并不是第一个发现这些问题的人，比如另一知名的Cassandra产品<a href="https://issues.apache.org/jira/browse/CASSANDRA-225">Cassandra-225</a>中就提到用一个中心commit log的方法来解决此问题。</p>
+<h3>WAN considerations 跨IDC的问题</h3>
+<p>值得指出的是，如果将Dynamo部署到多个机房，节点的断续情况会很容易发生。当一个节点连接不到，Dynamo的&#8221;hinted handoff&#8221;策略会使用一致性哈希算法将数据放入下一个节点。在多IDC环境下，下一节点通常在另一机房，因此会造成异地数据传输增加。当异地整个IDC都连不上网络分裂情况发生时，数据需要很长时间才能完全恢复。</p>
+<h3>Disaster Recovery 灾难恢复</h3>
+<p>Dynamo最终一致性及同步的设计对于是节点故障是有价值的，但是却无法估算有多少数据未同步。如果改用常规的commit log方式的话，很容易就能实现故障恢复并且计算未同步的数据量。</p>
+<p>未使用<strong>时间一致性</strong>(译者：基于timestamp的合并？)在某些场合下很难合并冲突。</p>
+<h3>一致性还是可用性 Consistency versus Availability</h3>
+<p>一般认为Dynamo选择了CAP理论中的AP，而BigTable选择了CA。不幸的是，Dynamo并没有搞清什么是A(availability)和P(Partition Tolerance)。读者被误导只能在C和P中做一个取舍，这个当然是错的。我们很容易在单IDC实现一致性及高可用性。大部分商业数据库就是如此，HBase/HDFS也是如此。</p>
+<p>很多人误以为即使在单IDC架构中，Dynamo方式比BigTable/GFS架构更合理。但Dynamo的优势其实是在多IDC。</p>
+<h3>中心化还是去中心化</h3>
+<p>Dynamo中提到</p>
+<blockquote><p>In the past, centralized control has resulted in outages and the goal is to avoid it as much as possible. This leads to a simpler, more scalable, and more available system.<br />
+过去，中心化设计导致了很多灾难，我们意识到要远离中心化。去中心化后，系统会更简洁，更具有可扩展性及高可用性。</p></blockquote>
+<p>中心化确实会形成瓶颈，但是没有证据说明中心化就低可用性。大部分专业的存储系统通过双机热备的方式都具备高可用性。简单的说，只需要所有中心模块(电源，主板，RAID，交换机等)都按双份的方式来设计，只需要额外增加一点硬件成本，这些系统基本可以达到5个9的可用性。</p>
+<p>值得讽刺的是Dynamo其实在部分情况下还是一个中心化的体系，如交换机故障发生了网络分片，服务器分成2个独立的小网，这时候Dynamo对客户端是不可用的，尽管客户端可以连接上Dynamo。</p>
+<p>更讽刺的是我们看到Dynamo很多一致性问题都是去中心化设计所导致。</p>
+<p><strong>&#8211;译文完&#8211;</strong></p>
+<p>此文的讨论也非常精彩，对于想深入了解Dynamo的朋友是不可多得的资料。可参看 <a href="http://news.ycombinator.com/item?id=915212">http://news.ycombinator.com/item?id=915212</a></p>
+Similar Posts:<ul><li><a href="http://timyang.net/distributed/multi-idc-consensus/" rel="bookmark" title="February 2, 2010">多IDC的数据分布设计(一)</a></li>
+
+<li><a href="http://timyang.net/architecture/yahoo-pnuts/" rel="bookmark" title="June 21, 2009">Yahoo!的分布式数据平台PNUTS简介及感悟</a></li>
+
+<li><a href="http://timyang.net/architecture/consistent-hashing-practice/" rel="bookmark" title="September 6, 2009">某分布式应用实践一致性哈希的一些问题</a></li>
+
+<li><a href="http://timyang.net/distributed/paxos-scenarios/" rel="bookmark" title="September 23, 2009">Paxos在大型系统中常见的应用场景</a></li>
+
+<li><a href="http://timyang.net/tech/key-value-store-draft/" rel="bookmark" title="July 27, 2009">分布式key/value store演讲草稿(一)</a></li>
+</ul><!-- Similar Posts took 18.052 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/data/dynamo-flawed-architecture-chinese/feed/</wfw:commentRss>
+		<slash:comments>3</slash:comments>
+		</item>
+		<item>
+		<title>多IDC的数据分布设计(一)</title>
+		<link>http://timyang.net/distributed/multi-idc-consensus/</link>
+		<comments>http://timyang.net/distributed/multi-idc-consensus/#comments</comments>
+		<pubDate>Tue, 02 Feb 2010 13:04:18 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[分布式]]></category>
+		<category><![CDATA[2PC]]></category>
+		<category><![CDATA[3PC]]></category>
+		<category><![CDATA[consensus]]></category>
+		<category><![CDATA[paxos]]></category>
+		<category><![CDATA[Three-phase commit]]></category>
+		<category><![CDATA[Two-phase commit]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=546</guid>
+		<description><![CDATA[上个月跟某个朋友谈及多IDC数据同时读写访问的问题(tweet)，当时觉得有不少解决方案，但觉得思路还不够清晰。最近看了Google App Engine工程师Ryan Barrett介绍GAE后端数据服务的演讲稿Transactions Across Datacenters(视频)，用Ryan的方法来分析这个问题后就豁然开朗。
+按Ryan的方法，多IDC实现有以下几种思路。
+一、Master/slave
+这个是多机房数据访问最常用的方案，一般的需求用此方案即可。因此大家也经常提到“premature optimization is the root of all evil”。
+优点：利用mysql replication即可实现，成熟稳定。
+缺点：写操作存在单点故障，master坏掉之后slave不能写。另外slave的延迟也是个困扰人的小问题。
+二、Multi-master
+Multi-master指一个系统存在多个master, 每个master都具有read-write能力，需根据时间戳或业务逻辑合并版本。比如分布式版本管理系统git可以理解成multi-master模式。具备最终一致性。多版本数据修改可以借鉴Dynamo的vector clock等方法。
+优点：解决了单点故障。
+ 缺点：不易实现一致性，合并版本的逻辑复杂。
+三、Two-phase commit(2PC)
+Two-phase commit是一个比较简单的一致性算法。由于一致性算法通常用神话(如Paxos的The Part-Time Parliament论文)来比喻容易理解，下面也举个类似神话的例子。
+某班要组织一个同学聚会，前提条件是所有参与者同意则活动举行，任意一人拒绝则活动取消。用2PC算法来执行过程如下
+Phase 1
+Prepare: 组织者(coordinator)打电话给所有参与者(participant) ，同时告知参与者列表。
+ Proposal: 提出周六2pm-5pm举办活动。
+ Vote: participant需vote结果给coordinator：accept or reject。
+ Block: 如果accept, participant锁住周六2pm-5pm的时间，不再接受其他请求。
+Phase 2
+Commit: 如果所有参与者都同意，组织者coodinator通知所有参与者commit, 否则通知abort，participant解除锁定。
+Failure 典型失败情况分析
+Participant failure:
+任一参与者无响应，coordinator直接执行abort
+Coordinator failure:
+ Takeover: 如果participant一段时间没收到cooridnator确认(commit/abort)，则认为coordinator不在了。这时候可自动成为Coordinator备份(watchdog)
+ Query: watchdog根据phase 1接收的participant列表发起query
+ Vote: 所有participant回复vote结果给watchdog, accept or reject
+ Commit: 如果所有都同意，则commit, 否则abort。
+优点：实现简单。
+ 缺点：所有参与者需要阻塞(block)，throughput低；无容错机制，一节点失败则整个事务失败。
+四、Three-phase commit (3PC)
+Three-phase [...]]]></description>
+			<content:encoded><![CDATA[<p>上个月跟某个朋友谈及多IDC数据同时读写访问的问题(<a href="http://twitter.com/xmpp/status/7625866165">tweet</a>)，当时觉得有不少解决方案，但觉得思路还不够清晰。最近看了Google App Engine工程师Ryan Barrett介绍GAE后端数据服务的演讲稿<a href="http://snarfed.org/space/transactions_across_datacenters_io.html">Transactions Across Datacenters</a>(<a href="http://www.youtube.com/watch?v=srOgpXECblk">视频</a>)，用Ryan的方法来分析这个问题后就豁然开朗。</p>
+<p>按Ryan的方法，多IDC实现有以下几种思路。</p>
+<h2>一、Master/slave</h2>
+<p>这个是多机房数据访问最常用的方案，一般的需求用此方案即可。因此大家也经常提到“premature optimization is the root of all evil”。<br />
+<strong>优点：</strong>利用mysql replication即可实现，成熟稳定。<br />
+<strong>缺点：</strong>写操作存在单点故障，master坏掉之后slave不能写。另外slave的延迟也是个困扰人的小问题。</p>
+<h2>二、Multi-master</h2>
+<p><a href="http://en.wikipedia.org/wiki/Multi-master_replication">Multi-master</a>指一个系统存在多个master, 每个master都具有read-write能力，需根据时间戳或业务逻辑合并版本。比如分布式版本管理系统git可以理解成multi-master模式。具备最终一致性。多版本数据修改可以借鉴Dynamo的vector clock等方法。</p>
+<p><strong>优点：</strong>解决了单点故障。<br />
+<strong> 缺点：</strong>不易实现一致性，合并版本的逻辑复杂。</p>
+<h2>三、Two-phase commit(2PC)</h2>
+<p><a href="http://en.wikipedia.org/wiki/Two-phase_commit_protocol">Two-phase commit</a>是一个比较简单的一致性算法。由于一致性算法通常用神话(如Paxos的The Part-Time Parliament论文)来比喻容易理解，下面也举个类似神话的例子。</p>
+<p>某班要组织一个同学聚会，前提条件是所有参与者同意则活动举行，任意一人拒绝则活动取消。用2PC算法来执行过程如下</p>
+<h3>Phase 1</h3>
+<p><strong>Prepare: </strong>组织者(coordinator)打电话给所有参与者(participant) ，同时告知参与者列表。<br />
+<strong> Proposal:</strong> 提出周六2pm-5pm举办活动。<br />
+<strong> Vote:</strong> participant需vote结果给coordinator：accept or reject。<br />
+<strong> Block:</strong> 如果accept, participant锁住周六2pm-5pm的时间，不再接受其他请求。</p>
+<h3>Phase 2</h3>
+<p><strong>Commit:</strong> 如果所有参与者都同意，组织者coodinator通知所有参与者commit, 否则通知abort，participant解除锁定。</p>
+<h3>Failure 典型失败情况分析</h3>
+<p><strong>Participant failure:</strong><br />
+任一参与者无响应，coordinator直接执行abort<br />
+<strong>Coordinator failure:</strong><br />
+<strong> Takeover:</strong> 如果participant一段时间没收到cooridnator确认(commit/abort)，则认为coordinator不在了。这时候可自动成为Coordinator备份(watchdog)<br />
+<strong> Query:</strong> watchdog根据phase 1接收的participant列表发起query<br />
+<strong> Vote:</strong> 所有participant回复vote结果给watchdog, accept or reject<br />
+<strong> Commit:</strong> 如果所有都同意，则commit, 否则abort。</p>
+<p><strong>优点：</strong>实现简单。<br />
+<strong> 缺点：</strong>所有参与者需要阻塞(block)，throughput低；无容错机制，一节点失败则整个事务失败。</p>
+<h2>四、Three-phase commit (3PC)</h2>
+<p><a href="http://en.wikipedia.org/wiki/Three-phase_commit_protocol">Three-phase commit</a>是一个2PC的改进版。2PC有一些很明显的缺点，比如在coordinator做出commit决策并开始发送commit之后，某个participant突然crash，这时候没法abort transaction, 这时候集群内实际上就存在不一致的情况，crash恢复后的节点跟其他节点数据是不同的。因此3PC将2PC的commit的过程1分为2,分成preCommit及commit, 如图。<br />
+<img class="alignnone" title="3PC" src="http://upload.wikimedia.org/wikipedia/en/3/39/Three-phase_commit_diagram.png" alt="" width="611" height="321" /><br />
+(图片来源：<a href="http://en.wikipedia.org/wiki/File:Three-phase_commit_diagram.png">http://en.wikipedia.org/wiki/File:Three-phase_commit_diagram.png</a>)</p>
+<p>从图来看，cohorts(participant)收到preCommit之后，如果没收到commit, 默认也执行commit, 即图上的timeout cause commit。</p>
+<p>如果coodinator发送了一半preCommit crash, watchdog接管之后通过query, 如果有任一节点收到commit, 或者全部节点收到preCommit, 则可继续commit, 否则abort。</p>
+<p><strong>优点：</strong>允许发生单点故障后继续达成一致。<br />
+<strong> 缺点：</strong>网络分离问题，比如preCommit消息发送后突然两个机房断开，这时候coodinator所在机房会abort, 另外剩余replicas机房会commit。</p>
+<h2>五、Paxos</h2>
+<p>Google Chubby的作者Mike Burrows说过， “there is only one consensus protocol, and that’s Paxos” – all other approaches are just broken versions of Paxos. 意即“世上只有一种一致性算法，那就是Paxos”，所有其他一致性算法都是Paxos算法的不完整版。相比2PC/3PC, Paxos算法的改进</p>
+<ul>
+<li>P1a. 每次Paxos实例执行都分配一个编号，编号需要递增，每个replica不接受比当前最大编号小的提案</li>
+<li>P2. 一旦一个 value v 被replica通过，那么之后任何再批准的 value 必须是 v，即没有拜占庭将军(Byzantine)问题。拿上面请客的比喻来说，就是一个参与者一旦accept周六2pm-5pm的proposal, 就不能改变主意。以后不管谁来问都是accept这个value。</li>
+<li>一个proposal只需要多数派同意即可通过。因此比2PC/3PC更灵活，在一个2f+1个节点的集群中，允许有f个节点不可用。</li>
+</ul>
+<p>另外Paxos还有很多约束的细节，特别是Google的chubby从工程实现的角度将Paxos的细节补充得非常完整。比如如何避免Byzantine问题，由于节点的持久存储可能会发生故障，Byzantine问题会导致Paxos算法P2约束失效。</p>
+<p>以上几种方式原理比较如下</p>
+<p><a href="http://timyang.net/blog/wp-content/uploads/2010/02/idc-transaction.png"><img class="alignnone size-full wp-image-547" title="idc-transaction" src="http://timyang.net/blog/wp-content/uploads/2010/02/idc-transaction.png" alt="" width="500" height="228" /></a></p>
+<p>(图片来源：<a href="http://snarfed.org/space/transactions_across_datacenters_io.html">http://snarfed.org/space/transactions_across_datacenters_io.html</a>)</p>
+<p>后文会继续比较实践环境选取何种策略合适。</p>
+<p>（PS: 写完后在Google Reader上发现本文跟王建硕最近发表的《<a href="http://home.wangjianshuo.com/cn/20100201_aeaeaecee.htm">关于两个机房的讨论</a>》文章有点类似，特别是本文一、二方式。不过他的文章偏MySQL的实现，我的重点是一致性算法，大家可以有选择性的阅读。）</p>
+Similar Posts:<ul><li><a href="http://timyang.net/distributed/paxos-scenarios/" rel="bookmark" title="September 23, 2009">Paxos在大型系统中常见的应用场景</a></li>
+
+<li><a href="http://timyang.net/architecture/consistent-hashing-practice/" rel="bookmark" title="September 6, 2009">某分布式应用实践一致性哈希的一些问题</a></li>
+
+<li><a href="http://timyang.net/data/dynamo-flawed-architecture-chinese/" rel="bookmark" title="March 1, 2010">Dynamo一个缺陷的架构设计(译)</a></li>
+
+<li><a href="http://timyang.net/architecture/yahoo-pnuts/" rel="bookmark" title="June 21, 2009">Yahoo!的分布式数据平台PNUTS简介及感悟</a></li>
+
+<li><a href="http://timyang.net/architecture/communication-code-review/" rel="bookmark" title="May 22, 2009">多服务器通讯层应该如何设计—一次code review小记</a></li>
+</ul><!-- Similar Posts took 21.034 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/distributed/multi-idc-consensus/feed/</wfw:commentRss>
+		<slash:comments>8</slash:comments>
+		</item>
+		<item>
+		<title>用Twitter的cursor方式进行Web数据分页</title>
+		<link>http://timyang.net/web/pagination/</link>
+		<comments>http://timyang.net/web/pagination/#comments</comments>
+		<pubDate>Tue, 19 Jan 2010 14:16:58 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[Web]]></category>
+		<category><![CDATA[mysql]]></category>
+		<category><![CDATA[performance]]></category>
+		<category><![CDATA[twitter]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=532</guid>
+		<description><![CDATA[本文讨论Web应用中实现数据分页功能，不同的技术实现方式的性能方区别。
+
+上图功能的技术实现方法拿MySQL来举例就是
+select * from msgs where thread_id = ? limit page * count, count
+不过在看Twitter API的时候，我们却发现不少接口使用cursor的方法，而不用page, count这样直观的形式，如 followers ids 接口
+URL:
+http://twitter.com/followers/ids.format
+Returns an array of numeric IDs for every user following the specified user.
+Parameters:
+* cursor. Required. Breaks the results into pages. Provide a value of -1 to begin paging. Provide values as returned to in the response body&#8217;s next_cursor [...]]]></description>
+			<content:encoded><![CDATA[<p>本文讨论Web应用中实现数据分页功能，不同的技术实现方式的性能方区别。<br />
+<a href="http://timyang.net/blog/wp-content/uploads/2010/01/pagination.png"><img class="alignnone size-full wp-image-533" title="pagination" src="http://timyang.net/blog/wp-content/uploads/2010/01/pagination.png" alt="" width="376" height="148" /></a><br />
+上图功能的技术实现方法拿MySQL来举例就是</p>
+<pre>select * from msgs where thread_id = ? limit page * count, count</pre>
+<p>不过在看Twitter API的时候，我们却发现不少接口使用cursor的方法，而不用page, count这样直观的形式，如 followers ids 接口</p>
+<blockquote><p><strong>URL:</strong></p>
+<p>http://twitter.com/followers/ids.format</p>
+<p>Returns an array of numeric IDs for every user following the specified user.</p>
+<p><strong>Parameters:</strong><br />
+* cursor. Required. Breaks the results into pages. Provide a value of -1 to begin paging. Provide values as returned to in the response body&#8217;s next_cursor and previous_cursor attributes to page back and forth in the list.<br />
+o Example: http://twitter.com/followers/ids/barackobama.xml?cursor=-1<br />
+o Example: http://twitter.com/followers/ids/barackobama.xml?cursor=-1300794057949944903</p></blockquote>
+<div id="_mcePaste" style="overflow: hidden; position: absolute; left: -10000px; top: 101px; width: 1px; height: 1px;"><span style="font-family: courier new,monospace;"><span style="font-family: arial,sans-serif;"><span style="font-family: courier new,monospace;"><span style="font-family: arial,sans-serif;"><span style="font-family: courier new,monospace;">http://twitter.com/followers/ids.<em>format</em></span></span></span></span></span></div>
+<p>从上面描述可以看到，http://twitter.com/followers/ids.xml 这个调用需要传cursor参数来进行分页，而不是传统的 url?page=n&amp;count=n的形式。这样做有什么优点呢？是否让每个cursor保持一个当时数据集的镜像？防止由于结果集实时改变而产生查询结果有重复内容？<br />
+在Google Groups这篇<a href="http://groups.google.com/group/twitter-development-talk/browse_thread/thread/712b4765028d527c/3f444faee8f8d7ef">Cursor Expiration</a>讨论中Twitter的架构师<a href="http://twitter.com/jkalucki">John Kalucki</a>提到</p>
+<blockquote><p>A cursor is an opaque deletion-tolerant index into a Btree keyed by source<br />
+userid and modification time. It brings you to a point in time in the<br />
+reverse chron sorted list. So, since you can&#8217;t change the past, other than<br />
+erasing it, it&#8217;s effectively stable. (Modifications bubble to the top.) But<br />
+you have to deal with additions at the list head and also block shrinkage<br />
+due to deletions, so your blocks begin to overlap quite a bit as the data<br />
+ages. (If you cache cursors and read much later, you&#8217;ll see the first few<br />
+rows of cursor[n+1]&#8217;s block as duplicates of the last rows of cursor[n]&#8217;s<br />
+block. The intersection cardinality is equal to the number of deletions in<br />
+cursor[n]&#8217;s block). Still, there may be value in caching these cursors and<br />
+then heuristically rebalancing them when the overlap proportion crosses some<br />
+threshold.</p></blockquote>
+<p>在另外一篇<a href="http://groups.google.com/group/twitter-development-talk/browse_thread/thread/cfccfa4302ff9729/66d6b91f9a6bf96d">new cursor-based pagination not multithread-friendly</a>中John又提到</p>
+<blockquote><p>The page based approach does not scale with large sets. We can no<br />
+longer support this kind of API without throwing a painful number of<br />
+503s.</p>
+<p>Working with row-counts forces the data store to recount rows in an O<br />
+(n^2) manner. Cursors avoid this issue by allowing practically<br />
+constant time access to the next block. The cost becomes O(n/<br />
+block_size) which, yes, is O(n), but a graceful one given n &lt; 10^7 and<br />
+a block_size of 5000. The cursor approach provides a more complete and<br />
+consistent result set.</p>
+<p>Proportionally, very few users require multiple page fetches with a<br />
+page size of 5,000.</p>
+<p>Also, scraping the social graph repeatedly at high speed is could<br />
+often be considered a low-value, borderline abusive use of the social<br />
+graph API.</p></blockquote>
+<p>通过这两段文字我们已经很清楚了，对于大结果集的数据，使用cursor方式的目的主要是为了极大地提高性能。还是拿MySQL为例说明，比如翻页到100,000条时，不用cursor，对应的SQL为</p>
+<pre>select * from msgs limit 100000, 100</pre>
+<p>在一个百万记录的表上，第一次执行这条SQL需要5秒以上。<br />
+假定我们使用表的主键的值作为cursor_id, 使用cursor分页方式对应的SQL可以优化为</p>
+<pre>select * from msgs where id &gt; cursor_id limit 100;</pre>
+<p>同样的表中，通常只需要100ms以下, 效率会提高几十倍。MySQL limit性能差别也可参看我3年前写的一篇不成熟的文章 <a href="http://hi.baidu.com/jabber/blog/item/67485b43379290119313c6b5.html">MySQL LIMIT 的性能问题</a>。</p>
+<h3>结论</h3>
+<p>建议Web应用中<strong>大数据集翻页可以采用这种cursor方式</strong>，不过此方法缺点是翻页时必须连续，不能跳页。</p>
+Similar Posts:<ul><li><a href="http://timyang.net/architecture/friendfeed-like-aggregator/" rel="bookmark" title="April 3, 2009">Ideas for creating a friendfeed like feed aggregator system</a></li>
+
+<li><a href="http://timyang.net/tech/twitter-whale/" rel="bookmark" title="March 8, 2010">Twitter“鲸鱼”故障技术剖析</a></li>
+
+<li><a href="http://timyang.net/python/python-rest/" rel="bookmark" title="February 12, 2009">用Python实现CRUD功能REST服务</a></li>
+
+<li><a href="http://timyang.net/architecture/twitter-cache-architecture/" rel="bookmark" title="October 28, 2009">Twitter架构图(cache篇)</a></li>
+
+<li><a href="http://timyang.net/sns/twitter-api-changes/" rel="bookmark" title="December 30, 2009">Twitter API最近的一些飞跃</a></li>
+</ul><!-- Similar Posts took 20.857 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/web/pagination/feed/</wfw:commentRss>
+		<slash:comments>4</slash:comments>
+		</item>
+		<item>
+		<title>2010年的技术架构建议</title>
+		<link>http://timyang.net/architecture/2010-tech-predictions/</link>
+		<comments>http://timyang.net/architecture/2010-tech-predictions/#comments</comments>
+		<pubDate>Thu, 31 Dec 2009 09:15:21 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[架构]]></category>
+		<category><![CDATA[2010]]></category>
+		<category><![CDATA[app engine]]></category>
+		<category><![CDATA[key value store]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=520</guid>
+		<description><![CDATA[在 2009年最后一天，根据自己小小的视角提出一些技术建议，供同行参考。
+编程语言
+首先要能跳出语言之争及语言偏见，架构师需要在中立的角度选择最合适团队的语言，避免在技术决策中加入过多个人喜好。在系统语言层面，主要可关注以下几种
+Erlang, 会继续在小圈子内流行，业界应用Erlang技术最大的障碍不是Erlang技术本身，而在于缺乏这方面专业人才。
+Scala, 和Erlang不同，Scala有成熟JVM及丰富的周边library，在异构系统中集成也很容易，新项目使用Scala风险很小，所以Scala在新语言中应该有较大的提升优势。
+Go, 由于刚开始推出，不适合正式项目使用，2010年会稳步上升，可适当关注。
+其他语言基本保持现状。
+架构
+LAMP中的Linux, Apache, MySQL会受到云计算中的App Engine模式的冲击，因为App Engine在分布式处理，可扩展性，稳定性方面都有很大的优势。 在App Engine模式中，MySQL作用会降低，退化成一种存储服务。而且App Engine的存储服务含义会更广泛，传统架构中的MySQL, Memcached, 及key value store在App Engine框架下都会以底层的服务方式提供。存储不再是软件，而是一种可靠服务，因此也会带来分布式存储相关技术的繁荣。
+Web 2.0的设计中，Cache会成为一个中心元素。传统的web应用cache只是一个可选的锦上添花层，即使去掉，PHP + MySQL这种模式也可正常运行。但随着未来应用social化及realtime的趋势，从facebook及twitter的设计来看，cache已经从可选层成为核心层。cache设计的好坏直接决定架构的成败。
+由于web发展的趋势会使应用更realtime化，体现到技术层面是HTML5(websockets)及类似技术具有更高的价值。但由于阻碍生产力的IE存在，HTML5无法一步到位。建议关注能解决HTML5及旧ajax自适应的框架。
+网络模型方面，由于多核的硬件环境，轻量级的进程模型值得采用。如传统的C++ boost的asio, 各公司自己实现的coroutine, Erlang的process, go的goroutines, Java/Scala的Netty/Mina框架等。但C++框架的代码优雅性可维护性欠佳，性能也没有突出的优势，可关注后面几种方案。
+分布式方面，Dynamo及Chubby的思想会逐渐在国内的项目等到更广泛的应用，架构师会逐步丢弃双写，双机心跳等山寨式的容错设计思想，可靠的分布式设计思想会更普及。
+存储
+2009是key value/nosql产品百花齐放的年代。到2010年，它们之中优秀的会脱颖而出逐步主流化，主流化的产品周边的工具会更丰富，运维相关经验也会更成熟。目前阻碍很多key value产品推广很大一个障碍是运维的顾虑，而不是它们本身的性能。究竟会是Memcachedb/Tokyo Cabinet/Redis这样的小巧软件走向主流，还是Cassandra这样的巨无霸更受欢迎，我们拭目以待。
+Similar Posts:2010年技术实践计划
+
+分布式key/value store演讲草稿(一)
+
+Twitter架构图(cache篇)
+
+广州技术沙龙安排
+
+Friendfeed的MySQL key/value存储
+]]></description>
+			<content:encoded><![CDATA[<p>在 2009年最后一天，根据自己小小的视角提出一些技术建议，供同行参考。</p>
+<h2>编程语言</h2>
+<p>首先要能跳出语言之争及语言偏见，架构师需要在中立的角度选择最合适团队的语言，避免在技术决策中加入过多个人喜好。在系统语言层面，主要可关注以下几种<br />
+Erlang, 会继续在小圈子内流行，业界应用Erlang技术最大的障碍不是Erlang技术本身，而在于缺乏这方面专业人才。<br />
+Scala, 和Erlang不同，Scala有成熟JVM及丰富的周边library，在异构系统中集成也很容易，新项目使用Scala风险很小，所以Scala在新语言中应该有较大的提升优势。<br />
+Go, 由于刚开始推出，不适合正式项目使用，2010年会稳步上升，可适当关注。<br />
+其他语言基本保持现状。</p>
+<h2>架构</h2>
+<p>LAMP中的Linux, Apache, MySQL会受到云计算中的App Engine模式的冲击，因为App Engine在分布式处理，可扩展性，稳定性方面都有很大的优势。 在App Engine模式中，MySQL作用会降低，退化成一种存储服务。而且App Engine的存储服务含义会更广泛，传统架构中的MySQL, Memcached, 及key value store在App Engine框架下都会以底层的服务方式提供。存储不再是软件，而是一种可靠服务，因此也会带来分布式存储相关技术的繁荣。</p>
+<p>Web 2.0的设计中，Cache会成为一个中心元素。传统的web应用cache只是一个可选的锦上添花层，即使去掉，PHP + MySQL这种模式也可正常运行。但随着未来应用social化及realtime的趋势，从facebook及twitter的设计来看，cache已经从可选层成为核心层。cache设计的好坏直接决定架构的成败。</p>
+<p>由于web发展的趋势会使应用更realtime化，体现到技术层面是HTML5(websockets)及类似技术具有更高的价值。但由于阻碍生产力的IE存在，HTML5无法一步到位。建议关注能解决HTML5及旧ajax自适应的框架。</p>
+<p>网络模型方面，由于多核的硬件环境，轻量级的进程模型值得采用。如传统的C++ boost的asio, 各公司自己实现的coroutine, Erlang的process, go的goroutines, Java/Scala的Netty/Mina框架等。但C++框架的代码优雅性可维护性欠佳，性能也没有突出的优势，可关注后面几种方案。</p>
+<p>分布式方面，Dynamo及Chubby的思想会逐渐在国内的项目等到更广泛的应用，架构师会逐步丢弃双写，双机心跳等山寨式的容错设计思想，可靠的分布式设计思想会更普及。</p>
+<h2>存储</h2>
+<p>2009是key value/nosql产品百花齐放的年代。到2010年，它们之中优秀的会脱颖而出逐步主流化，主流化的产品周边的工具会更丰富，运维相关经验也会更成熟。目前阻碍很多key value产品推广很大一个障碍是运维的顾虑，而不是它们本身的性能。究竟会是Memcachedb/Tokyo Cabinet/Redis这样的小巧软件走向主流，还是Cassandra这样的巨无霸更受欢迎，我们拭目以待。</p>
+Similar Posts:<ul><li><a href="http://timyang.net/misc/2010-tech-plan/" rel="bookmark" title="December 28, 2009">2010年技术实践计划</a></li>
+
+<li><a href="http://timyang.net/tech/key-value-store-draft/" rel="bookmark" title="July 27, 2009">分布式key/value store演讲草稿(一)</a></li>
+
+<li><a href="http://timyang.net/architecture/twitter-cache-architecture/" rel="bookmark" title="October 28, 2009">Twitter架构图(cache篇)</a></li>
+
+<li><a href="http://timyang.net/tech/guangzhou-salon-090808/" rel="bookmark" title="July 24, 2009">广州技术沙龙安排</a></li>
+
+<li><a href="http://timyang.net/data/friendfeed-mysql-schema-less/" rel="bookmark" title="October 29, 2009">Friendfeed的MySQL key/value存储</a></li>
+</ul><!-- Similar Posts took 10.319 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/architecture/2010-tech-predictions/feed/</wfw:commentRss>
+		<slash:comments>13</slash:comments>
+		</item>
+		<item>
+		<title>Twitter API最近的一些飞跃</title>
+		<link>http://timyang.net/sns/twitter-api-changes/</link>
+		<comments>http://timyang.net/sns/twitter-api-changes/#comments</comments>
+		<pubDate>Wed, 30 Dec 2009 04:41:26 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[SNS]]></category>
+		<category><![CDATA[firehose]]></category>
+		<category><![CDATA[twitter]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=516</guid>
+		<description><![CDATA[Twitter的平台总监Ryan Sarver在最近一封给开发者公开email Platform announcements from LeWeb提到，打算将API用户请求限制扩大10倍，由目前的150次/小时扩大到1,500次/小时(但同时将搜索范围缩短到7天)。
+*Auth announcements*
+With the recent launches of Retweet, Lists and Geotagging we have seen
+applications struggle to provide the experience they want for their users
+within the 150 req/hr limit. We are excited to open the skies up a bit and
+provide some more room for developers to work within. Starting in a few
+weeks [...]]]></description>
+			<content:encoded><![CDATA[<p>Twitter的平台总监Ryan Sarver在最近一封给开发者公开email <a href="http://groups.google.com/group/twitter-development-talk/browse_thread/thread/a1076d83d70d0450">Platform announcements from LeWeb</a>提到，打算将API用户请求限制扩大10倍，由目前的150次/小时扩大到1,500次/小时(但同时将搜索范围缩短到7天)。</p>
+<blockquote><p>*Auth announcements*<br />
+With the recent launches of Retweet, Lists and Geotagging we have seen<br />
+applications struggle to provide the experience they want for their users<br />
+within the 150 req/hr limit. We are excited to open the skies up a bit and<br />
+provide some more room for developers to work within. Starting in a few<br />
+weeks all OAuth requests to api.twitter.com/1/ will be able to take<br />
+advantage of a 10x rate limit increase. Basic Whitelisting still exists and<br />
+is unchanged. We look forward to what this means in terms of the increased<br />
+richness around the user experience in Twitter apps.</p></blockquote>
+<p>注意文中的限制是OAuth客户端，为什么只限OAuth客户端？由于OAuth客户端可控性较强。如果发现app有滥用api嫌疑，可以直接suspend这个app；而另外一种鉴权方式Basic Authentication方式并不强制client传递app id, 服务器判断app abuse较困难。</p>
+<p>在我的理解，microblog的最大的特性应该是realtime,(另外一特性应是social graph), 即使Twitter扩大rate limit, REST方式的HTTP协议终究没法实现realtime，如果所有的客户端都1分钟请求25次(1,500/60=25)，twitter服务器稳定性一向声誉不佳，增大后能否经住考验也是一个疑问。</p>
+<p>如果要实现真正的realtime, 目前有http callback或者XMPP等方案。callback由于客户端通常在防火墙内并不可行。XMPP由于协议栈庞大，服务端及客户端编写都比较繁琐，而且XMPP是为IM协议设计，所以并不十分适合twitter api。</p>
+<p>另外Twitter在邮件中还提到，打算将所有最新更新feed的数据流(Twitter称为Firehose)向所有人开放。</p>
+<blockquote><p>*Firehose for everyone*<br />
+Finally, the announcement that has garnered the most coverage and<br />
+excitement. As I stated in the session at LeWeb we are committed to<br />
+providing a framework for any company big or small, rich or poor to do a<br />
+deal with us to get access to the Firehose in the same way we did deals with<br />
+Google and Microsoft. We want everyone to have the opportunity &#8212; terms will<br />
+vary based on a number of variables but we want a two-person startup in a<br />
+garage to have the same opportunity to build great things with the full feed<br />
+that someone with a billion dollar market cap does. There are still a lot of<br />
+details to be fleshed out and communicated, but this a top priority for us<br />
+and we look forward to what types of companies and products get built on top<br />
+of this unique and rich stream.</p></blockquote>
+<p>Firehose可以理解成所有Twitter最近更新的水龙头，目前只对 Microsoft, Google等少量公司开放。Twitter表示以后即使&#8221;a two-person startup in a garage&#8221;这样的公司也可以获取firehose访问权限, &#8220;We want everyone to have the opportunity&#8221;。相信不少公司将会为这一特性而激动甚至疯狂。firehose开放意味为第三方提供了无限的创意空间，另外它也会对Twitter已有的服务search, geotag等业务构成威胁，走出这一步需要很大的勇气。</p>
+<p>以上文字基本已在<a href="http://t.sina.com.cn/" target="_blank">新浪微博</a>发表过，整理后就成了一篇blog, 欢迎在新浪微博关注我，点这里进入 <a href="http://t.sina.com.cn/timyang" target="_blank">http://t.sina.com.cn/timyang</a></p>
+Similar Posts:<ul><li><a href="http://timyang.net/web/pubsubhubbub/" rel="bookmark" title="October 29, 2009">PubSubHubbub的价值</a></li>
+
+<li><a href="http://timyang.net/architecture/friendfeed-like-aggregator/" rel="bookmark" title="April 3, 2009">Ideas for creating a friendfeed like feed aggregator system</a></li>
+
+<li><a href="http://timyang.net/architecture/twitter-cache-architecture/" rel="bookmark" title="October 28, 2009">Twitter架构图(cache篇)</a></li>
+
+<li><a href="http://timyang.net/google/google-wave/" rel="bookmark" title="May 31, 2009">从技术角度看Google Wave</a></li>
+
+<li><a href="http://timyang.net/sns/facebook-platform-f8-07/" rel="bookmark" title="June 10, 2009">Facebook平台设计(一)</a></li>
+</ul><!-- Similar Posts took 12.005 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/sns/twitter-api-changes/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>2010年技术实践计划</title>
+		<link>http://timyang.net/misc/2010-tech-plan/</link>
+		<comments>http://timyang.net/misc/2010-tech-plan/#comments</comments>
+		<pubDate>Mon, 28 Dec 2009 14:34:28 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[非技术]]></category>
+		<category><![CDATA[2010]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=513</guid>
+		<description><![CDATA[每年这个时候，都很高兴看到有很多技术人的总结，展望及计划。透过别人的经验及计划，可以了解自己的不足。可惜的是到一定层次的人一般不轻易透露自己的想法，使我们错失了很多学习及观摩的机会。以下是个人的一些近期实践打算，跟目前工作业务无关。
+网络模型研究，09年做的的C, Erlang, Java and Go Web Server performance test得出了一些实验室的结论，打算继续观察各种网络模型在大并发真实网络慢连接的情况下表现的差异。打算比较Scala, Java, Erlang and Go. 关注点也是throughput, latency以及代码的可扩展性及可维护性。
+分布式，打算尝试哪些分布式的理论可以适合国内公司使用，而不仅仅作为实验室产品。初步关注点是Cassandra。
+比较微博客的一些架构设计模式，不同的设计模式比如推拉方案在high load下的throughput, storage, bandwidth, latency之间的差异。可以利用一些开放的模型来如Jaiku来分析。由于这个研究跟目前公司某产品有关联关系，所以暂时不适合作为公开研究。
+由于计划做得越长，出洋相的机会就越大，先暂时想到这么多。
+以上几点特点都是一些纯兴趣的东西，未必是有前途或者“钱途”的方向。根据本人从业观察，对前途和“钱途”研究比较透彻的同学在技术行业三五年之后通常就改行干别的去了。我也奉劝有这样想法的同学，改行趁早，技术的从业经验对你以后从事别的行业并没有太大的帮助，而且后来的人要维护你留下的一堆不太优雅的代码也不容易。
+Similar Posts:2010年的技术架构建议
+
+广州技术沙龙设想
+
+第一期广州技术沙龙活动总结
+
+C, Erlang, Java and Go Web Server performance test
+
+第一期广州技术沙龙预告
+]]></description>
+			<content:encoded><![CDATA[<p>每年这个时候，都很高兴看到有很多技术人的总结，展望及计划。透过别人的经验及计划，可以了解自己的不足。可惜的是到一定层次的人一般不轻易透露自己的想法，使我们错失了很多学习及观摩的机会。以下是个人的一些近期实践打算，跟目前工作业务无关。</p>
+<p>网络模型研究，09年做的的<a href="http://timyang.net/programming/c-erlang-java-performance/">C, Erlang, Java and Go Web Server performance test</a>得出了一些实验室的结论，打算继续观察各种网络模型在大并发真实网络慢连接的情况下表现的差异。打算比较Scala, Java, Erlang and Go. 关注点也是throughput, latency以及代码的可扩展性及可维护性。</p>
+<p>分布式，打算尝试哪些分布式的理论可以适合国内公司使用，而不仅仅作为实验室产品。初步关注点是<a href="http://incubator.apache.org/cassandra/">Cassandra</a>。</p>
+<p>比较微博客的一些架构设计模式，不同的设计模式比如推拉方案在high load下的throughput, storage, bandwidth, latency之间的差异。可以利用一些开放的模型来如Jaiku来分析。由于这个研究跟目前公司某产品有关联关系，所以暂时不适合作为公开研究。</p>
+<p>由于计划做得越长，出洋相的机会就越大，先暂时想到这么多。</p>
+<p>以上几点特点都是一些纯兴趣的东西，未必是有前途或者“钱途”的方向。根据本人从业观察，对前途和“钱途”研究比较透彻的同学在技术行业三五年之后通常就改行干别的去了。我也奉劝有这样想法的同学，改行趁早，技术的从业经验对你以后从事别的行业并没有太大的帮助，而且后来的人要维护你留下的一堆不太优雅的代码也不容易。</p>
+Similar Posts:<ul><li><a href="http://timyang.net/architecture/2010-tech-predictions/" rel="bookmark" title="December 31, 2009">2010年的技术架构建议</a></li>
+
+<li><a href="http://timyang.net/tech/guangzhou-salon/" rel="bookmark" title="July 15, 2009">广州技术沙龙设想</a></li>
+
+<li><a href="http://timyang.net/tech/gz-salon-summary/" rel="bookmark" title="August 12, 2009">第一期广州技术沙龙活动总结</a></li>
+
+<li><a href="http://timyang.net/programming/c-erlang-java-performance/" rel="bookmark" title="November 11, 2009">C, Erlang, Java and Go Web Server performance test</a></li>
+
+<li><a href="http://timyang.net/tech/guangzhou-salon-guid/" rel="bookmark" title="August 3, 2009">第一期广州技术沙龙预告</a></li>
+</ul><!-- Similar Posts took 12.736 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/misc/2010-tech-plan/feed/</wfw:commentRss>
+		<slash:comments>7</slash:comments>
+		</item>
+		<item>
+		<title>CN Erlounge IV tweets</title>
+		<link>http://timyang.net/erlang/cn-erlounge-iv-tweets/</link>
+		<comments>http://timyang.net/erlang/cn-erlounge-iv-tweets/#comments</comments>
+		<pubDate>Sat, 14 Nov 2009 05:40:00 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[Erlang]]></category>
+		<category><![CDATA[Erlounge]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=494</guid>
+		<description><![CDATA[前言
+本文整理了Erlounge IV Erlang杭州开发者大会现场的记录的Tweets列表，建议先到 http://ecug.org/agenda/ 下载演讲文档，以便理解上下文。
+Twitter的优势是小之美，整理成一篇大文章比较杂乱，仅希望能给不在现场的读者在阅读演讲稿时提供一些参考的信息。
+文中 @user 方式表示用户的 twitter id，下文中提到的部分讲师Twitter id为@litaocheng @eric33yu @zoomq @sj_mackenzie @qiezi @bobcui @xushiwei @houmingyuan @aimingoo 同时也欢迎follow我的twitter: @xmpp
+
+(Erlounge IV第一天参会人员合影)
+Day 1
+@litaocheng 的《Erlang开发实践》如果要做Erlang具体开发的话（而不是所谓“架构”），建议看看后续公布的视频，这个是非常好的教程。由于当时没抢到无线IP，所以没有twitter记录
+@eric33yu 的 《Erlang系统调优》开始了，放弃无线上网，开始用手机发，幸亏BB打字快
+Erlang process 调度原则 尽量让一个cpu忙
+讲的都是实战精华，比如斑马书中提到进程字典不是一个好的编程习惯，但yufeng从实战角度鼓励用进程字典，因为进程字典性能非常好。
+模式匹配相同的标签尽量放在一起 如tuple，以提高效率
+讲erlang集群 所有节点都需要相互维持一个tcp连接 并要相互维持一个90s一次的心跳 开销很大
+讲erlang大量数据不要用tuple,array,list来存 最好用ets
+linux systemtap 来观测程序(profiler)很有用 非侵入式 不需要修改程序
+Erlang发送binary时候最好大于256长度，否则每份数据都需要copy，比如一次广播发送多份下行数据。
+讲erlang上不要把ulimit -n 设太高 因为每个handler 需要占用约200字节开销 即使没用
+yufeng讲他每做一个服务器程序，都投入30%时间编写log代码记录重要参数 以便运行期间观察
+讲erlang中如需跨语言通讯 推荐asn.1(不少现场同学也倾向于protocol buffers)
+Erlang中config set/get不适合用独立进程去做 推荐ets
+发现大部分erlang programmer是c++ 出身, 特别关注IO效率, cpu利用, 多核, 上下文切换开销, 内存分配/回收，总而言之就是性能, 另外一方面也许是 [...]]]></description>
+			<content:encoded><![CDATA[<h3>前言</h3>
+<p>本文整理了Erlounge IV Erlang杭州开发者大会现场的记录的Tweets列表，建议先到 <a href="http://ecug.org/agenda/">http://ecug.org/agenda/</a> 下载演讲文档，以便理解上下文。<br />
+Twitter的优势是小之美，整理成一篇大文章比较杂乱，仅希望能给不在现场的读者在阅读演讲稿时提供一些参考的信息。<br />
+文中 @user 方式表示用户的 twitter id，下文中提到的部分讲师Twitter id为@<a href="http://twitter.com/litaocheng">litaocheng</a> @<a href="http://twitter.com/eric33yu">eric33yu</a> @<a href="http://twitter.com/zoomq">zoomq</a> @<a href="http://twitter.com/sj_mackenzie">sj_mackenzie</a> @<a href="http://twitter.com/qiezi">qiezi</a> @<a href="http://twitter.com/bobcui">bobcui</a> @<a href="http://twitter.com/xushiwei">xushiwei</a> @<a href="http://twitter.com/houmingyuan">houmingyuan</a> @<a href="http://twitter.com/aimingoo">aimingoo</a> 同时也欢迎follow我的twitter: @<a href="http://twitter.com/xmpp">xmpp</a><br />
+<a title="Erlounge, Hangzhou by TimYang.net, on Flickr" href="http://www.flickr.com/photos/38692385@N03/4101649113/"><img src="http://farm3.static.flickr.com/2751/4101649113_0dec208b03.jpg" alt="Erlounge, Hangzhou" width="500" height="333" /></a><br />
+(Erlounge IV第一天参会人员合影)</p>
+<h3>Day 1</h3>
+<p>@litaocheng 的《Erlang开发实践》如果要做Erlang具体开发的话（而不是所谓“架构”），建议看看后续公布的视频，这个是非常好的教程。由于当时没抢到无线IP，所以没有twitter记录</p>
+<p>@eric33yu 的 《Erlang系统调优》开始了，放弃无线上网，开始用手机发，幸亏BB打字快</p>
+<p>Erlang process 调度原则 尽量让一个cpu忙</p>
+<p>讲的都是实战精华，比如斑马书中提到进程字典不是一个好的编程习惯，但yufeng从实战角度鼓励用进程字典，因为进程字典性能非常好。</p>
+<p>模式匹配相同的标签尽量放在一起 如tuple，以提高效率</p>
+<p>讲erlang集群 所有节点都需要相互维持一个tcp连接 并要相互维持一个90s一次的心跳 开销很大</p>
+<p>讲erlang大量数据不要用tuple,array,list来存 最好用ets</p>
+<p>linux systemtap 来观测程序(profiler)很有用 非侵入式 不需要修改程序</p>
+<p>Erlang发送binary时候最好大于256长度，否则每份数据都需要copy，比如一次广播发送多份下行数据。</p>
+<p>讲erlang上不要把ulimit -n 设太高 因为每个handler 需要占用约200字节开销 即使没用</p>
+<p>yufeng讲他每做一个服务器程序，都投入30%时间编写log代码记录重要参数 以便运行期间观察</p>
+<p>讲erlang中如需跨语言通讯 推荐asn.1(不少现场同学也倾向于protocol buffers)</p>
+<p>Erlang中config set/get不适合用独立进程去做 推荐ets</p>
+<p>发现大部分erlang programmer是c++ 出身, 特别关注IO效率, cpu利用, 多核, 上下文切换开销, 内存分配/回收，总而言之就是性能, 另外一方面也许是 @eric33yu 忽悠成功 <img src='http://timyang.net/blog/wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' /> </p>
+<p>恶狼战役的视频很震撼，这个是在ppt上看不到的 2:20 PM Nov 7th<br />
+<a href="http://code.google.com/p/erlbattle/"><img class="alignnone" title="erlang battle" src="http://erlbattle.googlecode.com/files/replay-pic-s.png" alt="" width="383" height="206" /></a></p>
+<p>erlang由于没有共享变量，所以进程间通讯是用message还是ets(memory db)的使用技巧是语言的特色 2:22 PM Nov 7th</p>
+<p>恶狼战役的项目专门给初学者练手用，都是用基本语法，没用什么什么高级特性 2:38 PM Nov 7th</p>
+<p>现在来自香港的老外Stewart Mackenzie讲 An Erlang Implementation of Restms，中英文夹杂很幽默，引起笑声阵阵 3:12 PM Nov 7th</p>
+<p>@sj_mackenzie讲他选择erlang的故事，平时他是靠java make $ 3:14 PM Nov 7th</p>
+<p>@sj_mackenzie解释了message queue的作用，并对比了xmpp, AMQP, atompub的一些不足，所以他建议用RestMS 3:34 PM Nov 7th</p>
+<p>@sj_mackenzie对key value store 也很感兴趣，他推荐了另外一个erlang based riak, 也是一个dynamo克隆 http://riak.basho.com/ 3:47 PM Nov 7th</p>
+<p>@sj_mackenzie 开始介绍 dynamo 理论了，这个是网上ppt没有的，so yet another dynamo fans. <img src='http://timyang.net/blog/wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' />  3:49 PM Nov 7th</p>
+<p>@sj_mackenzie 介绍 riak performance, 单机上write 18k/s, read 25k/s 3:53 PM Nov 7th<br />
+@sj_mackenzie 介绍 riak 还有一个link的特性，就像html的link一样，又向老外了解了一些link的细节 3:59 PM Nov 7th</p>
+<p>@sj_mackenzie 现在是trustno1讲cuda变成，开场白是Parallel和concurrent的区别 4:27 PM Nov 7th</p>
+<p>trustno1讲concurrent is coarse-grained Parallelism 4:33 PM Nov 7th</p>
+<p>trustno1讲&#8221;premature optimization is the root of all evil&#8221;翻译成“过早优化是万恶之源”是不准确的，premature应该说是草率的优化更准确 4:45 PM Nov 7th</p>
+<p>trustno1今天继续走“让听众听不懂”的路线，说是如果大家都听懂了他就给领导交辞呈，现在正在讲直流电平位移转为有符号数，然后突然停下来问大家前面内容有没有疑问，没人回应，然后话题继续 5:17 PM Nov 7th</p>
+<h3>Day 1, Evening</h3>
+<p>现在是 @bobcui 和 @qiezi 来分享actor erlang进程模型在c++事件，用51.com好友接口服务来做业务场景说明 8:10 PM Nov 7th</p>
+<p>@bobcui 正在介绍51.com底层服务concurrent实现思路，coroutine协程每秒可以切换200万次，比context switch有很大优势 8:27 PM Nov 7th</p>
+<p>@bobcui 介绍完coroutine spawn之后，引起听众讨论协程的一些缺陷，比如调度器没法主动调度，没有隔离，单个process出了问题没法像erlang那样隔离保护，伪erlang粉丝与纯erlang粉丝展开了pk 8:51 PM Nov 7th<br />
+<img class="alignnone size-full wp-image-497" title="c_coroutine" src="http://timyang.net/blog/wp-content/uploads/2009/11/c_coroutine.png" alt="c_coroutine" width="407" height="302" /><br />
+(插图：51.com C++实现的轻量级进程模型)</p>
+<p>纯erlang粉丝Ery Lee质疑这套c++的协程模型ac_actor,“这套模型有商用吗”, @bobcui 急了，&#8221;我们51.com已经有一百多台服务器在跑这个&#8221; 9:05 PM Nov 7th</p>
+<p>@xushiwei 开讲各种服务器编程模型的区别，进程fork方式，Boost ASIO, 轻量process其实都很相似，不管由os还是应用来管理调度，核心问题是看哪个进程够轻量 9:27 PM Nov 7th</p>
+<p>@xushiwei 谈到Boost ASIO缺点不够优雅，业务代码被切分支离破碎。但轻量级进程实现简单自然，易于维护且高效，不可避免是服务器编程发展方向 9:35 PM Nov 7th</p>
+<h3>Day 2</h3>
+<p>御风行的 @houmingyuan 讲网络程序的压力测试，使用erlang/otp的client比c++/python一样的机器人简单方便很多(原话：舒服太多)，一个erlang process一个机器人，代码约1500行，一个星期可以做得非常完善，包括流量监控支持 10:42 AM Nov 8th<br />
+<img class="alignnone size-full wp-image-498" title="erlang_cm" src="http://timyang.net/blog/wp-content/uploads/2009/11/erlang_cm.png" alt="erlang_cm" width="341" height="275" /><br />
+(插图：御风行的Erlang连接服务器)</p>
+<p>御风行的连接服务器/网关，由c++改成erlang之后,代码由7924减少到2000行，状态机状态及事件都减少到一半以下。以及模式匹配比c++优雅舒适很多,性能和c++差不多，而且erlang是新手写的，c++是老手 11:02 AM Nov 8th</p>
+<p>御风行的erlang连接服务器/网关，6500并发下，测试流量达到3w-4w packet/s 11:18 AM Nov 8th</p>
+<p>说到erlang连接服务器6500并发下，测试流量达到3w-4w packet/s，不少提问没找到缺陷，又伤害了现场不少c++, boost asio粉丝脆弱的心灵 11:26 AM Nov 8th</p>
+<p>@eric33yu 补充erlang内存分配的方式，erlang有200多种内存分配的方式，比一般同学自己写的内存池有不可比拟的优势。另外由于大部分erlang大牛都是c++/erlang双剑客，所以大部分c++粉丝的质疑都被轻松驳回 11:36 AM Nov 8th</p>
+<p>发现erlang缺少一本类似effective java/c++这样的书，现场工程师有很多类似问题    12:48 PM Nov 8th</p>
+Similar Posts:<ul><li><a href="http://timyang.net/architecture/game-backend/" rel="bookmark" title="December 25, 2008">陈杰谈网游服务器的后端技术</a></li>
+
+<li><a href="http://timyang.net/misc/2010-tech-plan/" rel="bookmark" title="December 28, 2009">2010年技术实践计划</a></li>
+
+<li><a href="http://timyang.net/architecture/2010-tech-predictions/" rel="bookmark" title="December 31, 2009">2010年的技术架构建议</a></li>
+
+<li><a href="http://timyang.net/web/pubsubhubbub/" rel="bookmark" title="October 29, 2009">PubSubHubbub的价值</a></li>
+
+<li><a href="http://timyang.net/lua/lua-coroutine-vs-java-wait-notify/" rel="bookmark" title="April 27, 2009">Lua coroutine vs Java wait/notify</a></li>
+</ul><!-- Similar Posts took 12.749 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/erlang/cn-erlounge-iv-tweets/feed/</wfw:commentRss>
+		<slash:comments>2</slash:comments>
+		</item>
+		<item>
+		<title>C, Erlang, Java and Go Web Server performance test</title>
+		<link>http://timyang.net/programming/c-erlang-java-performance/</link>
+		<comments>http://timyang.net/programming/c-erlang-java-performance/#comments</comments>
+		<pubDate>Wed, 11 Nov 2009 13:28:18 +0000</pubDate>
+		<dc:creator>Tim</dc:creator>
+				<category><![CDATA[编程]]></category>
+		<category><![CDATA[English]]></category>
+		<category><![CDATA[Erlang]]></category>
+		<category><![CDATA[Go]]></category>
+		<category><![CDATA[Java]]></category>
+		<category><![CDATA[nginx]]></category>
+		<category><![CDATA[web server]]></category>
+
+		<guid isPermaLink="false">http://timyang.net/?p=468</guid>
+		<description><![CDATA[I had tested a hello world web server in C, Erlang, Java and the Go programming language.
+* C, use the well-known high performance web server nginx, with a hello world nginx module
+* Erlang/OTP
+* Java, using the MINA 2.0 framework, now the JBoss Netty framework.
+* Go, http://golang.org/
+1. Test environment
+1.1 Hardware/OS
+2 Linux boxes in a gigabit ethernet [...]]]></description>
+			<content:encoded><![CDATA[<p>I had tested a hello world web server in C, Erlang, Java and the Go programming language.<br />
+* C, use the well-known high performance web server nginx, with a hello world nginx module<br />
+* Erlang/OTP<br />
+* Java, using <span style="text-decoration: line-through;">the MINA 2.0 framework</span>, now the JBoss <a href="http://www.jboss.org/netty/">Netty</a> framework.<br />
+* Go, <a href="http://golang.org/">http://golang.org/</a></p>
+<h3>1. Test environment</h3>
+<h4>1.1 Hardware/OS</h4>
+<p>2 Linux boxes in a gigabit ethernet LAN, 1 server and 1 test client<br />
+Linux Centos 5.2 64bit<br />
+Intel(R) Xeon(R) CPU E5410  @ 2.33GHz (L2 cache: 6M), Quad-Core * 2<br />
+8G memory<br />
+SCSI disk (standalone disk, no other access)</p>
+<h4>1.2 Software version</h4>
+<p>nginx, nginx-0.7.63.tar.gz<br />
+Erlang, otp_src_R13B02-1.tar.gz<br />
+Java, jdk-6u17-linux-x64.bin, mina-2.0.0-RC1.tar.gz, netty-3.2.0.ALPHA1-dist.tar.bz2<br />
+Go, hg clone -r release <a href="https://go.googlecode.com/hg/">https://go.googlecode.com/hg/</a> $GOROOT (Nov 12, 2009)</p>
+<h4>1.3 Source code and configuration</h4>
+<p><strong>Linux</strong>, run sysctl -p</p>
+<pre>net.ipv4.ip_forward = 0
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.conf.default.accept_source_route = 0
+kernel.sysrq = 0
+kernel.core_uses_pid = 1
+net.ipv4.tcp_syncookies = 1
+kernel.msgmnb = 65536
+kernel.msgmax = 65536
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+kernel.panic = 1
+net.ipv4.tcp_rmem = 8192	873800	8738000
+net.ipv4.tcp_wmem = 4096	655360	6553600
+net.ipv4.ip_local_port_range = 1024	65000
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216</pre>
+<p># ulimit -n<br />
+150000</p>
+<p><strong>C</strong>: ngnix hello world module, copy the code ngx_http_hello_module.c from <a href="http://timyang.net/web/nginx-module/">http://timyang.net/web/nginx-module/</a></p>
+<p>in nginx.conf, set &#8220;worker_processes  1; worker_connections 10240&#8243; for 1 cpu test, set &#8220;worker_processes  4; worker_connections 2048&#8243; for multi-core cpu test. Turn off all access or debug log in nginx.conf, as follows</p>
+<pre>worker_processes  1;
+worker_rlimit_nofile 10240;
+events {
+    worker_connections  10240;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  0;
+    server {
+        listen       8080;
+        server_name  localhost;
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+          location /hello {
+            ngx_hello_module;
+            hello 1234;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}</pre>
+<p>$ taskset -c 1 ./nginx or $ taskset -c 1-7 ./nginx</p>
+<p><strong>Erlang</strong> hello world server<br />
+The source code is available at yufeng&#8217;s blog, see <a href="http://blog.yufeng.info/archives/105">http://blog.yufeng.info/archives/105</a><br />
+Just copy the code after &#8220;cat ehttpd.erl&#8221;, and compile it.</p>
+<p>$ erlc ehttpd.erl<br />
+$ taskset -c 1 erl +K true +h 99999 +P 99999 -smp enable +S 2:1 -s ehttpd<br />
+$ taskset -c 1-7 erl +K true -s ehttpd<br />
+We use taskset to limit erlang vm to use only 1 CPU/core or use all CPU cores. The 2nd line is run in single CPU mode, and the 3rd line is run in multi-core CPU mode.</p>
+<p><strong>Java</strong> source code, save the 2 class as HttpServer.java and HttpProtocolHandler.java, and do necessary import.<strong><br />
+</strong></p>
+<pre>public class HttpServer {
+    public static void main(String[] args) throws Exception {
+        SocketAcceptor acceptor = new NioSocketAcceptor(4);
+        acceptor.setReuseAddress( true );
+
+		int port = 8080;
+		String hostname = null;
+		if (args.length &gt; 1) {
+			hostname = args[0];
+			port = Integer.parseInt(args[1]);
+		}
+
+        // Bind
+        acceptor.setHandler(new HttpProtocolHandler());
+        if (hostname != null)
+        	acceptor.bind(new InetSocketAddress(hostname, port));
+        else
+        	acceptor.bind(new InetSocketAddress(port));
+
+        System.out.println("Listening on port " + port);
+        Thread.currentThread().join();
+    }
+}
+
+public class HttpProtocolHandler extends IoHandlerAdapter {
+    public void sessionCreated(IoSession session) {
+        session.getConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
+        session.setAttribute(SslFilter.USE_NOTIFICATION);
+    }
+
+    public void sessionClosed(IoSession session) throws Exception {}
+    public void sessionOpened(IoSession session) throws Exception {}
+    public void sessionIdle(IoSession session, IdleStatus status) {}
+    public void exceptionCaught(IoSession session, Throwable cause) {
+        session.close(true);
+    }
+
+    static IoBuffer RESULT = null;
+	public static String HTTP_200 = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\n" +
+			"hello world\r\n";
+	static {
+    	RESULT = IoBuffer.allocate(32).setAutoExpand(true);
+    	RESULT.put(HTTP_200.getBytes());
+    	RESULT.flip();
+    }
+    public void messageReceived(IoSession session, Object message)
+            throws Exception {
+        if (message instanceof IoBuffer) {
+        	IoBuffer buf = (IoBuffer) message;
+        	int c = buf.get();
+        	if (c == 'G' || c == 'g') {
+        		session.write(RESULT.duplicate());
+        	}
+        	session.close(false);
+        }
+    }
+}</pre>
+<p><strong>Nov 24 update</strong> Because the above Mina code doesn&#8217;t parse HTTP request and handle the necessary HTTP protocol, replaced with org.jboss.netty.example.http.snoop.HttpServer from Netty example, but removed all the string builder code from HttpRequestHandler.messageReceived() and just return a &#8220;hello world&#8221; result in HttpRequestHandler.writeResponse(). Please read the <a href="http://www.jboss.org/file-access/default/members/netty/freezone/xref/3.2/org/jboss/netty/example/http/snoop/package-summary.html">source code</a> and the <a href="http://www.jboss.org/netty/documentation.html">Netty documentation</a> for more information.</p>
+<p>$ taskset -c 1-7 \<br />
+java -server -Xmx1024m -Xms1024m -XX:+UseConcMarkSweepGC -classpath . test.HttpServer 192.168.10.1 8080</p>
+<p>We use taskset to limit java only use cpu1-7, and not use cpu0, because we want cpu0 dedicate for system call(Linux use CPU0 for network interruptions).</p>
+<p>Go language, source code</p>
+<pre>package main
+import (
+   "http";
+    "io";
+)
+func HelloServer(c *http.Conn, req *http.Request) {
+    io.WriteString(c, "hello, world!\n");
+}
+func main() {
+     runtime.GOMAXPROCS(8); // 8 cores
+     http.Handle("/", http.HandlerFunc(HelloServer));
+     err := http.ListenAndServe(":8080", nil);
+    if err != nil {
+        panic("ListenAndServe: ", err.String())
+    }
+}</pre>
+<p>$ 6g httpd2.go<br />
+$ 6l httpd2.6<br />
+$ taskset -c 1-7 ./6.out</p>
+<h4>1.4 Performance test client</h4>
+<p>ApacheBench client, for 30, 100, 1,000, 5,000 concurrent threads<br />
+ab -c 30 -n 1000000 <a href="http://192.168.10.1:8080/">http://192.168.10.1:8080/</a><br />
+ab -c 100 -n 1000000 <a href="http://192.168.10.1:8080/">http://192.168.10.1:8080/</a><br />
+1000 thread, 334 from 3 different machine<br />
+ab -c 334 -n 334000 <a href="http://192.168.10.1:8080/">http://192.168.10.1:8080/</a><br />
+5000 thread, 1667 from 3 different machine<br />
+ab -c 1667 -n 334000 <a href="http://192.168.10.1:8080/">http://192.168.10.1:8080/</a></p>
+<h3>2. Test results</h3>
+<h4>2.1 request per second</h4>
+<table style="width: 437pt; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="0" width="580">
+<colgroup span="1">
+<col style="width: 167pt;" span="1" width="222"></col>
+<col style="width: 91pt;" span="1" width="121"></col>
+<col style="width: 61pt;" span="1" width="81"></col>
+<col style="width: 65pt;" span="1" width="86"></col>
+<col style="width: 53pt;" span="1" width="70"></col>
+</colgroup>
+<tbody>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"></td>
+<td class="xl26" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121"><span style="font-size: small;">30 (threads)</span></td>
+<td class="xl24" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">100</span></td>
+<td class="xl24" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">1,000</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">5,000</span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx html(1C)</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">21,301 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">21,331 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">23,746 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">23,502 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx module(1C)</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">25,809 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">25,735 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">30,380 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">29,667</span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx module(Multi-core)</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">25,057 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">24,507 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">31,544 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">33,274 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Erlang(1C)</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">11,585 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">12,367 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">12,852 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">12,815 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Erlang(Multi-Core)</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">15,101 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">20,255 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">26,468 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">25,865 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="text-decoration: line-through;"><span style="font-size: small;">Java, Mina2(without HTTP parse)<br />
+</span></span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;"><span style="text-decoration: line-through;">30,631</span> </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;"><span style="text-decoration: line-through;">26,846</span> </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;"><span style="text-decoration: line-through;">31,911</span> </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;"><span style="text-decoration: line-through;">31,653</span> </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Java, Netty</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">24,152 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">24,423 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">25,487 </span></td>
+<td class="xl28" style="background-color: transparent; border: #d4d0c8;" align="right"><span style="font-size: small;">25,521 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Go</span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">14,080 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">14,748 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">15,799 </span></td>
+<td class="xl27" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">16,110 </span></td>
+</tr>
+</tbody>
+</table>
+<h4><img class="alignnone size-full wp-image-505" title="c_erlang_java_go" src="http://timyang.net/blog/wp-content/uploads/2009/11/c_erlang_java_go.png" alt="c_erlang_java_go" width="612" height="369" /><br />
+2.2 latency, 99% requests within(ms)</h4>
+<table style="width: 437pt; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="0" width="580">
+<colgroup span="1">
+<col style="width: 167pt;" span="1" width="222"></col>
+<col style="width: 91pt;" span="1" width="121"></col>
+<col style="width: 61pt;" span="1" width="81"></col>
+<col style="width: 65pt;" span="1" width="86"></col>
+<col style="width: 53pt;" span="1" width="70"></col>
+</colgroup>
+<tbody>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">30 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">100 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">1,000 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">5,000 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx html(1C)</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">1 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">4 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">42 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">3,079 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx module(1C)</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">1 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">4 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">32 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">3,047 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Nginx module(Multi-core)</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">1 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">6 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">205 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">3,036 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Erlang(1C)</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">3 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">8 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">629 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">6,337 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Erlang(Multi-Core)</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">2 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">7 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">223 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">3,084 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Java, Netty</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">1 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">3</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">3 </span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">3,084 </span></td>
+</tr>
+<tr style="height: 15pt;" height="20">
+<td class="xl24" style="border: medium none #d4d0c8; width: 167pt; height: 15pt; background-color: transparent;" width="222" height="20"><span style="font-size: small;">Go</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 91pt; background-color: transparent;" width="121" align="right"><span style="font-size: small;">26</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 61pt; background-color: transparent;" width="81" align="right"><span style="font-size: small;">33</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 65pt; background-color: transparent;" width="86" align="right"><span style="font-size: small;">47</span></td>
+<td class="xl25" style="border: medium none #d4d0c8; width: 53pt; background-color: transparent;" width="70" align="right"><span style="font-size: small;">9,005 </span></td>
+</tr>
+</tbody>
+</table>
+<h3>3. Notes</h3>
+<p>* On large concurrent connections, C, Erlang, Java no big difference on their performance, results are very close.<br />
+* <span style="text-decoration: line-through;">Java runs better on small connections, but the code in this test doesn&#8217;t parse the HTTP request header (the MINA code).</span><br />
+* Although Mr. Yu Feng (the Erlang guru in China) mentioned that Erlang performance better on single CPU(prevent context switch), but the result tells that Erlang has big latency(&gt; 1S) under 1,000 or 5,000 connections.<br />
+* <span style="text-decoration: line-through;">Go language is very close to Erlang, but still not good under heavy load (5,000 threads)</span><br />
+<strong>After redo 1,000 and 5,000 tests on Nov 18</strong><br />
+* Nginx module is the winner on 5,000 concurrent requests.<br />
+* Although there is improvement space for Go, Go has the same performance from 30-5,000 threads.<br />
+* Erlang process is impressive on large concurrent request, still as good as nginx (5,000 threads).</p>
+<h3>4. Update Log</h3>
+<p>Nov 12, change nginx.conf work_connections from 1024 to 10240<br />
+Nov 13, add runtime.GOMAXPROCS(8); to go&#8217;s code, add sysctl -p env<br />
+Nov 18, realized that <strong>ApacheBench itself is a bottleneck</strong> under 1,000 or 5,000 threads, so use 3 clients from 3 different machines to redo all tests of 1,000 and 5,000 concurrent tests.<br />
+Nov 24, use Netty with full HTTP implementation to replace Mina 2 for the Java web server. Still very fast and low latency after added HTTP handle code.</p>
+Similar Posts:<ul><li><a href="http://timyang.net/web/nginx-module/" rel="bookmark" title="March 17, 2009">如何写nginx module</a></li>
+
+<li><a href="http://timyang.net/data/mcdb-tt-redis/" rel="bookmark" title="August 11, 2009">MemcacheDB, Tokyo Tyrant, Redis performance test</a></li>
+
+<li><a href="http://timyang.net/programming/thrift-protocol-buffers-java-howto/" rel="bookmark" title="April 2, 2009">Thrift, Protocol Buffers installation and Java code howto</a></li>
+
+<li><a href="http://timyang.net/programming/thrift-protocol-buffers-performance-java/" rel="bookmark" title="April 2, 2009">Thrift and Protocol Buffers performance in Java</a></li>
+
+<li><a href="http://timyang.net/programming/thrift-protocol-buffers-performance-2/" rel="bookmark" title="April 17, 2009">Thrift and Protocol Buffers performance in Java Round 2</a></li>
+</ul><!-- Similar Posts took 15.003 ms -->]]></content:encoded>
+			<wfw:commentRss>http://timyang.net/programming/c-erlang-java-performance/feed/</wfw:commentRss>
+		<slash:comments>55</slash:comments>
+		</item>
+	</channel>
+</rss>
