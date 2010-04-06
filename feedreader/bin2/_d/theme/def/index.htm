@@ -1,0 +1,211 @@
+<html>
+<head>
+<title>Feed Reader</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style>
+
+
+html {
+	#background-color: #CEE2FB;
+
+}
+body {
+	font-family: verdana;
+	font-size: 12px;
+	padding:0px;
+	margin:0px;
+	overflow: none;
+}
+
+/* 加载提示框 */
+div#loadtip {
+	display: none;
+	position: fixed;
+	left: *; right: *;
+	top: 0px;
+	border: 0px solid #FFEA93;
+	border-radius: 0 0 6px 6px;
+	background-color: #FFEA93;
+	font-family: Arial;
+	font-weight: bold;
+	padding: 3px 8px;
+	width: 0.4*;
+}
+
+h1 {
+	background-color: #BFD9FB;
+	color: #ffffff;
+	padding: 6px;
+	margin-top: 0px;
+	margin-bottom: 10px;
+}
+
+
+
+#body {
+	width:100%%; height:100%%;  
+	background-color: #ffffff;
+	flow:horizontal;
+	behavior:frame-set;
+	border-spacing: 4px;
+	overflow: none;
+}
+
+div.left {
+	background-color: #ffffff;
+	width: 240px;
+	min-width: 150px;
+	max-width: 250px;
+	height: *;
+	margin-left: 5px;
+}
+div.left #subpad {
+	position: relative;
+	display: none;
+	padding: 10px;
+	background-color: #CEE2FB;
+}
+div.left #closemenu {
+	position: absolute;
+	right: 5px;
+	top: 3px;
+	font-weight: bold;
+	color: #aaaaaa;
+}
+div.left #closemenu:hover {
+	color: #cccccc;
+	cursor: pointer;
+}
+div.left #submenu {
+	margin-bottom: 2px;
+	padding: 7px;
+	padding: 7px 20px;
+}
+div.left #addbutton {
+
+}
+div.tip {
+	text-align: left;
+	margin: 2px 0px;
+	color: #888888;
+}
+div.left #feedlist {
+	behavior:select;
+	border: 1px solid #CEE2FB;
+	height: *;
+}
+div.left option {
+	padding: 5px;
+	background-image:url(tata.png);
+    background-repeat: no-repeat;
+	background-position:5px 5px;
+	padding-left: 24px;
+}
+div.left option:hover {
+	background-color: #FFEDA6;
+	cursor: pointer;
+	transition: blend;
+}
+div.left option:current {
+	background-color: #FFE066;
+}
+
+
+div.right {
+	margin-left: 7px;
+	padding: 0px;
+	border: 1px solid #CEE2FB;
+	background: #ffffff;
+	height: 100%%;
+
+	min-width: 100px;
+}
+div.right #board {
+	font-weight:bold;
+	font-size: 18px;
+	background-color: #8FBDF5;
+	padding: 6px;
+	padding-left: 5px;
+}
+div.right #itemlist {
+	height: *;
+	overflow-y: scroll;
+	overflow-x: auto;
+}
+div.right #itemcontent {
+	display: none;
+	padding: 12px;
+	overflow: none;
+}
+div.right dl {
+	margin:0px;
+}
+div.right dt {
+	padding: 6px;
+	border-bottom: 1px solid #cccccc;
+	background-color: #EFF5FE;
+}
+div.right dt:hover {
+	cursor: pointer;
+	background-color: #B5D0FB;
+}
+div.right dt:current {
+	background-color: #B5D0FB;
+}
+
+div.foot {
+	font-family: Arial;
+	font-size: 11px;
+	color: #999999;
+	text-align:right;
+	margin: 6px;
+	margin-right: 9px;
+}
+
+</style>
+</head>
+
+<body>
+
+
+
+<!-- header -->
+<h1>Feed Reader
+<div id='loadtip' align='center'>Loading..</div>
+</h1>
+
+<!-- body -->
+<div #body>
+	<!-- left -->
+	<div class='left' >
+	<button id='submenu'>添加新订阅</button>
+		<div id='subpad'>
+			<div id='closemenu'>x</div>
+		<div class='tip'>输入rss地址或网址</div>
+		<input type='text' style='border:0px solid #eeeeee;width:170px;height:14px;' id='inputurl' value='http://my.dongua.com/flashgame/feeds/blog/' />
+			<button id='addbutton'>确定</button>
+		<div class='tip'>例如: blog.cnal.com/rss.php</div>
+		</div>
+	<dl id='feedlist'>
+		<!--<option>..items..</option>-->
+	</dl>
+	</div>
+
+	<!-- right -->
+	<div class='right'>
+	<div id='board'>indiegm - indie game magazine</div>
+	<dl id='itemlist'>
+		<div id='itemcontent'></div>
+		<!--<dt>..items..</dt>-->
+
+	</dl>
+	</div>
+</div>
+
+
+
+<!-- footer -->
+<div class='foot'>copyright © cnal.com 2012</div>
+
+</body>
+</html>
