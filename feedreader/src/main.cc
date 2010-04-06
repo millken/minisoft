@@ -7,9 +7,21 @@
 #include "xml.h"
 #include "db.h"
 #include "html.h"
+#include "ctrls.h"
 
 #define must(exp) if(!(exp))return 0
 
+static char *dump(char *s)
+{
+	char *t;
+	int n = 0;
+
+	if (s) n = strlen(s);
+	t = (char *)malloc(n+1);
+	if (s) strcpy(t, s);
+	t[n] = '\0';
+	return t;
+}
 
 /* 后台下载循环 */
 void download (void *param)
@@ -21,23 +33,20 @@ void download (void *param)
 	printf ("i'm done\n");
 }
 
-/* 下载并在数据库中插入新的feed, 返回新feed的id */
+/* 下载并在数据库中插入新的feed和item, 返回新feed的id */
 int insert_newfeed(char *url)
 {
 	Feed *feed;
 	FeedItem *item;
-	int id;
+	int id = 0;
 
 	int e;
 	char *tmpfile = DOWNLOADDIR"/0.xml";
-	int lastupdated;
+	int lastupdated = 0;
 
 	url_clear();
-	e = url_add (0, url);
-	if (!e) return 0;
-
+	e = url_add (0, url); if (!e) return 0;
 	url_download ();
-
 	url_clear();
 
 	feed = newfeed();
@@ -49,14 +58,14 @@ int insert_newfeed(char *url)
 	}
 	printf ("feed title: %s\n", feed->title);
 
-	feed->source = url;
+	feed->source = dump(url);
 	id = db_insertfeed(feed);
 	if (id <= 0) {
 		delfeed (feed);
 		return -1; /* 源已存在 */
 	}
 
-	lastupdated = db_lastupdated (id);
+	lastupdated = db_newupdated (id);
 	printf ("lastupdated: %d\n", lastupdated);
 
 	for (item = feed->list; item; item=item->next)
@@ -106,18 +115,52 @@ int update_items (int feedid)
 	return n;
 }
 
+
+static void click_sub (HWND hwnd, char *url)
+{
+	printf ("url: %s#\n", url);
+	html_showtip (hwnd, "正在抓取..", 1);
+	int e = insert_newfeed(url);
+	if (!e) printf ("insert feed error.\n");
+
+	if (e > 0)
+		html_hidetip (hwnd);
+	else if (e < 0)
+		html_showtip (hwnd, "你已经订阅过此博客", 1);
+	else
+		html_showtip (hwnd, "噢, 发生错误!", 0);
+
+	if (e > 0) {
+		html_clearfeedlist(hwnd);
+		html_loadfeedlist(hwnd);
+	}
+}
+
+/**
+ * UI
+ */
 int mainform_quit (I32E e)
 {
 	PostQuitMessage(0);
+	exit(0); /* 这样快 */
 	return 0;
 }
 
 HWND open_mainform()
 {
-	i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 500, 500, "c", TEXT("中铝网阅读器"), -1);
+	HWND hwnd, hhtml;
+
+	reg_form();
+	//hwnd = i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
+	hwnd = i32create (TEXT("form"), "s|w|h|a|t|bc",
+		WS_OVERLAPPEDWINDOW, 900, 700, "c", TEXT("FeedReader"), -1);
 	i32setproc (I32PRE, WM_DESTROY, mainform_quit);
 
-	return I32PRE;
+	reg_html_control();
+	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
+	html_loadfile (hhtml, L"theme/def/index.htm");
+
+	return hwnd;
 }
 
 int mainform_onsize (I32E e)
@@ -142,32 +185,20 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	//e = insert_feed("http://blog.codingnow.com/atom.xml");
 	//if (!e) printf ("insert feed error.\n");
 
-	//e = insert_newfeed("http://rss.follow5.com/rss/user?ai=2261401");
-	//if (e <= 0) printf ("insert feed error: %d\n", e);
 
-	//Feed *feed = db_loadfeed (1);
-	//if (feed) printf ("title: %\n", feed->updated);
+	HWND hhtml = i32("htmlbox");
+	html_loadfeedlist (hhtml);
+	html_loaditemlist (hhtml, 0);
 
-	//int n = update_items(1);
-	//printf ("update n: %d\n", n);
-	//int lastupdated = db_lastupdated (1);
-	//printf ("lastupdated: %d\n", lastupdated);
+	html_set_subevt (hhtml, click_sub); /* click one feed */
 
-	reg_html_control();
-	//HWND hhtml = i32create (TEXT("html"), "d|s|w|h|a", hwnd, WS_CTRL, 100, 100, "c");
-	HWND hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
+	ShowWindow (hwnd, SW_MINIMIZE); /* 加载延时 */
+	SetFocus(hhtml);
+	ShowWindow (hwnd, SW_SHOWNORMAL);
 
-	html_loadfile (hhtml, L"demo.htm");
-
-	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox2", 200, 200, "c");
-	html_loadstring (hhtml, "<p>sdsf的dd</p>d<p>d<p>d<p>d<p>d<p>d<p>d<p>d<p>");
-
-
-
-	ShowWindow (hwnd, SW_SHOW);
 
 	i32loop();
-	//close_db();
+	close_db();
 
 	return 0;
 }

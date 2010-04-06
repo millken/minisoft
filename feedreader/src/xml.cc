@@ -15,6 +15,25 @@
 #define streq(a,b) (!strcmp(a, b))  /* 判断字符串相同 */
 
 
+FeedItem *newitem ()
+{
+	FeedItem *item = (FeedItem *)malloc(sizeof(FeedItem));
+	memset(item, 0, sizeof(FeedItem));
+	return item;
+}
+
+void delitem (FeedItem *item)
+{
+	if (!item) return;
+
+	mfree (item->author);
+	mfree (item->link);
+	mfree (item->title);
+	mfree (item->content);
+	mfree (item);
+}
+
+
 Feed *newfeed ()
 {
 	Feed *feed = (Feed *)malloc(sizeof(Feed));
@@ -33,22 +52,13 @@ void delfeed (Feed *feed)
 
 	for (item = feed->list; item; ) {
 		FeedItem *next = item->next;
-		mfree (item->author);
-		mfree (item->link);
-		mfree (item->title);
-		mfree (item->content);
+		delitem (item);
 		item = next;
 	}
 
 	memset (feed, 0, sizeof(Feed));
 }
 
-static FeedItem *newitem ()
-{
-	FeedItem *item = (FeedItem *)malloc(sizeof(FeedItem));
-	memset(item, 0, sizeof(FeedItem));
-	return item;
-}
 
 static char *encode (iconv_t cv, const char *in)
 {

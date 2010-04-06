@@ -5,13 +5,17 @@
 extern "C" {
 #endif
 
-
 typedef struct feeditem {
+	int id;
+	int feedid;
+	time_t updated;
+
 	char *title;
 	char *link;
 	char *content;
 	char *author;
-	time_t updated;
+
+	int read; /* 0:未读, 1:已读 */
 
 	struct feeditem *next;
 } FeedItem;
@@ -29,6 +33,8 @@ typedef struct {
 
 Feed *newfeed ();
 void delfeed (Feed *feed);
+FeedItem *newitem ();
+void delitem (FeedItem *item);
 int parsefeed (char *filename, Feed *feed);
 void feedtest (Feed *feed);
 
