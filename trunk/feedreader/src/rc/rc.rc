@@ -1,2 +1,11 @@
-logo ICON "show.ico"
-logo2 ICON "show.ico"
+logo ICON "rss.ico"
+
+/* 外框所用图片
+ */
+FORM_HEAD BITMAP "head.bmp"  /* 标题栏 */
+FORM_LEFT BITMAP "bord-left.bmp"  /* 左边框 */
+FORM_RIGHT BITMAP "bord-right.bmp"  /* 右边框 */
+FORM_FOOT BITMAP "foot.bmp"  /* 底边框 */
+FORM_MIN BITMAP "min.bmp"  /* 最小化按钮 */
+FORM_CLOSE BITMAP "close.bmp" /* 关闭按钮 */
+FORM_ICON BITMAP "logo.bmp" /* 图标按钮 */

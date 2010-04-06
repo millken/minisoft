@@ -14,7 +14,7 @@
 	"i32.h"
 	<ctype.h>
 
-1269676882 source:f:\dev\minisoft\feedreader\src\main.cc
+1270545948 source:f:\dev\minisoft\feedreader\src\main.cc
 	<process.h>
 	<assert.h>
 	<time.h>
@@ -24,6 +24,7 @@
 	"xml.h"
 	"db.h"
 	"html.h"
+	"ctrls.h"
 
 1133701484 f:\dev\minisoft\feedreader\src\include\curl\curl.h
 	"curlver.h"
@@ -113,7 +114,7 @@
 
 1268903028 f:\dev\minisoft\feedreader\src\url.h
 
-1269595462 source:f:\dev\minisoft\feedreader\src\xml.cc
+1270523568 source:f:\dev\minisoft\feedreader\src\xml.cc
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -122,7 +123,7 @@
 	<time.h>
 	"xml.h"
 
-1269595370 f:\dev\minisoft\feedreader\src\xml.h
+1270539954 f:\dev\minisoft\feedreader\src\xml.h
 
 1269317046 source:f:\dev\minisoft\feedreader\src\main.c
 	<process.h>
@@ -137,7 +138,7 @@
 	<stddef.h>
 	<errno.h>
 
-1268900620 source:f:\dev\minisoft\feedreader\src\rc\rc.rc
+1270102408 source:f:\dev\minisoft\feedreader\src\rc\rc.rc
 
 1260113030 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
 	<windows.h>
@@ -277,7 +278,7 @@
 	<unicode/ubrk.h>
 	<unicode/utf16.h>
 
-1269669542 source:f:\dev\minisoft\feedreader\src\db.c
+1270546454 source:f:\dev\minisoft\feedreader\src\db.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -287,15 +288,34 @@
 1268118546 f:\dev\minisoft\feedreader\src\include\sqlite3.h
 	<stdarg.h>
 
-1269584906 f:\dev\minisoft\feedreader\src\db.h
+1270545884 f:\dev\minisoft\feedreader\src\db.h
+	"xml.h"
+	<time.h>
+
+1270546908 source:f:\dev\minisoft\feedreader\src\html.cc
+	<ctype.h>
+	"i32.h"
+	<commdlg.h>
+	"htmlayout/htmlayout.h"
+	"htmlayout/behaviors/notifications.h"
+	"html.h"
+	"xml.h"
+	"db.h"
+
+1270546856 f:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
-1269676458 source:f:\dev\minisoft\feedreader\src\html.cc
+1269841320 source:f:\dev\minisoft\feedreader\src\html.c
 	"i32.h"
 	<commdlg.h>
 	"htmlayout/htmlayout.h"
 	"htmlayout/behaviors/notifications.h"
 	"html.h"
 
-1269676466 f:\dev\minisoft\feedreader\src\html.h
+1268119224 source:f:\dev\minisoft\feedreader\src\form.c
+	"i32.h"
+
+1270101692 f:\dev\minisoft\feedreader\src\ctrls.h
+	<windows.h>
+	<richedit.h>
 
