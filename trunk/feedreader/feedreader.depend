@@ -319,7 +319,7 @@
 	<windows.h>
 	<richedit.h>
 
-1270555543 source:e:\dev\minisoft\feedreader\src\db.c
+1270561613 source:e:\dev\minisoft\feedreader\src\db.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -329,7 +329,7 @@
 1270552505 e:\dev\minisoft\feedreader\src\include\sqlite3.h
 	<stdarg.h>
 
-1270555543 e:\dev\minisoft\feedreader\src\db.h
+1270561639 e:\dev\minisoft\feedreader\src\db.h
 	"xml.h"
 	<time.h>
 
@@ -346,7 +346,7 @@
 	<string.h>
 	<assert.h>
 
-1270555738 source:e:\dev\minisoft\feedreader\src\html.cc
+1270561375 source:e:\dev\minisoft\feedreader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -356,7 +356,7 @@
 	"xml.h"
 	"db.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
 	<windows.h>
 	"value.h"
 	"htmlayout_dom.h"
@@ -368,17 +368,17 @@
 	"htmlayout_value.hpp"
 	"htmlayout_controls.hpp"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\value.h
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\value.h
 	<windows.h>
 	<string>
 	"aux-slice.h"
 	"aux-cvt.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\aux-slice.h
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\aux-slice.h
 	"aux-cvt.h"
 	"limits.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\aux-cvt.h
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\aux-cvt.h
 	<assert.h>
 	<wchar.h>
 	<string.h>
@@ -386,20 +386,20 @@
 	<stdlib.h>
 	<stdio.h>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.h
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.h
 	"value.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.h
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.h
 	<windows.h>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.hpp
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.hpp
 	<windows.h>
 	<assert.h>
 	"htmlayout.h"
 	"htmlayout_behavior.h"
 	"behavior_impl.hpp"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.hpp
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.hpp
 	"value.h"
 	"htmlayout_dom.h"
 	"htmlayout_aux.h"
@@ -408,7 +408,7 @@
 	<stdio.h>
 	<vector>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_aux.h
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_aux.h
 	<stdio.h>
 	<stdlib.h>
 	<string>
@@ -416,12 +416,12 @@
 	"aux-slice.h"
 	"htmlayout.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_queue.h
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_queue.h
 	<windows.h>
 	<stdio.h>
 	<assert.h>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dialog.hpp
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dialog.hpp
 	"htmlayout_dom.hpp"
 	"htmlayout_behavior.hpp"
 	"htmlayout_controls.hpp"
@@ -430,27 +430,27 @@
 	<shellapi.h>
 	<assert.h>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_controls.hpp
+1270557065 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_controls.hpp
 	<stdio.h>
 	"value.h"
 	"htmlayout_dom.hpp"
 	"htmlayout_value.hpp"
 	"htmlayout_aux.h"
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_value.hpp
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_value.hpp
 	<assert.h>
 	"value.h"
 	<map>
 	<string>
 	<vector>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_notifications.hpp
+1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_notifications.hpp
 	"htmlayout_dom.h"
 	"htmlayout_aux.h"
 	"htmlayout_behavior.hpp"
 	<assert.h>
 
-1270552504 e:\dev\minisoft\feedreader\src\include\htmlayout\behaviors\notifications.h
+1270557061 e:\dev\minisoft\feedreader\src\include\htmlayout\behaviors\notifications.h
 	<windows.h>
 
 1270555738 e:\dev\minisoft\feedreader\src\html.h
@@ -474,7 +474,7 @@
 	<windows.h>
 	<richedit.h>
 
-1270552505 source:e:\dev\minisoft\feedreader\src\rc\rc.rc
+1270557078 source:e:\dev\minisoft\feedreader\src\rc\rc.rc
 
 1270552505 source:e:\dev\minisoft\feedreader\src\tinyxml\tinystr.cpp
 	"tinystr.h"
@@ -562,7 +562,7 @@
 	"i32.h"
 	<ctype.h>
 
-1270555544 source:e:\dev\minisoft\feedreader\src\main.c
+1270558636 source:e:\dev\minisoft\feedreader\src\main.c
 	<process.h>
 	<assert.h>
 	<time.h>

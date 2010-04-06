@@ -367,3 +367,22 @@ int db_unreadcount (int feedid)
 
 	return n;
 }
+
+int db_feedexist (char *source)
+{
+	char *sql, *format;
+	sqlite3_stmt *st;
+	int e;
+	int n = 0;
+
+	sql = sqlite3_mprintf ("select * from feed where source='%q'", source);
+	sqlite3_prepare(g_db, sql, -1, &st, 0);
+	sqlite3_free(sql);
+
+	e = sqlite3_step(st);
+	if (e != SQLITE_ROW) return 0;
+
+	sqlite3_finalize(st);
+
+	return 1;
+}

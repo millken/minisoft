@@ -209,6 +209,9 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		html_hidetip (hwnd);
 
 		HELEMENT hitemcon = html_getelementbyid(hwnd, "itemcontent");
+		HELEMENT ctitle = html_getelementbyid(hwnd, "ctitle");
+		HELEMENT cnote = html_getelementbyid(hwnd, "cnote");
+		HELEMENT ccon = html_getelementbyid(hwnd, "ccon");
 		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
 
 		/* 收起 */
@@ -229,7 +232,18 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 
 		FeedItem *item = db_loaditem(itemid);
 		char *html = item->content;
-		HTMLayoutSetElementHtml(hitemcon, (const BYTE *)html, strlen(html), SIH_REPLACE_CONTENT);
+		char notebuf[128], *note = item->author;
+		if (strlen(item->author) > 0) {
+			sprintf (notebuf, "作者: %s", note);
+			note = notebuf;
+		}
+		HTMLayoutSetElementInnerText(ctitle, (const BYTE *)item->title, strlen(item->title));
+		wchar_t *link = utf8tou(item->link);
+		HTMLayoutSetAttributeByName(ctitle, "href", (const WCHAR *)link);
+		wfree(link);
+		HTMLayoutSetElementInnerText(cnote, (const BYTE *)note, strlen(note));
+		HTMLayoutSetElementHtml(ccon, (const BYTE *)item->content, strlen(item->content), SIH_REPLACE_CONTENT);
+		//HTMLayoutSetElementHtml(hitemcon, (const BYTE *)html, strlen(html), SIH_REPLACE_CONTENT);
 		delitem(item);
 
 		/* 标记为已读 */

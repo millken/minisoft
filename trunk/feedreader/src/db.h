@@ -32,6 +32,9 @@ void db_del_feedlist (Feed **feedlist, int rown);
 int db_select_itemlist (FeedItem ***itemlist, const char *where, ...);
 void db_del_itemlist (FeedItem **feeditem, int rown);
 
+/* 是否已订阅 */
+int db_feedexist (char *source);
+
 #ifdef __cplusplus
 }
 #endif

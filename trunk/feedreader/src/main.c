@@ -118,7 +118,13 @@ int update_items (int feedid)
 
 static void click_sub (HWND hwnd, char *url)
 {
-	printf ("url: %s#\n", url);
+	int sud = db_feedexist(url);
+	if (sud) {
+		html_showtip (hwnd, "你已经订阅过此博客", 1);
+		return;
+	}
+
+	//printf ("url: %s#\n", url);
 	html_showtip (hwnd, "正在抓取..", 1);
 	int e = insert_newfeed(url);
 	if (!e) printf ("insert feed error.\n");
@@ -153,12 +159,12 @@ HWND open_mainform()
 	reg_form();
 	//hwnd = i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
 	hwnd = i32create (TEXT("form"), "s|w|h|a|t|bc",
-		WS_OVERLAPPEDWINDOW, 900, 700, "c", TEXT("FeedReader"), -1);
+		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
 	i32setproc (I32PRE, WM_DESTROY, mainform_quit);
 
 	reg_html_control();
 	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
-	html_loadfile (hhtml, L"theme/def/index.htm");
+	html_loadfile (hhtml, L"theme/index.htm");
 
 	return hwnd;
 }
