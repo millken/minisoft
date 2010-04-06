@@ -151,7 +151,7 @@ void i32bind (HWND hwnd, char *name)
 }
 
 
-HWND i32 (char *name)
+HWND i32 (const char *name)
 {
 	unsigned hash;
 	struct hwndname *p;
@@ -159,7 +159,7 @@ HWND i32 (char *name)
 	if (!name) return NULL;
 	init ();
 
-	hash = strhash (name) % I32NAMETABLE_SIZE;
+	hash = strhash ((char *)name) % I32NAMETABLE_SIZE;
 	p = nametable[hash];
 	while (p) {
 		if (strcmp(p->name, name) == 0)
@@ -375,7 +375,7 @@ defproc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			a = get_attr(hctrl);
 			if (!a) return (LRESULT)hbrush;
 
-			if (a->bgcolor != -1)
+			if (a->bgcolor != (unsigned)-1)
 				hbrush = CreateSolidBrush(a->bgcolor);
 			else
 				hbrush = GetStockObject(NULL_BRUSH);
@@ -546,7 +546,7 @@ static int on_setcursor (I32EVENT e)
 	return TRUE;
 }
 
-void i32vset (HWND hwnd, char *format, va_list p)
+void i32vset (HWND hwnd, const char *format, va_list p)
 {
 	char a[16];
 
@@ -555,7 +555,7 @@ void i32vset (HWND hwnd, char *format, va_list p)
 
 	init();
 	do {
-		format = token(a, format, I32DOT);
+		format = token(a, (char *)format, I32DOT);
 
 		if (STRSAME("n", a) || STRSAME("name", a)) {
 			char *name = va_arg(p, char*);
@@ -852,7 +852,7 @@ void i32set (HWND hwnd, char *format, ...)
 }
 
 
-HWND i32create (TCHAR *classname, char *format, ...)
+HWND i32create (const TCHAR *classname, const char *format, ...)
 {
 	HWND hwnd;
 	va_list p;
@@ -957,7 +957,7 @@ void i32vfill (HWND hwnd, ...)
 		HWND hwnd;
 		int v;
 	} blist[32];
-	int n = 0, i;
+	unsigned n = 0, i;
 
 	HWND hbox;
 	int h;
@@ -1033,7 +1033,7 @@ void i32hfill (HWND hwnd, ...)
 		HWND hwnd;
 		int v;
 	} blist[32];
-	int n = 0, i;
+	unsigned n = 0, i;
 
 	HWND hbox;
 	int w;

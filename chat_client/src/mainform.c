@@ -241,6 +241,7 @@ static int logedpad_oncommand (I32E e)
 			break;
 		}
 	}
+	return 0;
 }
 
 static HWND create_logedpad (HWND hwnd)
