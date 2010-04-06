@@ -8,9 +8,9 @@
 		<Option virtualFolders="i32\;src\;tinyxml\;" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin\_d\feedreader" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="bin\_d" />
-				<Option object_output="bin\_o\d\" />
+				<Option output="bin\feedreader_d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin\" />
+				<Option object_output="o\d\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -18,9 +18,9 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin\_r\feedreader" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="bin\_d" />
-				<Option object_output="bin\_o\r\" />
+				<Option output="bin\feedreader" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin" />
+				<Option object_output="o\r\" />
 				<Option type="0" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -32,7 +32,6 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Wall" />
 			<Add option="-DUNICODE" />
 			<Add directory="..\chat_client\src" />
 			<Add directory=".\src\include" />
@@ -77,7 +76,8 @@
 		<Unit filename="src\html.h">
 			<Option virtualFolder="src\" />
 		</Unit>
-		<Unit filename="src\main.cc">
+		<Unit filename="src\main.c">
+			<Option compilerVar="CPP" />
 			<Option virtualFolder="src\" />
 		</Unit>
 		<Unit filename="src\rc\rc.rc">

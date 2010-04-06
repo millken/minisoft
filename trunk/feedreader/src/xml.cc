@@ -134,7 +134,7 @@ static time_t mktime_atom (const char *time)
 /* Sat, 26 Dec 2009 10:35:00 +0800 */
 static time_t rss_timeformat1 (const char *format, struct tm *ts)
 {
-	static char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	static const char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	                          "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"};
 	time_t t;
 	int n;
@@ -357,7 +357,7 @@ static int parse_rss (iconv_t cv, TiXmlNode *head, Feed *feed)
 	return yes;
 }
 
-int parsefeed (char *filename, Feed *feed)
+int parsefeed (const char *filename, Feed *feed)
 {
 	sure(feed);
 

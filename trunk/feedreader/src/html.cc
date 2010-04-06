@@ -55,7 +55,7 @@ void reg_html_control ()
     RegisterClassEx (&wincl);
 }
 
-HWND html_create (HWND dad, char *format, ...)
+HWND html_create (HWND dad, const char *format, ...)
 {
 	HWND hwnd;
 	va_list p;
@@ -80,7 +80,7 @@ BOOL CALLBACK findelembyid (HELEMENT he, LPVOID param)
 	return TRUE;
 }
 
-static HELEMENT html_getelementbyid (HWND hwnd, char *id)
+static HELEMENT html_getelementbyid (HWND hwnd, const char *id)
 {
 	HELEMENT hroot, he;
 	char selector[128];
@@ -161,7 +161,7 @@ static char *trim (char *s)
 
 	n = end - start;
 	if (n < 0)
-		start = "";
+		start = (char *)"";
 	else
 		start[n+1] = '\0';
 
@@ -406,7 +406,7 @@ void html_loadfeedlist (HWND hwnd)
 	int rown;
 
 	feed.id = 0;
-	feed.title = "全部";
+	feed.title = (char *)"全部";
 	html_insertfeed (hwnd, &feed);
 
 	rown = db_select_feedlist (&feedlist, "1");
@@ -442,7 +442,7 @@ void html_refresh_feedlist (HWND hwnd)
 }
 
 /* 设置右侧标题 */
-void html_setboard (HWND hwnd, char *feedtitle)
+void html_setboard (HWND hwnd, const char *feedtitle)
 {
 	HELEMENT hboard;
 
@@ -457,7 +457,7 @@ void html_setboard (HWND hwnd, char *feedtitle)
 /**
  * base functions
  */
-int html_loadfile (HWND hwnd, wchar_t *filename)
+int html_loadfile (HWND hwnd, const wchar_t *filename)
 {
 	wchar_t path[2048];
 	int len, i;
@@ -566,7 +566,7 @@ void html_set_subevt (HWND hwnd, html_subcb f)
 
 
 /* 加载提示框, state=1:黄, 0:红 */
-void html_showtip(HWND hwnd, char *info, int state)
+void html_showtip(HWND hwnd, const char *info, int state)
 {
 	HELEMENT tipbox = html_getelementbyid(hwnd, "loadtip");
 	if (!tipbox) return;

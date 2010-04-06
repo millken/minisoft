@@ -35,7 +35,7 @@ Feed *newfeed ();
 void delfeed (Feed *feed);
 FeedItem *newitem ();
 void delitem (FeedItem *item);
-int parsefeed (char *filename, Feed *feed);
+int parsefeed (const char *filename, Feed *feed);
 void feedtest (Feed *feed);
 
 
