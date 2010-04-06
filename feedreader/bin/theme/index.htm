@@ -102,7 +102,7 @@ div.left option {
 	padding-left: 24px;
 }
 div.left option:hover {
-	background-color: #FFEDA6;
+	background-color: #FFE67D;
 	cursor: pointer;
 	transition: blend;
 }
@@ -137,6 +137,26 @@ div.right #itemcontent {
 	padding: 12px;
 	overflow: none;
 }
+div.right #ctitle {
+	font-size: 14px;
+	font-weight: bold;
+	color: #0040FF;
+	text-decoration: none;
+}
+div.right #ctitle:hover {
+	color: #3366FF;
+	text-decoration: underline;
+}
+div.right #cnote {
+	font-size: 10px;
+	color: #999999;
+	margin: 4px 0;
+	
+}
+div.right #ccon {
+	padding-top: 10px;
+}
+
 div.right dl {
 	margin:0px;
 }
@@ -195,7 +215,11 @@ div.foot {
 	<div class='right'>
 	<div id='board'>indiegm - indie game magazine</div>
 	<dl id='itemlist'>
-		<div id='itemcontent'></div>
+		<div id='itemcontent'>
+			<a href='#' id='ctitle'></a><br/>
+			<div id='cnote'>asdfasdf</div>
+			<div id='ccon'></div>
+		</div>
 		<!--<dt>..items..</dt>-->
 
 	</dl>
