@@ -26,7 +26,7 @@ static char *dump(char *s)
 }
 
 
-int init_db (char *dbname)
+int init_db (const char *dbname)
 {
 	int e;
 
@@ -94,7 +94,7 @@ int db_create_table ()
 	return e1 && e2;
 }
 
-int db_select_feedlist (Feed ***feedlist, char *where, ...)
+int db_select_feedlist (Feed ***feedlist, const char *where, ...)
 {
 	char *pwhere, *sql;
 	va_list vp;
@@ -155,7 +155,7 @@ void db_del_feedlist (Feed **feedlist, int rown)
 }
 
 /* 给定where条件查询一个item集合 */
-int db_select_itemlist (FeedItem ***itemlist, char *where, ...)
+int db_select_itemlist (FeedItem ***itemlist, const char *where, ...)
 {
 	char *pwhere, *sql;
 	va_list vp;

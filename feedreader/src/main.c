@@ -41,7 +41,7 @@ int insert_newfeed(char *url)
 	int id = 0;
 
 	int e;
-	char *tmpfile = DOWNLOADDIR"/0.xml";
+	char *tmpfile = (char *)DOWNLOADDIR"/0.xml";
 	int lastupdated = 0;
 
 	url_clear();
