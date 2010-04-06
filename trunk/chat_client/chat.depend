@@ -335,3 +335,63 @@
 	"ctrls.h"
 	"wins.h"
 
+1270552515 source:e:\dev\minisoft\chat_client\src\butten.c
+	"i32.h"
+	"ctrls.h"
+
+1270552515 e:\dev\minisoft\chat_client\src\i32.h
+	<windows.h>
+	<commctrl.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+
+1270553165 e:\dev\minisoft\chat_client\src\ctrls.h
+	<windows.h>
+	<richedit.h>
+
+1270552515 source:e:\dev\minisoft\chat_client\src\chatlist.c
+	"i32.h"
+	"ctrls.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\chatview.c
+	"i32.h"
+	"ctrls.h"
+	"wins.h"
+
+1270552515 e:\dev\minisoft\chat_client\src\wins.h
+
+1270552515 source:e:\dev\minisoft\chat_client\src\ctrls.rc
+	<windows.h>
+
+1270552515 source:e:\dev\minisoft\chat_client\src\form.c
+	"i32.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\groupview.c
+	"i32.h"
+	"ctrls.h"
+	"wins.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\i32.c
+	"i32.h"
+	<ctype.h>
+
+1270552515 source:e:\dev\minisoft\chat_client\src\image.c
+	"i32.h"
+	"ctrls.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\link.c
+	"i32.h"
+	"ctrls.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\main.c
+	"i32.h"
+	"ctrls.h"
+	"wins.h"
+
+1270552515 source:e:\dev\minisoft\chat_client\src\richedit.c
+	<windows.h>
+	"i32.h"
+	"ctrls.h"
+

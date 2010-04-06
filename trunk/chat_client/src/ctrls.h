@@ -50,7 +50,7 @@ enum CHATLIST_MSG {
 };
 HWND create_cl (HWND dad, char *format, ...);
 void cl_viewmode (HWND hwnd, int mode); /* 0:显示大头像, 1:小头像, 2:无头像 */
-int cl_selectid (HWND hwnd);
+int cl_getsel (HWND hwnd);
 
 /* 按钮控件消息 */
 enum {

@@ -4,14 +4,14 @@
 	<File name="src\butten.c" open="0" top="0" tabpos="9">
 		<Cursor position="1347" topLine="37" />
 	</File>
-	<File name="src\chatlist.c" open="0" top="0" tabpos="9">
-		<Cursor position="28683" topLine="1267" />
+	<File name="src\chatlist.c" open="1" top="0" tabpos="2">
+		<Cursor position="28629" topLine="1281" />
 	</File>
 	<File name="src\chatview.c" open="0" top="0" tabpos="3">
 		<Cursor position="1300" topLine="66" />
 	</File>
-	<File name="src\ctrls.h" open="0" top="0" tabpos="6">
-		<Cursor position="292" topLine="6" />
+	<File name="src\ctrls.h" open="1" top="1" tabpos="3">
+		<Cursor position="999" topLine="40" />
 	</File>
 	<File name="src\ctrls.rc" open="0" top="0" tabpos="7">
 		<Cursor position="510" topLine="0" />
@@ -37,8 +37,8 @@
 	<File name="src\main.c" open="0" top="0" tabpos="1">
 		<Cursor position="202" topLine="0" />
 	</File>
-	<File name="src\mainform.c" open="0" top="0" tabpos="2">
-		<Cursor position="621" topLine="6" />
+	<File name="src\mainform.c" open="1" top="0" tabpos="1">
+		<Cursor position="5690" topLine="219" />
 	</File>
 	<File name="src\richedit.c" open="0" top="0" tabpos="10">
 		<Cursor position="164" topLine="0" />

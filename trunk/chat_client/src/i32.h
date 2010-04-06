@@ -41,11 +41,11 @@ typedef struct {
 typedef int (*I32PROC) (I32EVENT);
 
 /* 核心 */
-HWND i32create (TCHAR *classname, char *format, ...);
+HWND i32create (const TCHAR *classname, const char *format, ...);
 HWND i32pre (); /* 取得上一个创建的hwnd */
 void i32setpre (HWND hwnd);
 void i32set (HWND hwnd, char *format, ...);
-HWND i32 (char *name);
+HWND i32 (const char *name);
 void i32setproc (HWND hwnd, UINT message, I32PROC f);
 int i32callold (I32EVENT e);
 int i32loop ();
@@ -76,7 +76,7 @@ void i32textout (HDC hdc, int x, int y, TCHAR *text, DWORD col);
 void i32bind (HWND hwnd, char *name);
 I32PROC i32getproc (HWND hwnd, UINT message);
 void i32debug ();
-void i32vset (HWND hwnd, char *format, va_list p);
+void i32vset (HWND hwnd, const char *format, va_list p);
 void i32error (char *format, ...);
 
 /* 常用控件 */
