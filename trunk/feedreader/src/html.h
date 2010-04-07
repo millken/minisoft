@@ -34,6 +34,9 @@ void html_set_subevt (HWND hwnd, html_subcb f);
 void html_showtip(HWND hwnd, const char *info, int state);
 void html_hidetip(HWND hwnd);
 
+/* 左侧菜单是否弹出 */
+BOOL html_is_onleft ();
+
 #ifdef __cplusplus
 }
 #endif

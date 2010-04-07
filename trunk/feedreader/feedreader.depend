@@ -2,7 +2,7 @@
 1268790262 source:f:\dev\minisoft\feedreader\main.cc
 	"i32.h"
 
-1268793550 f:\dev\minisoft\chat_client\src\i32.h
+1270598024 f:\dev\minisoft\chat_client\src\i32.h
 	<windows.h>
 	<commctrl.h>
 	<stdio.h>
@@ -10,7 +10,7 @@
 	<string.h>
 	<assert.h>
 
-1268793536 source:f:\dev\minisoft\chat_client\src\i32.c
+1270598024 source:f:\dev\minisoft\chat_client\src\i32.c
 	"i32.h"
 	<ctype.h>
 
@@ -563,6 +563,249 @@
 	<ctype.h>
 
 1270558636 source:e:\dev\minisoft\feedreader\src\main.c
+	<process.h>
+	<assert.h>
+	<time.h>
+	<assert.h>
+	"i32.h"
+	"url.h"
+	"xml.h"
+	"db.h"
+	"html.h"
+	"ctrls.h"
+
+1270624212 source:f:\dev\minisoft\reader\src\db.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<sqlite3.h>
+	"db.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\sqlite3.h
+	<stdarg.h>
+
+1270624164 f:\dev\minisoft\reader\src\db.h
+	"xml.h"
+	<time.h>
+
+1270598216 f:\dev\minisoft\reader\src\xml.h
+
+1270598216 source:f:\dev\minisoft\reader\src\form.c
+	"i32.h"
+
+1270623828 source:f:\dev\minisoft\reader\src\main.c
+	<process.h>
+	<assert.h>
+	<time.h>
+	<assert.h>
+	"i32.h"
+	"url.h"
+	"xml.h"
+	"db.h"
+	"html.h"
+	"ctrls.h"
+
+1270598216 f:\dev\minisoft\reader\src\url.h
+
+1270625908 f:\dev\minisoft\reader\src\html.h
+	"xml.h"
+
+1270598216 f:\dev\minisoft\reader\src\ctrls.h
+	<windows.h>
+	<richedit.h>
+
+1270598216 source:f:\dev\minisoft\reader\src\rc\rc.rc
+
+1270598216 source:f:\dev\minisoft\reader\src\tinyxml\tinystr.cpp
+	"tinystr.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\tinystr.h
+	<assert.h>
+	<string.h>
+
+1270598214 source:f:\dev\minisoft\reader\src\tinyxml\tinyxml.cpp
+	<ctype.h>
+	<sstream>
+	<iostream>
+	"tinyxml.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\tinyxml.h
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	<string>
+	<iostream>
+	<sstream>
+	"tinystr.h"
+
+1270598214 source:f:\dev\minisoft\reader\src\tinyxml\tinyxmlerror.cpp
+	"tinyxml.h"
+
+1270598214 source:f:\dev\minisoft\reader\src\tinyxml\tinyxmlparser.cpp
+	<ctype.h>
+	<stddef.h>
+	"tinyxml.h"
+	<windows.h>
+
+1270598216 source:f:\dev\minisoft\reader\src\url.c
+	<stdio.h>
+	<io.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<winsock.h>
+	<curl/curl.h>
+	<assert.h>
+	"url.h"
+
+1270598212 f:\dev\minisoft\reader\src\include\curl\curl.h
+	"curlver.h"
+	<stdio.h>
+	<limits.h>
+	<types.h>
+	<time.h>
+	<sys/types.h>
+	<time.h>
+	<support/SupportDefs.h>
+	"easy.h"
+	"multi.h"
+
+1270598212 f:\dev\minisoft\reader\src\include\curl\curlver.h
+
+1270598212 f:\dev\minisoft\reader\src\include\curl\easy.h
+
+1270598212 f:\dev\minisoft\reader\src\include\curl\multi.h
+	<winsock2.h>
+	<sys/select.h>
+	<sys/socket.h>
+	<sys/time.h>
+	<sys/types.h>
+	"curl.h"
+
+1270598216 source:f:\dev\minisoft\reader\src\xml.cc
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<tinyxml.h>
+	<iconv.h>
+	<time.h>
+	"xml.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\iconv.h
+	"iconv.h"
+	<stddef.h>
+	<errno.h>
+
+1270626990 source:f:\dev\minisoft\reader\src\html.cc
+	<ctype.h>
+	"i32.h"
+	<commdlg.h>
+	"htmlayout/htmlayout.h"
+	"htmlayout/behaviors/notifications.h"
+	"html.h"
+	"xml.h"
+	"db.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout.h
+	<windows.h>
+	"value.h"
+	"htmlayout_dom.h"
+	"htmlayout_behavior.h"
+	"htmlayout_behavior.hpp"
+	"htmlayout_dom.hpp"
+	"htmlayout_dialog.hpp"
+	"behaviors/notifications.h"
+	"htmlayout_value.hpp"
+	"htmlayout_controls.hpp"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\value.h
+	<windows.h>
+	<string>
+	"aux-slice.h"
+	"aux-cvt.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\aux-slice.h
+	"aux-cvt.h"
+	"limits.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\aux-cvt.h
+	<assert.h>
+	<wchar.h>
+	<string.h>
+	<string>
+	<stdlib.h>
+	<stdio.h>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_dom.h
+	"value.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_behavior.h
+	<windows.h>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_behavior.hpp
+	<windows.h>
+	<assert.h>
+	"htmlayout.h"
+	"htmlayout_behavior.h"
+	"behavior_impl.hpp"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_dom.hpp
+	"value.h"
+	"htmlayout_dom.h"
+	"htmlayout_aux.h"
+	"htmlayout_queue.h"
+	<assert.h>
+	<stdio.h>
+	<vector>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_aux.h
+	<stdio.h>
+	<stdlib.h>
+	<string>
+	"aux-cvt.h"
+	"aux-slice.h"
+	"htmlayout.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_queue.h
+	<windows.h>
+	<stdio.h>
+	<assert.h>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_dialog.hpp
+	"htmlayout_dom.hpp"
+	"htmlayout_behavior.hpp"
+	"htmlayout_controls.hpp"
+	"htmlayout_notifications.hpp"
+	"htmlayout_queue.h"
+	<shellapi.h>
+	<assert.h>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_controls.hpp
+	<stdio.h>
+	"value.h"
+	"htmlayout_dom.hpp"
+	"htmlayout_value.hpp"
+	"htmlayout_aux.h"
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_value.hpp
+	<assert.h>
+	"value.h"
+	<map>
+	<string>
+	<vector>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\htmlayout_notifications.hpp
+	"htmlayout_dom.h"
+	"htmlayout_aux.h"
+	"htmlayout_behavior.hpp"
+	<assert.h>
+
+1270598214 f:\dev\minisoft\reader\src\include\htmlayout\behaviors\notifications.h
+	<windows.h>
+
+1270625900 source:f:\dev\minisoft\reader\src\main.cc
 	<process.h>
 	<assert.h>
 	<time.h>

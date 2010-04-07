@@ -13,7 +13,9 @@
 #include "xml.h"
 #include "db.h"
 
-
+static int g_current_feedid = 0; /* 正在阅读的feed */
+static int g_menu_feedid = 0; /* 左侧菜单对应的feedid */
+static BOOL g_onleft = 0; /* 左侧菜单是否出现 */
 
 static CALLBACK LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -198,8 +200,6 @@ int html_getnth (HELEMENT he)
 /* 展开/收起item事件 */
 BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 {
-	static HELEMENT expandelem = NULL; /* 已展开的item */
-
 	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
 	HWND hwnd = (HWND)tag;
 	int e;
@@ -214,11 +214,13 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HELEMENT ccon = html_getelementbyid(hwnd, "ccon");
 		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
 
+		wchar_t *display;
+		HTMLayoutGetStyleAttribute(hitemcon, "display", (const WCHAR **)&display);
+
 		/* 收起 */
-		if (expandelem == he) {
+		if (lstrcmp(display, L"none")) {
 			HTMLayoutSetStyleAttribute(hitemcon, "display", L"none");
 			HTMLayoutUpdateElement(hitemlist, TRUE);
-			expandelem = NULL;
 			return TRUE;
 		}
 
@@ -231,6 +233,7 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		if (itemid <= 0) return TRUE;
 
 		FeedItem *item = db_loaditem(itemid);
+		if (!item) return TRUE;
 		char *html = item->content;
 		char notebuf[128], *note = item->author;
 		if (strlen(item->author) > 0) {
@@ -257,9 +260,35 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HTMLayoutScrollToView(he, SCROLL_SMOOTH);
 		HTMLayoutUpdateElement(hitemlist, TRUE);
 
-		expandelem = he;
-
 		return TRUE;
+	}
+
+	/* 右键切换已读未读状态 */
+	if ((evtg & HANDLE_MOUSE) && ep->cmd==MOUSE_UP && ep->button_state==PROP_MOUSE_BUTTON) {
+
+		int itemid;
+		wchar_t *wid;
+		e = HTMLayoutGetAttributeByName(he, "itemid", (const WCHAR **)&wid);
+		if (e != HLDOM_OK) return TRUE;
+		swscanf (wid, L"%d", &itemid);
+		if (itemid <= 0) return TRUE;
+
+		FeedItem *item = db_loaditem(itemid);
+		if (!item) return TRUE;
+
+		db_markread (item->id, !item->read);
+
+		HELEMENT itemcon = html_getelementbyid (hwnd, "itemcontent");
+		if (itemcon)
+			HTMLayoutSetStyleAttribute (itemcon, "display", (const WCHAR *)L"none");
+
+		html_refresh_feedlist(hwnd);
+		if (item->read)
+			HTMLayoutSetStyleAttribute(he, "font-weight", (const WCHAR *)L"bold");
+		else
+			HTMLayoutSetStyleAttribute(he, "font-weight", (const WCHAR *)L"normal");
+
+		HTMLayoutUpdateElement(he, TRUE);
 	}
 
 	return FALSE;
@@ -300,6 +329,8 @@ void html_loaditemlist (HWND hwnd, int feedid)
 	Feed *feed;
 	int rown;
 
+	g_current_feedid = feedid;
+
 	if (feedid != 0) {
 		feed = db_loadfeed (feedid);
 		if (!feed) return;
@@ -311,9 +342,9 @@ void html_loaditemlist (HWND hwnd, int feedid)
 		html_setboard (hwnd, "所有");
 
 	if (feedid == 0)
-		rown = db_select_itemlist(&itemlist, "read=0 order by updated desc, id desc");
+		rown = db_select_itemlist(&itemlist, "1 order by read, updated desc, id desc limit 400");
 	else
-		rown = db_select_itemlist(&itemlist, "read=0 and feedid=%d order by updated desc, id desc", feedid);
+		rown = db_select_itemlist(&itemlist, "feedid=%d order by read,updated desc, id desc limit 200", feedid);
 
 	for (int i = 0; i < rown; i++) {
 		FeedItem *item = itemlist[i];
@@ -349,12 +380,15 @@ void html_clearitemlist (HWND hwnd)
 
 
 /* 点击feedlist事件 */
+
+
 BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 {
 	HWND hwnd = (HWND)tag;
 	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
 	int e;
 
+	/* 左键 */
 	if ((evtg&HANDLE_MOUSE) && ep->cmd==MOUSE_DOWN && ep->button_state==MAIN_MOUSE_BUTTON) {
 
 		html_hidetip (hwnd);
@@ -368,6 +402,28 @@ BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 		html_clearitemlist(hwnd);
 		html_loaditemlist(hwnd, feedid);
 
+		return FALSE;
+	}
+
+	/* 右键 */
+	if ((evtg&HANDLE_MOUSE) && ep->cmd==MOUSE_DOWN && ep->button_state==PROP_MOUSE_BUTTON) {
+
+		int feedid;
+		wchar_t *wid;
+		e = HTMLayoutGetAttributeByName(he, "feedid", (const WCHAR **)&wid);
+		if (e != HLDOM_OK) return FALSE;
+		swscanf (wid, L"%d", &feedid);
+		g_menu_feedid = feedid;
+
+		HELEMENT unsub = html_getelementbyid (hwnd, "unsub");
+		if (unsub) {
+			if (feedid == 0)
+				HTMLayoutSetStyleAttribute(unsub, "display", (const WCHAR *)L"none");
+			else
+				HTMLayoutSetStyleAttribute(unsub, "display", (const WCHAR *)L"block");
+		}
+
+		g_onleft = TRUE;
 		return FALSE;
 	}
 
@@ -465,7 +521,7 @@ void html_setboard (HWND hwnd, const char *feedtitle)
 	hboard = html_getelementbyid(hwnd, "board");
 	if (!hboard) return;
 
-	HTMLayoutSetElementHtml(hboard, (const BYTE *)feedtitle, strlen(feedtitle), SIH_REPLACE_CONTENT);
+	HTMLayoutSetElementInnerText(hboard, (const BYTE *)feedtitle, strlen(feedtitle));
 }
 
 /**
@@ -508,6 +564,7 @@ static BOOL CALLBACK click_showmenu (LPVOID tag, HELEMENT he, UINT evtg, LPVOID 
 		HELEMENT hmenu = html_getelementbyid(hwnd, "subpad");
 		if (!hmenu) return FALSE;
 		HTMLayoutSetStyleAttribute (hmenu, "display", L"block");
+
 		return FALSE;
 	}
 	return FALSE;
@@ -560,21 +617,141 @@ static BOOL CALLBACK click_sub (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 	return FALSE;
 }
 
+/* 处理超连接 */
+static BOOL CALLBACK click_linker (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+	DWORD now;
+
+	HWND hwnd = (HWND)tag;
+	struct BEHAVIOR_EVENT_PARAMS *ep = (struct BEHAVIOR_EVENT_PARAMS *)prms;
+
+
+	if ((evtg&HANDLE_BEHAVIOR_EVENT) && (BYTE)ep->cmd==HYPERLINK_CLICK) {
+		now = GetTickCount();
+		if (now - lasttime < 100)
+			return TRUE;
+		printf ("%u ", evtg);
+		wchar_t *link;
+		HTMLayoutGetAttributeByName(ep->he, "href", (const WCHAR **)&link);
+		if (lstrlen(link) > 4)
+			ShellExecuteW (0, L"open", link, NULL, NULL, SW_NORMAL);
+		lasttime = now;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/* 取消订阅 */
+static BOOL CALLBACK click_unsub (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 100)
+			return FALSE;
+		else
+			lasttime = now;
+
+		db_unsub(g_menu_feedid);
+		html_clearfeedlist (hwnd);
+		html_loadfeedlist (hwnd);
+		if (g_menu_feedid==g_current_feedid || g_current_feedid==0) {
+			html_clearitemlist (hwnd);
+			html_loaditemlist (hwnd, 0);
+		}
+
+		g_onleft = FALSE;
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
+/* 把所有标记为已读 */
+static BOOL CALLBACK click_markread (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 100)
+			return FALSE;
+		else
+			lasttime = now;
+
+		db_markallread(g_menu_feedid);
+		html_clearfeedlist (hwnd);
+		html_loadfeedlist (hwnd);
+		html_clearitemlist (hwnd);
+		html_loaditemlist (hwnd, g_menu_feedid);
+
+		g_onleft = FALSE;
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
+/* 鼠标在左侧 */
+static BOOL CALLBACK on_feedlist (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_ENTER) {
+		g_onleft = TRUE;
+		return FALSE;
+	}
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_LEAVE) {
+		g_onleft = FALSE;
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
 void html_set_subevt (HWND hwnd, html_subcb f)
 {
 	HELEMENT submenu = html_getelementbyid (hwnd, "submenu");
-	if (!submenu) return;
-	HTMLayoutAttachEventHandler(submenu, click_showmenu, (LPVOID)hwnd);
+	if (submenu)
+		HTMLayoutAttachEventHandler(submenu, click_showmenu, (LPVOID)hwnd);
 
 	HELEMENT closemenu = html_getelementbyid (hwnd, "closemenu");
-	if (!closemenu) return;
-	HTMLayoutAttachEventHandler(closemenu, click_closemenu, (LPVOID)hwnd);
+	if (closemenu)
+		HTMLayoutAttachEventHandler(closemenu, click_closemenu, (LPVOID)hwnd);
+
+	HELEMENT body = html_getelementbyid (hwnd, "all");
+	if (body)
+		HTMLayoutAttachEventHandler(body, click_linker, (LPVOID)hwnd);
+
+	HELEMENT unsub = html_getelementbyid (hwnd, "unsub");
+	if (unsub)
+		HTMLayoutAttachEventHandler(unsub, click_unsub, (LPVOID)hwnd);
+
+	HELEMENT markread = html_getelementbyid (hwnd, "markallread");
+	if (markread)
+		HTMLayoutAttachEventHandler(markread, click_markread, (LPVOID)hwnd);
+
+	HELEMENT feedlist = html_getelementbyid (hwnd, "feedlist");
+	if (feedlist)
+		HTMLayoutAttachEventHandler(feedlist, on_feedlist, (LPVOID)hwnd);
 
 	HELEMENT addbutton = html_getelementbyid (hwnd, "addbutton");
-	if (!addbutton) return;
-	g_clicksub = f;
-	HTMLayoutAttachEventHandler(addbutton, click_sub, (LPVOID)hwnd);
-
+	if (addbutton) {
+		g_clicksub = f;
+		HTMLayoutAttachEventHandler(addbutton, click_sub, (LPVOID)hwnd);
+	}
 }
 
 
@@ -585,7 +762,7 @@ void html_showtip(HWND hwnd, const char *info, int state)
 	HELEMENT tipbox = html_getelementbyid(hwnd, "loadtip");
 	if (!tipbox) return;
 
-	const wchar_t *color = state? L"#FFEA93" : L"#FECFDC";
+	const wchar_t *color = state? L"#FFEEB3" : L"#FECFDC";
 	HTMLayoutSetStyleAttribute(tipbox, "border-color", color);
 	HTMLayoutSetStyleAttribute(tipbox, "background-color", color);
 	HTMLayoutSetElementHtml(tipbox, (const BYTE *)info, strlen(info), SIH_REPLACE_CONTENT);
@@ -602,4 +779,7 @@ void html_hidetip(HWND hwnd)
 	HTMLayoutSetStyleAttribute(tipbox, "display", L"none");
 }
 
-
+BOOL html_is_onleft ()
+{
+	return g_onleft;
+}

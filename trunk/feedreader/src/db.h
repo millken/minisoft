@@ -24,6 +24,8 @@ FeedItem *db_loaditem (int itemid);
 /* 设置已读状态 */
 void db_markread (int itemid, int state);
 int db_unreadcount (int feedid);
+/* 标记所有条为已读 */
+void db_markallread (int feedid);
 
 /* 查询集合 */
 int db_select_feedlist (Feed ***feedlist, const char *where, ...);
@@ -34,6 +36,14 @@ void db_del_itemlist (FeedItem **feeditem, int rown);
 
 /* 是否已订阅 */
 int db_feedexist (char *source);
+
+/* 删除feed */
+void db_unsub (int feedid);
+
+/* 最大feedid */
+int db_maxfeedid ();
+int db_minfeedid ();
+int db_nextfeedid (int feedid);
 
 #ifdef __cplusplus
 }

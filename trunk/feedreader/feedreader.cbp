@@ -76,8 +76,7 @@
 		<Unit filename="src\html.h">
 			<Option virtualFolder="src\" />
 		</Unit>
-		<Unit filename="src\main.c">
-			<Option compilerVar="CPP" />
+		<Unit filename="src\main.cc">
 			<Option virtualFolder="src\" />
 		</Unit>
 		<Unit filename="src\rc\rc.rc">
