@@ -16,6 +16,14 @@ body {
 	margin:0px;
 	overflow: none;
 }
+menu {
+	transition: none;
+}
+menu#for-feed > li {
+	padding-left: 12px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
 
 /* 加载提示框 */
 div#loadtip {
@@ -23,9 +31,9 @@ div#loadtip {
 	position: fixed;
 	left: *; right: *;
 	top: 0px;
-	border: 0px solid #FFEA93;
+	border: 0px solid #FFEEB3;
 	border-radius: 0 0 6px 6px;
-	background-color: #FFEA93;
+	background-color: #FFEEB3;
 	font-family: Arial;
 	font-weight: bold;
 	padding: 3px 8px;
@@ -64,6 +72,7 @@ div.left #subpad {
 	display: none;
 	padding: 10px;
 	background-color: #CEE2FB;
+	border-radius: 3px;
 }
 div.left #closemenu {
 	position: absolute;
@@ -93,8 +102,10 @@ div.left #feedlist {
 	behavior:select;
 	border: 1px solid #CEE2FB;
 	height: *;
+	margin-top: 5px;
 }
 div.left option {
+	context-menu:selector(menu#for-feed);
 	padding: 5px;
 	background-image:url(tata.png);
     background-repeat: no-repeat;
@@ -121,6 +132,7 @@ div.right {
 	min-width: 100px;
 }
 div.right #board {
+	behavior:htmlarea;
 	font-weight:bold;
 	font-size: 18px;
 	background-color: #8FBDF5;
@@ -133,10 +145,13 @@ div.right #itemlist {
 	overflow-x: auto;
 }
 div.right #itemcontent {
+	behavior:htmlarea;
+	context-menu:selector(menu#for-htmlarea);
 	display: none;
 	padding: 12px;
 	overflow: none;
 }
+
 div.right #ctitle {
 	font-size: 14px;
 	font-weight: bold;
@@ -181,11 +196,14 @@ div.foot {
 	margin: 6px;
 	margin-right: 9px;
 }
+div.foot a {
+
+}
 
 </style>
 </head>
 
-<body>
+<body id='all'>
 
 
 
@@ -197,7 +215,7 @@ div.foot {
 <!-- body -->
 <div #body>
 	<!-- left -->
-	<div class='left' >
+	<div class='left'>
 	<button id='submenu'>添加新订阅</button>
 		<div id='subpad'>
 			<div id='closemenu'>x</div>
@@ -207,29 +225,44 @@ div.foot {
 		<div class='tip'>例如: blog.cnal.com/rss.php</div>
 		</div>
 	<dl id='feedlist'>
-		<!--<option>..items..</option>-->
+		<!--<option feedid='0'>..items..</option>-->
 	</dl>
 	</div>
 
 	<!-- right -->
 	<div class='right'>
 	<div id='board'>indiegm - indie game magazine</div>
+
 	<dl id='itemlist'>
 		<div id='itemcontent'>
 			<a href='#' id='ctitle'></a><br/>
 			<div id='cnote'>asdfasdf</div>
 			<div id='ccon'></div>
 		</div>
+
 		<!--<dt>..items..</dt>-->
 
 	</dl>
 	</div>
 </div>
 
+<!-- 左侧菜单 -->
+<menu.context #for-feed>
+  <li id='markallread'>把所有文章标记为已读</li>
+  <li id='unsub'>取消订阅</li>
+</menu>
 
+<!-- 右侧菜单 -->
+<menu.context #for-htmlarea>
+  <li command="htmlarea:copy"
+	style="foreground-image:url(res:edit-copy.png)"
+	>Copy<span class="accesskey">Ctrl+C</span></li>
+  <li command="htmlarea:selectall"
+	>Select All</li>
+</menu>
 
 <!-- footer -->
-<div class='foot'>copyright © cnal.com 2012</div>
+<div class='foot'>copyright © <a href='http://www.cnal.com'>cnal.com</a> 2012</div>
 
 </body>
 </html>

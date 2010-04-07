@@ -11,6 +11,9 @@
 
 #define must(exp) if(!(exp))return 0
 
+static CRITICAL_SECTION g_cs;
+
+
 static char *dump(char *s)
 {
 	char *t;
@@ -23,15 +26,6 @@ static char *dump(char *s)
 	return t;
 }
 
-/* 后台下载循环 */
-void download (void *param)
-{
-	printf ("download...\n\n");
-
-	url_download ();
-
-	printf ("i'm done\n");
-}
 
 /* 下载并在数据库中插入新的feed和item, 返回新feed的id */
 int insert_newfeed(char *url)
@@ -115,7 +109,7 @@ int update_items (int feedid)
 	return n;
 }
 
-
+/* 新订阅 */
 static void click_sub (HWND hwnd, char *url)
 {
 	int sud = db_feedexist(url);
@@ -126,8 +120,13 @@ static void click_sub (HWND hwnd, char *url)
 
 	//printf ("url: %s#\n", url);
 	html_showtip (hwnd, "正在抓取..", 1);
+
+	EnterCriticalSection (&g_cs);
+
 	int e = insert_newfeed(url);
 	if (!e) printf ("insert feed error.\n");
+
+	LeaveCriticalSection (&g_cs);
 
 	if (e > 0)
 		html_hidetip (hwnd);
@@ -139,6 +138,24 @@ static void click_sub (HWND hwnd, char *url)
 	if (e > 0) {
 		html_clearfeedlist(hwnd);
 		html_loadfeedlist(hwnd);
+	}
+}
+
+/* 后台抓取 */
+void download (void *param)
+{
+	int feedid = 0;
+
+	while (1) {
+		EnterCriticalSection (&g_cs);
+
+		feedid = db_nextfeedid(feedid);
+		printf ("grabing: %d\n", feedid);
+		if (feedid > 0)
+			update_items(feedid);
+
+		LeaveCriticalSection (&g_cs);
+		Sleep(2000);
 	}
 }
 
@@ -177,19 +194,31 @@ int mainform_onsize (I32E e)
 	return 0;
 }
 
+
+void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
+{
+	HWND hhtml;
+
+	if (!html_is_onleft()) {
+		hhtml = i32("htmlbox");
+		html_clearfeedlist(hhtml);
+		html_loadfeedlist(hhtml);
+	}
+}
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
 	HWND hwnd = open_mainform();
 	i32setproc (hwnd, WM_SIZE, mainform_onsize);
+	SetTimer(hwnd, 1, 1000, timerproc); /* 检查新feed */
 
-	int e = init_db("subscribe.s3db");
+	int e = init_db("feed.db");
 	assert(e);
 
 	db_create_table ();
 
-	//_beginthread (download, 0, NULL);
-	//e = insert_feed("http://blog.codingnow.com/atom.xml");
-	//if (!e) printf ("insert feed error.\n");
+	InitializeCriticalSection (&g_cs);
+	_beginthread (download, 0, NULL); /* 开始后台循环抓取 */
 
 
 	HWND hhtml = i32("htmlbox");
@@ -199,11 +228,13 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	html_set_subevt (hhtml, click_sub); /* click one feed */
 
 	ShowWindow (hwnd, SW_MINIMIZE); /* 加载延时 */
-	SetFocus(hhtml);
 	ShowWindow (hwnd, SW_SHOWNORMAL);
+	SetFocus(hhtml);
 
-
+	/* end */
 	i32loop();
+
+	DeleteCriticalSection (&g_cs) ;
 	close_db();
 
 	return 0;

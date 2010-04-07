@@ -341,6 +341,15 @@ void db_markread (int itemid, int state)
 	db_exe("update item set read=%d where id=%d", state, itemid);
 }
 
+/* 标记所有条为已读 */
+void db_markallread (int feedid)
+{
+	if (feedid == 0)
+		db_exe("update item set read=1 where read=0");
+	else
+		db_exe("update item set read=1 where feedid=%d and read=0", feedid);
+}
+
 /* 某feed未读条数 */
 int db_unreadcount (int feedid)
 {
@@ -385,4 +394,84 @@ int db_feedexist (char *source)
 	sqlite3_finalize(st);
 
 	return 1;
+}
+
+void db_unsub (int feedid)
+{
+	int e;
+
+	if (feedid <= 0) return;
+
+	e = db_exe ("delete from feed where id=%d", feedid);
+	if (e)
+		db_exe ("delete from item where feedid=%d", feedid);
+}
+
+/* 后台线程用 */
+int db_maxfeedid ()
+{
+	char *sql;
+	sqlite3_stmt *st;
+	int e;
+	int maxid = 0;
+
+	sql = sqlite3_mprintf ("select max(id) from feed");
+	sqlite3_prepare(g_db, sql, -1, &st, 0);
+	sqlite3_free(sql);
+
+	e = sqlite3_step(st);
+	if (e != SQLITE_ROW) return 0;
+
+	maxid = sqlite3_column_int(st, 0);
+
+	sqlite3_finalize(st);
+	return maxid;
+}
+
+int db_minfeedid ()
+{
+	char *sql;
+	sqlite3_stmt *st;
+	int e;
+	int maxid = 0;
+
+	sql = sqlite3_mprintf ("select min(id) from feed");
+	sqlite3_prepare(g_db, sql, -1, &st, 0);
+	sqlite3_free(sql);
+
+	e = sqlite3_step(st);
+	if (e != SQLITE_ROW) return 0;
+
+	maxid = sqlite3_column_int(st, 0);
+
+	sqlite3_finalize(st);
+	return maxid;
+}
+
+int db_nextfeedid (int feedid)
+{
+	char *sql;
+	sqlite3_stmt *st;
+	int e;
+	int n = 0, minid, maxid;
+
+	maxid = db_maxfeedid ();
+	if (maxid == 0) return 0;
+
+	if (feedid >= maxid)
+		return db_minfeedid ();
+
+
+	sql = sqlite3_mprintf ("select id from feed where id>%d order by id limit 1", feedid);
+	sqlite3_prepare(g_db, sql, -1, &st, 0);
+	sqlite3_free(sql);
+
+	e = sqlite3_step(st);
+	if (e != SQLITE_ROW) return 0;
+
+	feedid = sqlite3_column_int(st, 0);
+
+	sqlite3_finalize(st);
+
+	return feedid;
 }
