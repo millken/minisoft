@@ -8,11 +8,12 @@
 #include "db.h"
 #include "html.h"
 #include "ctrls.h"
+#include "tray.h"
 
 #define must(exp) if(!(exp))return 0
 
 static CRITICAL_SECTION g_cs;
-
+static int g_isactive = 0;
 
 static char *dump(char *s)
 {
@@ -164,6 +165,7 @@ void download (void *param)
  */
 int mainform_quit (I32E e)
 {
+	tydel (e.hwnd);
 	PostQuitMessage(0);
 	exit(0); /* 这样快 */
 	return 0;
@@ -194,15 +196,53 @@ int mainform_onsize (I32E e)
 	return 0;
 }
 
+int mainform_onact (I32E e)
+{
+	g_isactive = LOWORD(e.wp);
+	printf ("%d\n", g_isactive);
+	if (g_isactive)
+		html_refresh_feedlist(i32("htmlbox"));
+
+	return 0;
+}
+
+void popmenu (HWND hwnd)
+{
+	POINT pt;
+	HMENU hmenu;
+
+	/* 设置为前台窗口,以在单击非弹出菜单区域时使菜单自动消失! */
+	SetForegroundWindow (hwnd);
+	hmenu = LoadMenu (GetModuleHandle(NULL), "POPMENU");
+	hmenu = GetSubMenu (hmenu, 0);
+
+	GetCursorPos (&pt);
+	TrackPopupMenu (hmenu, TPM_RIGHTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y,
+											 0, hwnd, NULL);
+}
+
+int mainform_ontray (I32E e)
+{
+	if (e.wp==ID_TRAY && e.lp==WM_LBUTTONDOWN) {
+		ShowWindow (e.hwnd, SW_SHOW);
+		SetFocus(i32("htmlbox"));
+	}
+	else
+	if (wp==ID_TRAY && lp==WM_RBUTTONUP) {
+
+	}
+
+	return 0;
+}
 
 void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 {
 	HWND hhtml;
 
-	if (!html_is_onleft()) {
-		hhtml = i32("htmlbox");
-		html_clearfeedlist(hhtml);
-		html_loadfeedlist(hhtml);
+	if (!html_is_onleft() && g_isactive) {
+		HWND hhtml = i32("htmlbox");
+		html_refresh_feedlist (hhtml);
+		html_updatewindow (hhtml);
 	}
 }
 
@@ -210,7 +250,10 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
 	HWND hwnd = open_mainform();
 	i32setproc (hwnd, WM_SIZE, mainform_onsize);
+	i32setproc (hwnd, WM_NCACTIVATE, mainform_onact);
 	SetTimer(hwnd, 1, 1000, timerproc); /* 检查新feed */
+	tyadd (hwnd, L"tray_ico", L"Feed Reader");
+	i32setproc (hwnd, ON_TRAY, mainform_ontray);
 
 	int e = init_db("feed.db");
 	assert(e);

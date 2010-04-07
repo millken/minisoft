@@ -16,6 +16,9 @@ HWND html_create (HWND dad, const char *format, ...);
 int html_loadfile (HWND hwnd, const wchar_t *filename);
 int html_loadstring (HWND hwnd, char *html);
 
+/* 刷新 */
+void html_updatewindow (HWND hwnd);
+
 /* 加载feedlist到左侧 */
 void html_loadfeedlist (HWND hwnd);
 void html_clearfeedlist (HWND hwnd);
@@ -36,6 +39,7 @@ void html_hidetip(HWND hwnd);
 
 /* 左侧菜单是否弹出 */
 BOOL html_is_onleft ();
+
 
 #ifdef __cplusplus
 }
