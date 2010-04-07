@@ -607,14 +607,14 @@
 
 1270598216 f:\dev\minisoft\reader\src\url.h
 
-1270625908 f:\dev\minisoft\reader\src\html.h
+1270628778 f:\dev\minisoft\reader\src\html.h
 	"xml.h"
 
 1270598216 f:\dev\minisoft\reader\src\ctrls.h
 	<windows.h>
 	<richedit.h>
 
-1270598216 source:f:\dev\minisoft\reader\src\rc\rc.rc
+1270628396 source:f:\dev\minisoft\reader\src\rc\rc.rc
 
 1270598216 source:f:\dev\minisoft\reader\src\tinyxml\tinystr.cpp
 	"tinystr.h"
@@ -698,7 +698,7 @@
 	<stddef.h>
 	<errno.h>
 
-1270626990 source:f:\dev\minisoft\reader\src\html.cc
+1270629018 source:f:\dev\minisoft\reader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -805,7 +805,7 @@
 1270598214 f:\dev\minisoft\reader\src\include\htmlayout\behaviors\notifications.h
 	<windows.h>
 
-1270625900 source:f:\dev\minisoft\reader\src\main.cc
+1270630584 source:f:\dev\minisoft\reader\src\main.cc
 	<process.h>
 	<assert.h>
 	<time.h>
@@ -816,4 +816,9 @@
 	"db.h"
 	"html.h"
 	"ctrls.h"
+	"tray.h"
+
+1270628490 f:\dev\minisoft\reader\src\tray.h
+	<windows.h>
+	<string.h>
 

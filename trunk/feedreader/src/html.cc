@@ -200,6 +200,8 @@ int html_getnth (HELEMENT he)
 /* 展开/收起item事件 */
 BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 {
+	static HELEMENT lastclick = NULL;
+
 	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
 	HWND hwnd = (HWND)tag;
 	int e;
@@ -214,13 +216,11 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HELEMENT ccon = html_getelementbyid(hwnd, "ccon");
 		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
 
-		wchar_t *display;
-		HTMLayoutGetStyleAttribute(hitemcon, "display", (const WCHAR **)&display);
-
 		/* 收起 */
-		if (lstrcmp(display, L"none")) {
+		if (lastclick == he) {
 			HTMLayoutSetStyleAttribute(hitemcon, "display", L"none");
 			HTMLayoutUpdateElement(hitemlist, TRUE);
+			lastclick = NULL;
 			return TRUE;
 		}
 
@@ -259,6 +259,8 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HTMLayoutInsertElement(hitemcon, hitemlist, n+1);
 		HTMLayoutScrollToView(he, SCROLL_SMOOTH);
 		HTMLayoutUpdateElement(hitemlist, TRUE);
+
+		lastclick = he;
 
 		return TRUE;
 	}
@@ -782,4 +784,15 @@ void html_hidetip(HWND hwnd)
 BOOL html_is_onleft ()
 {
 	return g_onleft;
+}
+
+void html_updatewindow (HWND hwnd)
+{
+	HELEMENT feedlist = html_getelementbyid(hwnd, "feedlist");
+	HTMLayoutUpdateElement(feedlist, TRUE);
+
+	HELEMENT itemlist = html_getelementbyid(hwnd, "itemlist");
+	HTMLayoutUpdateElement(itemlist, TRUE);
+
+	HTMLayoutUpdateWindow(hwnd);
 }
