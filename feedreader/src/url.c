@@ -127,13 +127,13 @@ void url_download ()
 
 	multi_handle = curl_multi_init();
 
-	mkdir (DOWNLOADDIR); /* 创建临时目录 */
+	mkdir (g_downdir); /* 创建临时目录 */
 
 	for (i = 0; i < g_len; i++) {
 		urow *u = &g_list[i];
 		char filename[256];
 
-		sprintf (filename, "%s/%d.xml", DOWNLOADDIR, u->id);
+		sprintf (filename, "%s/%d.xml", g_downdir, u->id);
 
 		/* 如果文件存在但删除失败, pass */
 		if (!access(filename, 0) && unlink(filename))

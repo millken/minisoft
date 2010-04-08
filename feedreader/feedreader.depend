@@ -338,7 +338,7 @@
 
 1270555363 e:\dev\minisoft\feedreader\src\xml.h
 
-1270552505 source:e:\dev\minisoft\feedreader\src\form.c
+1270725901 source:e:\dev\minisoft\feedreader\src\form.c
 	"i32.h"
 
 1270555738 e:\dev\minisoft\chat_client\src\i32.h
@@ -459,7 +459,9 @@
 1270640405 e:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
-1270646190 source:e:\dev\minisoft\feedreader\src\main.cc
+1270726360 source:e:\dev\minisoft\feedreader\src\main.cc
+	<stdlib.h>
+	<io.h>
 	<process.h>
 	<assert.h>
 	<time.h>
@@ -472,13 +474,13 @@
 	"ctrls.h"
 	"tray.h"
 
-1270552505 e:\dev\minisoft\feedreader\src\url.h
+1270725901 e:\dev\minisoft\feedreader\src\url.h
 
 1270552505 e:\dev\minisoft\feedreader\src\ctrls.h
 	<windows.h>
 	<richedit.h>
 
-1270645725 source:e:\dev\minisoft\feedreader\src\rc\rc.rc
+1270725900 source:e:\dev\minisoft\feedreader\src\rc\rc.rc
 
 1270552505 source:e:\dev\minisoft\feedreader\src\tinyxml\tinystr.cpp
 	"tinystr.h"
@@ -513,7 +515,7 @@
 	"tinyxml.h"
 	<windows.h>
 
-1270552505 source:e:\dev\minisoft\feedreader\src\url.c
+1270725901 source:e:\dev\minisoft\feedreader\src\url.c
 	<stdio.h>
 	<io.h>
 	<stdlib.h>
