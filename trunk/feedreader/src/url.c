@@ -28,6 +28,38 @@ typedef struct {
 static urow g_list[URLMAX];
 static int g_len;
 
+static char g_userdir[128] = {"u/0"};
+static char g_downdir[256] = {"u/0/download"};
+
+/* 根据WinMain参数获得uid,创建各自目录 */
+int url_set_userdir (char *param)
+{
+	char *uid = param;
+
+	mkdir ("u");
+
+	if (uid==NULL || strlen(uid)==0)
+		uid = "0";
+	sprintf (g_userdir, "u/%s", uid);
+	mkdir (g_userdir);
+
+	sprintf (g_downdir, "%s/download", g_userdir);
+	mkdir (g_downdir);
+
+	return !access(g_userdir, 0) && !access(g_downdir, 0);
+}
+
+char *url_get_userdir ()
+{
+	return g_userdir;
+}
+
+char *url_get_downdir ()
+{
+	return g_downdir;
+}
+
+
 int url_add (int id, char *url)
 {
 	urow *u;
