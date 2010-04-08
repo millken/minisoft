@@ -14,8 +14,9 @@
 
 #define must(exp) if(!(exp))return 0
 
-static CRITICAL_SECTION g_cs;
+static CRITICAL_SECTION g_cs; /* url_download同步锁 */
 static int g_isactive = 0;
+static HANDLE g_mutex = NULL;
 
 static char *dump(char *s)
 {
@@ -38,7 +39,8 @@ int insert_newfeed(char *url)
 	int id = 0;
 
 	int e;
-	char *tmpfile = (char *)DOWNLOADDIR"/0.xml";
+	char tmpfile[256];
+	sprintf (tmpfile, "%s/0.xml", url_get_downdir());
 	int lastupdated = 0;
 
 	url_clear();
@@ -100,7 +102,9 @@ int update_items (int feedid)
 
 	/* parse */
 	feed = newfeed();
-	e = parsefeed(DOWNLOADDIR"/0.xml", feed);
+	char tmpfile[256];
+	sprintf (tmpfile, "%s/0.xml", url_get_downdir());
+	e = parsefeed(tmpfile, feed);
 	if (e) {
 		for (item = feed->list; item; item=item->next)
 			if (item->updated > newtime) {
@@ -186,6 +190,7 @@ void quit_mainform (HWND hwnd)
 {
 	tydel (hwnd);
 	PostQuitMessage (0);
+	CloseHandle(g_mutex);
 	exit(0); /* 这样快 */
 }
 
@@ -312,18 +317,32 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
+	/* 建立用户个人目录 */
 	int r = url_set_userdir(param);
-	while (r) {
+	while (!r) {
 		int e = MessageBox(NULL, TEXT("程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
 		if (e == IDABORT)
 			return 0;
-		else if (e == IDRETRY)
+		else if (e == IDRETRY) {
+			r = url_set_userdir(param);
 			continue;
+		}
 		else if (e == IDIGNORE)
 			break;
 		else
 			return 0;
 	}
+
+
+	/* 每用户只需运行一个实例 */
+	HANDLE g_mutex = CreateMutexA(FALSE, NULL, url_get_userdir());
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		CloseHandle(g_mutex);
+		MessageBox(NULL,
+			TEXT("程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
+		return 0;
+	}
+
 
 	HWND hwnd = open_mainform();
 
@@ -336,7 +355,9 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 
 	SetTimer(hwnd, 1, 2000, timerproc); /* 检查新feed */
 
-	int e = init_db("feed.db");
+	char dbpath[128];
+	sprintf (dbpath, "%s/feed.db", url_get_userdir());
+	int e = init_db(dbpath);
 	assert(e);
 
 	db_create_table ();
@@ -349,6 +370,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	html_loadfeedlist (hhtml);
 	html_loaditemlist (hhtml, 0);
 	i32setproc (hhtml, WM_KEYDOWN, mainform_onkey);
+	i32setproc (hwnd, WM_KEYDOWN, mainform_onkey);
 	i32setproc (hhtml, WM_SYSCHAR, mainform_onsyschar);
 	i32setproc (hwnd, WM_SYSCHAR, mainform_onsyschar);
 	html_set_subevt (hhtml, click_sub); /* click one feed */
@@ -361,6 +383,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 
 	DeleteCriticalSection (&g_cs) ;
 	close_db();
+	CloseHandle(g_mutex);
 
 	return 0;
 }
