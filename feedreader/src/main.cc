@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <io.h>
 #include <process.h>
 #include <assert.h>
 #include <time.h>
@@ -163,6 +165,31 @@ void download (void *param)
 /**
  * UI
  */
+
+HWND open_mainform()
+{
+	HWND hwnd, hhtml;
+
+	reg_form();
+	//hwnd = i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
+	hwnd = i32create (TEXT("form"), "n|s|w|h|a|t|bc", "mainform",
+		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
+
+	reg_html_control();
+	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
+	html_loadfile (hhtml, L"theme/index.htm");
+
+	return hwnd;
+}
+
+void quit_mainform (HWND hwnd)
+{
+	tydel (hwnd);
+	PostQuitMessage (0);
+	exit(0); /* 这样快 */
+}
+
+
 int mainform_syscmd (I32E e)
 {
 	if (e.wp == SC_CLOSE) {
@@ -172,21 +199,26 @@ int mainform_syscmd (I32E e)
 	return -1;
 }
 
-HWND open_mainform()
+int mainform_onkey (I32E e)
 {
-	HWND hwnd, hhtml;
+	if (e.wp == VK_ESCAPE) {
+		ShowWindow (i32("mainform"), SW_HIDE);
+		return 0;
+	}
 
-	reg_form();
-	//hwnd = i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
-	hwnd = i32create (TEXT("form"), "s|w|h|a|t|bc",
-		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
-
-	reg_html_control();
-	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
-	html_loadfile (hhtml, L"theme/index.htm");
-
-	return hwnd;
+	return -1;
 }
+
+int mainform_onsyschar (I32E e)
+{
+	if (e.wp==(int)'Q' || e.wp==(int)'q') {
+		quit_mainform (i32("mainform"));
+		return 0;
+	}
+
+	return -1;
+}
+
 
 int mainform_onsize (I32E e)
 {
@@ -202,7 +234,7 @@ int mainform_onact (I32E e)
 	if (g_isactive)
 		html_refresh_feedlist(i32("htmlbox"));
 
-	return 0;
+	return -1;
 }
 
 void popmenu (HWND hwnd)
@@ -222,13 +254,21 @@ void popmenu (HWND hwnd)
 
 int mainform_ontray (I32E e)
 {
-	if (e.wp==ID_TRAY && e.lp==WM_LBUTTONDOWN) {
-			ShowWindow (e.hwnd, SW_SHOW);
+	if (e.wp==ID_TRAY && e.lp==WM_LBUTTONUP) {
+		if (!IsWindowVisible(e.hwnd)) {
+			ShowWindow(e.hwnd, SW_MINIMIZE); /* 有时候在任务栏里不出来 */
+			i32send(e.hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			SetFocus(i32("htmlbox"));
+		}
+		else {
+			ShowWindow(e.hwnd, SW_HIDE);
+		}
 	}
-	else
-	if (e.wp==ID_TRAY && e.lp==WM_RBUTTONUP) {
+	else if (e.wp==ID_TRAY && e.lp==WM_RBUTTONUP) {
 		popmenu (e.hwnd);
+	}
+	else if (e.wp==ID_TRAY && e.lp==WM_RBUTTONDBLCLK) { /* 右键双击退出 */
+		quit_mainform (e.hwnd);
 	}
 
 	return 0;
@@ -238,9 +278,11 @@ int mainform_oncmd (I32E e)
 {
 	switch (LOWORD(e.wp)) {
 		case 101:
-			tydel (e.hwnd);
-			PostQuitMessage (0);
-			exit(0); /* 这样快 */
+			quit_mainform (e.hwnd);
+		break;
+
+		case 100:
+			ShowWindow (e.hwnd, SW_SHOW);
 		break;
 	}
 	return 0;
@@ -249,12 +291,16 @@ int mainform_oncmd (I32E e)
 void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 {
 	HWND hhtml;
+	wchar_t buf[128];
 
 	int unreadn = db_unreadcount(0);
-	if (unreadn)
+	if (unreadn > 0)
 		tymod (hwnd, TEXT("tray_unread"));
 	else
 		tymod (hwnd, TEXT("tray_ico"));
+
+	wsprintfW(buf, L"%d条未读", unreadn);
+	tytip (hwnd, buf);
 
 	if ( unreadn>0 && g_isactive && !html_is_onleft() ) {
 		HWND hhtml = i32("htmlbox");
@@ -263,8 +309,22 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 	}
 }
 
+
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
+	int r = url_set_userdir(param);
+	while (r) {
+		int e = MessageBox(NULL, TEXT("程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
+		if (e == IDABORT)
+			return 0;
+		else if (e == IDRETRY)
+			continue;
+		else if (e == IDIGNORE)
+			break;
+		else
+			return 0;
+	}
+
 	HWND hwnd = open_mainform();
 
 	i32setproc (hwnd, WM_SYSCOMMAND, mainform_syscmd);
@@ -273,6 +333,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	tyadd (hwnd, TEXT("tray_ico"), TEXT("Feed Reader"));
 	i32setproc (hwnd, ON_TRAY, mainform_ontray);
 	i32setproc (hwnd, WM_COMMAND, mainform_oncmd);
+
 	SetTimer(hwnd, 1, 2000, timerproc); /* 检查新feed */
 
 	int e = init_db("feed.db");
@@ -287,11 +348,12 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	HWND hhtml = i32("htmlbox");
 	html_loadfeedlist (hhtml);
 	html_loaditemlist (hhtml, 0);
-
+	i32setproc (hhtml, WM_KEYDOWN, mainform_onkey);
+	i32setproc (hhtml, WM_SYSCHAR, mainform_onsyschar);
+	i32setproc (hwnd, WM_SYSCHAR, mainform_onsyschar);
 	html_set_subevt (hhtml, click_sub); /* click one feed */
 
-	ShowWindow (hwnd, SW_MINIMIZE); /* 加载延时 */
-	ShowWindow (hwnd, SW_SHOWNORMAL);
+	ShowWindow (hwnd, SW_SHOW);
 	SetFocus(hhtml);
 
 	/* end */

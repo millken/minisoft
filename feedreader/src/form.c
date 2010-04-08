@@ -4,6 +4,10 @@
 
 #include "i32.h"
 
+#define MLEFT_NORMAL -98
+#define MLEFT_ZOOMED -95
+#define MTOP_NORMAL 1
+#define MTOP_ZOOMED 4
 
 /* 边框尺寸 */
 static int NCPADDING_LEFT = 4;
@@ -17,6 +21,9 @@ static HBITMAP bmpleft = 0;
 static HBITMAP bmpright = 0;
 static HBITMAP bmpfoot = 0;
 static HBITMAP bmpmin = 0;
+static HBITMAP bmpmax = 0;
+static HBITMAP maxbmp = 0;
+static HBITMAP restorebmp = 0;
 static HBITMAP bmpclose = 0;
 static HBITMAP bmpico = 0;
 
@@ -26,6 +33,7 @@ static HRGN FormRgn = 0;
 /* 按钮尺寸 */
 static RECT CloseRect = {0, 0, 0, 0};
 static RECT MinRect = {0, 0, 0, 0};
+static RECT MaxRect = {0, 0, 0, 0};
 
 /* 按钮状态 */
 enum BUTTON_STATE {
@@ -43,8 +51,8 @@ static int TitleLeft = 28;
 static int TitleTop = 7;
 static DWORD TitleColor = 0xFFFFFF;
 /* 按钮css */
-static int BtnMarginLeft = -74; /* NC按钮左上角定位 */
-static int BtnMarginTop = 1;
+static int BtnMarginLeft = MLEFT_NORMAL; /* NC按钮左上角定位 */
+static int BtnMarginTop = MTOP_NORMAL;
 static int BtnSpace = -1;
 /* 窗口css */
 static int RNDH = 4; /* 圆角半径 */
@@ -128,9 +136,11 @@ void getCloseRect (HWND hwnd, RECT *r)
 	getNcRect(hwnd, &ncrect);
 	MinRect.left = BtnMarginLeft>=0 ? ncrect.left+BtnMarginLeft : ncrect.right+BtnMarginLeft;
 	CloseRect.left = MinRect.left + MinRect.right + BtnSpace;
+	CloseRect.left += MaxRect.right + BtnSpace;
 
 	CopyRect (r, &CloseRect);
 	r->right += r->left;
+	r->top = BtnMarginTop;
 	r->bottom += r->top;
 }
 
@@ -144,6 +154,22 @@ void getMinRect (HWND hwnd, RECT *r)
 
 	CopyRect (r, &MinRect);
 	r->right += r->left;
+	r->top = BtnMarginTop;
+	r->bottom += r->top;
+}
+
+static
+void getMaxRect (HWND hwnd, RECT *r)
+{
+	RECT ncrect;
+
+	getNcRect(hwnd, &ncrect);
+	MinRect.left = BtnMarginLeft>=0 ? ncrect.left+BtnMarginLeft : ncrect.right+BtnMarginLeft;
+	MaxRect.left = MinRect.left + MinRect.right + BtnSpace;
+
+	CopyRect (r, &MaxRect);
+	r->right += r->left;
+	r->top = BtnMarginTop;
 	r->bottom += r->top;
 }
 
@@ -154,6 +180,15 @@ void drawMin (HWND hwnd, HDC hdc, int state)
 
 	getMinRect (hwnd, &r);
 	bltBtn4 (hdc, bmpmin, r.left, r.top, state);
+}
+
+static
+void drawMax (HWND hwnd, HDC hdc, int state)
+{
+	RECT r;
+
+	getMaxRect (hwnd, &r);
+	bltBtn4 (hdc, bmpmax, r.left, r.top, state);
 }
 
 static
@@ -232,6 +267,16 @@ static BOOL ptInMin (HWND hwnd)
 	return PtInRect (&r, p);
 }
 
+static BOOL ptInMax (HWND hwnd)
+{
+	POINT p;
+	RECT r;
+
+	getMaxRect(hwnd, &r);
+	ncCursorPos(hwnd, &p);
+	return PtInRect (&r, p);
+}
+
 static BOOL ptInBody (HWND hwnd)
 {
 	POINT p;
@@ -303,12 +348,13 @@ static void drawnc (HWND hwnd, int state)
 	drawTitle (hwnd, hmem);
 
 	drawMin (hwnd, hmem, state==0?BS_NORMAL:BS_BLUR);
+	drawMax (hwnd, hmem, state==0?BS_NORMAL:BS_BLUR);
 	drawClose (hwnd, hmem, state==0?BS_NORMAL:BS_BLUR);
 
 	FormRgn = createFormRgn(hwnd);
 	drawFormFrame (hmem);
 
-	/* 绕着客户区分4块画 */
+	/* 渲染到hdc,绕着客户区分4块画 */
 	BitBlt (hdc, 0, 0, r.right, NCPADDING_TOP,
 			hmem, 0, 0, SRCCOPY);
 	BitBlt (hdc, 0, r.bottom-NCPADDING_BOTTOM, r.right, NCPADDING_BOTTOM,
@@ -329,8 +375,10 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	static BOOL bInClose = FALSE;
 	static BOOL bInMin = FALSE;
+	static BOOL bInMax = FALSE;
 	static BOOL bCloseDown = FALSE; /*确保先按下了才触发真正的keyup*/
 	static BOOL bMinDown = FALSE;
+	static BOOL bMaxDown = FALSE;
 
     switch (message)                  /* handle the messages */
     {
@@ -347,6 +395,8 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			bmpright = LoadBitmap(hinstance, TEXT("FORM_RIGHT"));
 			/* 按钮图片必须是4种状态横排 */
 			bmpmin = LoadBitmap(hinstance, TEXT("FORM_MIN"));
+			bmpmax = maxbmp = LoadBitmap(hinstance, TEXT("FORM_MAX"));
+			restorebmp = LoadBitmap(hinstance, TEXT("FORM_RESTORE"));
 			bmpclose = LoadBitmap(hinstance, TEXT("FORM_CLOSE"));
 			bmpico = LoadBitmap(hinstance, TEXT("FORM_ICON"));
 
@@ -362,6 +412,10 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			MinRect.bottom = bmp.bmHeight;
 			MinRect.right = bmp.bmWidth/4;
 			MinRect.top = BtnMarginTop;
+			GetObject (bmpmax, sizeof(BITMAP), &bmp);
+			MaxRect.bottom = bmp.bmHeight;
+			MaxRect.right = bmp.bmWidth/4;
+			MaxRect.top = BtnMarginTop;
 			GetObject (bmpclose, sizeof(BITMAP), &bmp);
 			CloseRect.bottom = bmp.bmHeight;
 			CloseRect.right = bmp.bmWidth/4;
@@ -444,6 +498,11 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				bMinDown = TRUE;
 				return 0;
 			}
+			else if (ptInMax(hwnd)) {
+				drawMax (hwnd, hdc, BS_DOWN);
+				bMaxDown = TRUE;
+				return 0;
+			}
 			else if (ptInClose(hwnd)) {
 				drawClose (hwnd, hdc, BS_DOWN);
 				bCloseDown = TRUE;
@@ -451,6 +510,19 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}
 			ReleaseDC(hwnd, hdc);
 		}
+		break;
+
+		case WM_SYSCOMMAND:
+			if ((wp&(~15)) == SC_MAXIMIZE) {
+				bmpmax = restorebmp;
+				BtnMarginTop = MTOP_ZOOMED;
+				BtnMarginLeft = MLEFT_ZOOMED;
+			}
+			else if ((wp&(~15)) == SC_RESTORE && IsZoomed(hwnd)) {
+				bmpmax = maxbmp;
+				BtnMarginTop = MTOP_NORMAL;
+				BtnMarginLeft = MLEFT_NORMAL;
+			}
 		break;
 
 		case WM_NCLBUTTONUP: {
@@ -461,6 +533,17 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					SendMessage(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 				}
 				bCloseDown = FALSE;
+				return 0;
+			}
+			else if (ptInMax(hwnd)) {
+				if (bMaxDown) {
+					drawMax (hwnd, hdc, BS_NORMAL);
+					if (!IsZoomed(hwnd))
+						SendMessage(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+					else
+						SendMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+				}
+				bMaxDown = FALSE;
 				return 0;
 			}
 			else if (ptInMin(hwnd)) {
@@ -495,6 +578,20 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				bCloseDown = FALSE;
 			}
 
+			if (ptInMax(hwnd)) {
+				if (!bInMax) {
+					drawMax (hwnd, hdc, BS_HOVER);
+					bInMax = TRUE;
+				}
+			}
+			else {
+				if (bInMax) {
+					drawMax (hwnd, hdc, GetActiveWindow()==hwnd?BS_NORMAL:BS_BLUR);
+					bInMax = FALSE;
+				}
+				bMaxDown = FALSE;
+			}
+
 			if (ptInMin(hwnd)) {
 				if (!bInMin) {
 					drawMin (hwnd, hdc, BS_HOVER);
@@ -518,6 +615,8 @@ form_proc (HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				return HTCLOSE;
 			else if (ptInMin(hwnd))
 				return HTMINBUTTON;
+			else if (ptInMax(hwnd))
+				return HTMAXBUTTON;
 			else if (!ptInBody(hwnd) && !ptInBorder(hwnd))
 				return HTCAPTION;
 		}

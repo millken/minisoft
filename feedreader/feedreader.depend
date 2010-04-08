@@ -14,7 +14,9 @@
 	"i32.h"
 	<ctype.h>
 
-1270545948 source:f:\dev\minisoft\feedreader\src\main.cc
+1270720902 source:f:\dev\minisoft\feedreader\src\main.cc
+	<stdlib.h>
+	<io.h>
 	<process.h>
 	<assert.h>
 	<time.h>
@@ -25,8 +27,9 @@
 	"db.h"
 	"html.h"
 	"ctrls.h"
+	"tray.h"
 
-1133701484 f:\dev\minisoft\feedreader\src\include\curl\curl.h
+1270684546 f:\dev\minisoft\feedreader\src\include\curl\curl.h
 	"curlver.h"
 	<stdio.h>
 	<limits.h>
@@ -38,11 +41,11 @@
 	"easy.h"
 	"multi.h"
 
-1133921314 f:\dev\minisoft\feedreader\src\include\curl\curlver.h
+1270684546 f:\dev\minisoft\feedreader\src\include\curl\curlver.h
 
-1100019778 f:\dev\minisoft\feedreader\src\include\curl\easy.h
+1270684546 f:\dev\minisoft\feedreader\src\include\curl\easy.h
 
-1133205510 f:\dev\minisoft\feedreader\src\include\curl\multi.h
+1270684546 f:\dev\minisoft\feedreader\src\include\curl\multi.h
 	<winsock2.h>
 	<sys/select.h>
 	<sys/socket.h>
@@ -66,7 +69,7 @@
 1268891100 source:f:\dev\minisoft\feedreader\src\parsexml.cc
 	<tinyxml.h>
 
-1268987112 f:\dev\minisoft\feedreader\src\include\tinyxml.h
+1270684548 f:\dev\minisoft\feedreader\src\include\tinyxml.h
 	<ctype.h>
 	<stdio.h>
 	<stdlib.h>
@@ -77,31 +80,31 @@
 	<sstream>
 	"tinystr.h"
 
-1178437284 f:\dev\minisoft\feedreader\src\include\tinystr.h
+1270684548 f:\dev\minisoft\feedreader\src\include\tinystr.h
 	<assert.h>
 	<string.h>
 
 1268886002 f:\dev\minisoft\feedreader\src\parsexml.h
 
-1178437284 source:f:\dev\minisoft\feedreader\src\tinyxml\tinystr.cpp
+1270684552 source:f:\dev\minisoft\feedreader\src\tinyxml\tinystr.cpp
 	"tinystr.h"
 
-1268986896 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxml.cpp
+1270684552 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxml.cpp
 	<ctype.h>
 	<sstream>
 	<iostream>
 	"tinyxml.h"
 
-1178437284 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxmlerror.cpp
+1270684552 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxmlerror.cpp
 	"tinyxml.h"
 
-1178437284 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxmlparser.cpp
+1270684552 source:f:\dev\minisoft\feedreader\src\tinyxml\tinyxmlparser.cpp
 	<ctype.h>
 	<stddef.h>
 	"tinyxml.h"
 	<windows.h>
 
-1269509304 source:f:\dev\minisoft\feedreader\src\url.c
+1270720606 source:f:\dev\minisoft\feedreader\src\url.c
 	<stdio.h>
 	<io.h>
 	<stdlib.h>
@@ -112,9 +115,9 @@
 	<assert.h>
 	"url.h"
 
-1268903028 f:\dev\minisoft\feedreader\src\url.h
+1270719854 f:\dev\minisoft\feedreader\src\url.h
 
-1270523568 source:f:\dev\minisoft\feedreader\src\xml.cc
+1270684552 source:f:\dev\minisoft\feedreader\src\xml.cc
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -123,7 +126,7 @@
 	<time.h>
 	"xml.h"
 
-1270539954 f:\dev\minisoft\feedreader\src\xml.h
+1270684552 f:\dev\minisoft\feedreader\src\xml.h
 
 1269317046 source:f:\dev\minisoft\feedreader\src\main.c
 	<process.h>
@@ -133,14 +136,14 @@
 	"xml.h"
 	<time.h>
 
-1146749014 f:\dev\minisoft\feedreader\src\include\iconv.h
+1270684548 f:\dev\minisoft\feedreader\src\include\iconv.h
 	"iconv.h"
 	<stddef.h>
 	<errno.h>
 
-1270102408 source:f:\dev\minisoft\feedreader\src\rc\rc.rc
+1270703838 source:f:\dev\minisoft\feedreader\src\rc\rc.rc
 
-1260113030 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
 	<windows.h>
 	"value.h"
 	"htmlayout_dom.h"
@@ -152,17 +155,17 @@
 	"htmlayout_value.hpp"
 	"htmlayout_controls.hpp"
 
-1269669694 f:\dev\minisoft\feedreader\src\include\htmlayout\value.h
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\value.h
 	<windows.h>
 	<string>
 	"aux-slice.h"
 	"aux-cvt.h"
 
-1269321936 f:\dev\minisoft\feedreader\src\include\htmlayout\aux-slice.h
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\aux-slice.h
 	"aux-cvt.h"
 	"limits.h"
 
-1269669694 f:\dev\minisoft\feedreader\src\include\htmlayout\aux-cvt.h
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\aux-cvt.h
 	<assert.h>
 	<wchar.h>
 	<string.h>
@@ -170,20 +173,20 @@
 	<stdlib.h>
 	<stdio.h>
 
-1263042206 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.h
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.h
 	"value.h"
 
-1265333794 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.h
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.h
 	<windows.h>
 
-1269675196 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.hpp
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_behavior.hpp
 	<windows.h>
 	<assert.h>
 	"htmlayout.h"
 	"htmlayout_behavior.h"
 	"behavior_impl.hpp"
 
-1269675110 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.hpp
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dom.hpp
 	"value.h"
 	"htmlayout_dom.h"
 	"htmlayout_aux.h"
@@ -192,7 +195,7 @@
 	<stdio.h>
 	<vector>
 
-1269673782 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_aux.h
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_aux.h
 	<stdio.h>
 	<stdlib.h>
 	<string>
@@ -200,12 +203,12 @@
 	"aux-slice.h"
 	"htmlayout.h"
 
-1254996758 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_queue.h
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_queue.h
 	<windows.h>
 	<stdio.h>
 	<assert.h>
 
-1269675236 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dialog.hpp
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_dialog.hpp
 	"htmlayout_dom.hpp"
 	"htmlayout_behavior.hpp"
 	"htmlayout_controls.hpp"
@@ -214,27 +217,27 @@
 	<shellapi.h>
 	<assert.h>
 
-1259151562 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_controls.hpp
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_controls.hpp
 	<stdio.h>
 	"value.h"
 	"htmlayout_dom.hpp"
 	"htmlayout_value.hpp"
 	"htmlayout_aux.h"
 
-1269675112 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_value.hpp
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_value.hpp
 	<assert.h>
 	"value.h"
 	<map>
 	<string>
 	<vector>
 
-1269673598 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_notifications.hpp
+1270684548 f:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout_notifications.hpp
 	"htmlayout_dom.h"
 	"htmlayout_aux.h"
 	"htmlayout_behavior.hpp"
 	<assert.h>
 
-1269673604 f:\dev\minisoft\feedreader\src\include\htmlayout\behaviors\notifications.h
+1270684546 f:\dev\minisoft\feedreader\src\include\htmlayout\behaviors\notifications.h
 	<windows.h>
 
 1268118530 source:f:\dev\minisoft\feedreader\src\sqlite\sqlite3.c
@@ -278,21 +281,21 @@
 	<unicode/ubrk.h>
 	<unicode/utf16.h>
 
-1270546454 source:f:\dev\minisoft\feedreader\src\db.c
+1270684552 source:f:\dev\minisoft\feedreader\src\db.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<sqlite3.h>
 	"db.h"
 
-1268118546 f:\dev\minisoft\feedreader\src\include\sqlite3.h
+1270684548 f:\dev\minisoft\feedreader\src\include\sqlite3.h
 	<stdarg.h>
 
-1270545884 f:\dev\minisoft\feedreader\src\db.h
+1270684552 f:\dev\minisoft\feedreader\src\db.h
 	"xml.h"
 	<time.h>
 
-1270546908 source:f:\dev\minisoft\feedreader\src\html.cc
+1270684552 source:f:\dev\minisoft\feedreader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -302,7 +305,7 @@
 	"xml.h"
 	"db.h"
 
-1270546856 f:\dev\minisoft\feedreader\src\html.h
+1270684552 f:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
 1269841320 source:f:\dev\minisoft\feedreader\src\html.c
@@ -312,10 +315,10 @@
 	"htmlayout/behaviors/notifications.h"
 	"html.h"
 
-1268119224 source:f:\dev\minisoft\feedreader\src\form.c
+1270705932 source:f:\dev\minisoft\feedreader\src\form.c
 	"i32.h"
 
-1270101692 f:\dev\minisoft\feedreader\src\ctrls.h
+1270684552 f:\dev\minisoft\feedreader\src\ctrls.h
 	<windows.h>
 	<richedit.h>
 
@@ -824,6 +827,10 @@
 	<string.h>
 
 1270640405 e:\dev\minisoft\feedreader\src\tray.h
+	<windows.h>
+	<string.h>
+
+1270684552 f:\dev\minisoft\feedreader\src\tray.h
 	<windows.h>
 	<string.h>
 
