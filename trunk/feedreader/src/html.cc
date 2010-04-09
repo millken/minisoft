@@ -446,9 +446,12 @@ void html_clearfeedlist (HWND hwnd)
 	if (!hfeedlist) return;
 
 	HTMLayoutGetChildrenCount(hfeedlist, &n);
+	printf ("chn: %d\n", n);
 	for (i = 0; i < n; i++) {
-		HTMLayoutGetNthChild(hfeedlist, 0, &hdt);
+		int e = HTMLayoutGetNthChild(hfeedlist, 0, &hdt);
+		if (e != HLDOM_OK) continue;
 		HTMLayoutDetachEventHandler(hdt, feedproc, (LPVOID)hwnd);
+		printf ("hdt: %u\n", hdt);
 		HTMLayoutDeleteElement(hdt);
 	}
 }
@@ -708,12 +711,14 @@ static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVO
 	static DWORD lasttime = 0;
 
 	HWND hwnd = (HWND)tag;
-	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+	//struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+	struct BEHAVIOR_EVENT_PARAMS *ep = (struct BEHAVIOR_EVENT_PARAMS *)prms;
 
-	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+	//if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_DOWN && ep->button_state==MAIN_MOUSE_BUTTON) {
+	if ((evtg&HANDLE_BEHAVIOR_EVENT) && (BYTE)ep->cmd==BUTTON_PRESS) {
 		DWORD now = GetTickCount();
-		if (now - lasttime < 1000)
-			return FALSE;
+		if (now - lasttime < 100)
+			return TRUE;
 
 		char *username, *password;
 		HELEMENT husername = html_getelementbyid(hwnd, "username");
@@ -721,28 +726,46 @@ static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVO
 		HELEMENT hpwd = html_getelementbyid(hwnd, "password");
 		HTMLayoutGetElementInnerText(hpwd, (BYTE **)&password);
 
-
 		/* 表单验证 */
 		html_hidetip (hwnd);
 		if (strlen(username)==0 ) {
-			html_showtip(hwnd, "请填写用户名", 1);
-			return FALSE;
+			html_showtip(hwnd, "请填写用户名", 0);
+			return TRUE;
 		}
 		if (strlen(password)==0 ) {
 			html_showtip(hwnd, "密码不能为空", 0);
-			return FALSE;
-		}
-
-		struct user *u = url_login (username, password);
-		if (!u) {
-			html_showtip(hwnd, "登录失败:(", 0);
 			return TRUE;
 		}
-		printf ("account: uid-%s name:%s pwd:%s\n", u->suid, u->username, password);
-		if (g_logincb) g_logincb (hwnd, username, password);
 
+		html_showtip (hwnd, "正在登录..", 1);
+
+		struct user *u = url_login (username, password);
+		lasttime = now = GetTickCount();
+		if (!u) {
+			url_deluser (u);
+			html_showtip(hwnd, "登录失败 :(", 0);
+			return TRUE;
+		}
+
+		int e = 0;
+		if (g_logincb)
+			e = g_logincb (hwnd, u->suid, u->username);
+
+		if (e)
+			html_showtip (hwnd, "噢,发生错误!", 0);
+		else {
+			HELEMENT hlogen = html_getelementbyid (hwnd, "loginuser");
+			HELEMENT hloglink = html_getelementbyid (hwnd, "loginlink");
+			if (hlogen) {
+				HTMLayoutSetElementInnerText(hlogen, (const BYTE *)u->username, strlen(u->username));
+				HTMLayoutSetStyleAttribute(hlogen, "display", L"block");
+				HTMLayoutSetStyleAttribute(hloglink, "display", L"none");
+			}
+		}
+
+		url_deluser (u);
 		lasttime = now;
-		return FALSE;
+		return TRUE;
 	}
 	return FALSE;
 }

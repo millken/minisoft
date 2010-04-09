@@ -83,9 +83,9 @@ void url_deluser (struct user *u)
 }
 
 /* 根据WinMain参数获得uid,创建各自目录 */
-int url_set_userdir (char *param)
+int url_set_userdir (const char *param)
 {
-	char *uid = param;
+	const char *uid = param;
 
 	mkdir ("u");
 
@@ -264,7 +264,7 @@ savepostresult (void *buffer, size_t size, size_t count, void *userp)
 
 
 /* post登录 */
-struct user *url_login (char *username, char *password)
+struct user *url_login (const char *username, const char *password)
 {
 	CURL *curl = NULL;
 	CURLcode res;
@@ -300,11 +300,12 @@ struct user *url_login (char *username, char *password)
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1);
 
+	postlen = 0;
+	memset(g_postresult, 0, sizeof(g_postresult));
+
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK)
 		goto fail;
-
-printf ("post result: %s\n", g_postresult);
 
 	{
 	char *out;
