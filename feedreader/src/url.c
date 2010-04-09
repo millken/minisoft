@@ -10,6 +10,7 @@
 
 #define closefile(p) if(p){fclose(p);p=NULL;}
 #define freestring(s) if(s){free(s);s=NULL;}
+#define mfree(p) if(p)free(p)
 #define closehandle(h) if(h){curl_easy_cleanup(h);h=NULL;}
 
 #define yes 1
@@ -30,6 +31,56 @@ static int g_len;
 
 static char g_userdir[128] = {"u/0"};
 static char g_downdir[256] = {"u/0/download"};
+
+static char g_postresult[512]; /* 登录后接收post结果 */
+
+
+
+static char *nexttok (char *s, const char split, char **out)
+{
+	char *p;
+
+	while (*s && (*s==split || *s==' ' || *s=='\t'))
+		s++;
+
+	*out = s;
+
+	for (p = s; *p && *p!=split; p++);
+
+	s = *p ? p + 1 : p; /* next start */
+	*p = '\0';
+
+	return s;
+}
+
+static char *dump (char *s)
+{
+	char *buf;
+
+	s = s ? s : "";
+
+	buf = (char *)malloc (strlen(s)+1);
+	strcpy (buf, s);
+
+	return buf;
+}
+
+
+
+struct user *url_newuser ()
+{
+	struct user *u = (struct user*)malloc(sizeof(struct user));
+	memset (u, 0, sizeof(struct user));
+	return u;
+}
+
+void url_deluser (struct user *u)
+{
+	if (u) {
+		mfree(u->username);
+		free(u);
+	}
+}
 
 /* 根据WinMain参数获得uid,创建各自目录 */
 int url_set_userdir (char *param)
@@ -193,4 +244,93 @@ void url_download ()
 	url_clear ();
 	curl_multi_cleanup(multi_handle);
 	curl_global_cleanup();
+}
+
+
+
+static size_t
+savepostresult (void *buffer, size_t size, size_t count, void *userp)
+{
+	int *len = (int *)userp;
+	int n = size * count;
+
+	strncpy(g_postresult + *len, buffer, n);
+
+	*len += n;
+	g_postresult[*len] = '\0';
+
+	return n;
+}
+
+
+/* post登录 */
+struct user *url_login (char *username, char *password)
+{
+	CURL *curl = NULL;
+	CURLcode res;
+	char url[128];
+	int postlen = 0;
+
+	struct curl_httppost *post = NULL;
+	struct curl_httppost *last = NULL;
+
+	struct user *user;
+
+	sprintf (url, "http://service.cnal.com/?m=login&a=softlogin&rand=%u", (int)time(NULL));
+
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "username",
+		CURLFORM_COPYCONTENTS, username,
+		CURLFORM_END);
+
+	curl_formadd(&post, &last,
+		CURLFORM_COPYNAME, "password",
+		CURLFORM_COPYCONTENTS, password,
+		CURLFORM_END);
+
+	curl = curl_easy_init();
+	if (curl == NULL)
+		goto fail;
+
+	curl_easy_setopt(curl, CURLOPT_HEADER, 0);
+	curl_easy_setopt(curl, CURLOPT_URL, url); /*Set URL*/
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, savepostresult);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&postlen);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1);
+
+	res = curl_easy_perform(curl);
+	if (res != CURLE_OK)
+		goto fail;
+
+printf ("post result: %s\n", g_postresult);
+
+	{
+	char *out;
+	char *s = g_postresult;
+	int uid;
+	char *suid, *username;
+
+	s = nexttok(s, ',', &out);
+	uid = atoi(out);
+	if (uid == 0) return NULL;
+	suid = dump(out);
+
+	s = nexttok(s, ',', &out);
+	username = dump(out);
+
+	user = url_newuser();
+	user->uid = uid;
+	user->suid = suid;
+	user->username = username;
+	}
+
+	curl_easy_cleanup(curl);
+	return user;
+
+fail:
+	curl_formfree(post);
+	curl_easy_cleanup(curl);
+	return NULL;
 }
