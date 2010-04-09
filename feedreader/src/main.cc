@@ -323,20 +323,18 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 }
 
 
-int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
+static int login_init (const char *uid, const char *username)
 {
-	struct user *u = url_login("cat000", "123456");
-	printf ("login: %s %s\n", u?u->suid:"", u?u->username:"");
-	url_deluser(u);
+	EnterCriticalSection (&g_cs);
 
 	/* 建立用户个人目录 */
-	int r = url_set_userdir(param);
+	int r = url_set_userdir(uid);
 	while (!r) {
-		int e = MessageBox(NULL, TEXT("程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
+		int e = MessageBox(NULL, TEXT("无法访问个人目录, 程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
 		if (e == IDABORT)
 			return 0;
 		else if (e == IDRETRY) {
-			r = url_set_userdir(param);
+			r = url_set_userdir(uid);
 			continue;
 		}
 		else if (e == IDIGNORE)
@@ -345,17 +343,44 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 			return 0;
 	}
 
-
 	/* 每用户只需运行一个实例 */
+	CloseHandle(g_mutex);
 	g_mutex = CreateMutexA(NULL, FALSE, url_get_userdir());
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(g_mutex);
 		MessageBox(NULL,
-			TEXT("程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
+			TEXT("同一个帐号的程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
 		return 0;
 	}
 
+	/* 初始化数据库 */
+	char dbpath[128];
+	sprintf (dbpath, "%s/feed.db", url_get_userdir());
+	close_db ();
+	init_db (dbpath);
+	db_create_table ();
 
+	LeaveCriticalSection (&g_cs);
+
+	HWND hhtml = i32("htmlbox");
+	html_loadfeedlist (hhtml);
+	html_loaditemlist (hhtml, 0);
+	html_refresh_feedlist (hhtml); /* bug */
+	html_clearitemlist (hhtml);
+	html_loaditemlist (hhtml, 0);
+
+	html_updatewindow (hhtml);
+
+	return 1;
+}
+
+int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
+{
+	InitializeCriticalSection (&g_cs);
+
+	//_beginthread (download, 0, NULL); /* 开始后台循环抓取 */
+
+	/* UI form */
 	HWND hwnd = open_mainform();
 
 	i32setproc (hwnd, WM_SYSCOMMAND, mainform_syscmd);
@@ -365,23 +390,9 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	i32setproc (hwnd, ON_TRAY, mainform_ontray);
 	i32setproc (hwnd, WM_COMMAND, mainform_oncmd);
 
-	SetTimer(hwnd, 1, 2000, timerproc); /* 检查新feed */
+	SetTimer(hwnd, 1, 3000, timerproc); /* 检查新feed */
 
-	char dbpath[128];
-	sprintf (dbpath, "%s/feed.db", url_get_userdir());
-	int e = init_db(dbpath);
-	assert(e);
-
-	db_create_table ();
-
-	InitializeCriticalSection (&g_cs);
-	_beginthread (download, 0, NULL); /* 开始后台循环抓取 */
-
-
-	/* UI */
 	HWND hhtml = i32("htmlbox");
-	html_loadfeedlist (hhtml);
-	html_loaditemlist (hhtml, 0);
 	i32setproc (hhtml, WM_KEYDOWN, mainform_onkey);
 	i32setproc (hwnd, WM_KEYDOWN, mainform_onkey);
 	i32setproc (hhtml, WM_SYSCHAR, mainform_onsyschar);
@@ -390,14 +401,18 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	html_set_subevt (hhtml, click_sub); /* click one feed */
 	html_set_logincb (hhtml, login_cb);
 
-
-
 	ShowWindow (hwnd, SW_SHOW);
 	SetFocus(hhtml);
 
-	/* end */
+	login_init ("1", "cat");
+	Sleep(2000);
+	login_init ("2", "cat");
+	Sleep(2000);
+	login_init ("3", "cat");
+
 	i32loop();
 
+	/* end */
 	DeleteCriticalSection (&g_cs) ;
 	close_db();
 	CloseHandle(g_mutex);

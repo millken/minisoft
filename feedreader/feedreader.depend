@@ -350,7 +350,7 @@
 	<string.h>
 	<assert.h>
 
-1270640404 source:e:\dev\minisoft\feedreader\src\html.cc
+1270821641 source:e:\dev\minisoft\feedreader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -359,6 +359,7 @@
 	"html.h"
 	"xml.h"
 	"db.h"
+	"url.h"
 
 1270557066 e:\dev\minisoft\feedreader\src\include\htmlayout\htmlayout.h
 	<windows.h>
@@ -457,10 +458,10 @@
 1270557061 e:\dev\minisoft\feedreader\src\include\htmlayout\behaviors\notifications.h
 	<windows.h>
 
-1270640405 e:\dev\minisoft\feedreader\src\html.h
+1270811781 e:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
-1270726360 source:e:\dev\minisoft\feedreader\src\main.cc
+1270821184 source:e:\dev\minisoft\feedreader\src\main.cc
 	<stdlib.h>
 	<io.h>
 	<process.h>
@@ -475,7 +476,7 @@
 	"ctrls.h"
 	"tray.h"
 
-1270725901 e:\dev\minisoft\feedreader\src\url.h
+1270818319 e:\dev\minisoft\feedreader\src\url.h
 
 1270552505 e:\dev\minisoft\feedreader\src\ctrls.h
 	<windows.h>
@@ -516,7 +517,7 @@
 	"tinyxml.h"
 	<windows.h>
 
-1270725901 source:e:\dev\minisoft\feedreader\src\url.c
+1270818348 source:e:\dev\minisoft\feedreader\src\url.c
 	<stdio.h>
 	<io.h>
 	<stdlib.h>
@@ -551,7 +552,7 @@
 	<sys/types.h>
 	"curl.h"
 
-1270555363 source:e:\dev\minisoft\feedreader\src\xml.cc
+1270730175 source:e:\dev\minisoft\feedreader\src\xml.cc
 	<stdio.h>
 	<stdlib.h>
 	<string.h>

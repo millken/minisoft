@@ -7,7 +7,7 @@ extern "C" {
 
 #define DOWNLOADDIR "download"
 
-int url_set_userdir (char *param);
+int url_set_userdir (const char *param);
 char *url_get_userdir ();
 char *url_get_downdir ();
 
@@ -25,7 +25,7 @@ struct user {
 
 struct user *url_newuser ();
 void url_deluser (struct user *u);
-struct user *url_login (char *username, char *password);
+struct user *url_login (const char *username, const char *password);
 
 #ifdef __cplusplus
 }
