@@ -148,6 +148,15 @@ static void click_sub (HWND hwnd, char *url)
 	}
 }
 
+/* 登录后 */
+static BOOL login_cb (HWND hhtml, char *uid, char *username)
+{
+
+
+	return FALSE;
+}
+
+
 /* 后台抓取 */
 void download (void *param)
 {
@@ -175,7 +184,6 @@ HWND open_mainform()
 	HWND hwnd, hhtml;
 
 	reg_form();
-	//hwnd = i32box (NULL, "s|w|h|a|t|bc", WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
 	hwnd = i32create (TEXT("form"), "n|s|w|h|a|t|bc", "mainform",
 		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
 
@@ -317,6 +325,10 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
+	struct user *u = url_login("cat000", "123456");
+	printf ("login: %s %s\n", u?u->suid:"", u?u->username:"");
+	url_deluser(u);
+
 	/* 建立用户个人目录 */
 	int r = url_set_userdir(param);
 	while (!r) {
@@ -335,7 +347,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 
 
 	/* 每用户只需运行一个实例 */
-	HANDLE g_mutex = CreateMutexA(FALSE, NULL, url_get_userdir());
+	g_mutex = CreateMutexA(NULL, FALSE, url_get_userdir());
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(g_mutex);
 		MessageBox(NULL,
@@ -366,6 +378,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	_beginthread (download, 0, NULL); /* 开始后台循环抓取 */
 
 
+	/* UI */
 	HWND hhtml = i32("htmlbox");
 	html_loadfeedlist (hhtml);
 	html_loaditemlist (hhtml, 0);
@@ -373,7 +386,11 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	i32setproc (hwnd, WM_KEYDOWN, mainform_onkey);
 	i32setproc (hhtml, WM_SYSCHAR, mainform_onsyschar);
 	i32setproc (hwnd, WM_SYSCHAR, mainform_onsyschar);
+	html_init (hhtml);
 	html_set_subevt (hhtml, click_sub); /* click one feed */
+	html_set_logincb (hhtml, login_cb);
+
+
 
 	ShowWindow (hwnd, SW_SHOW);
 	SetFocus(hhtml);

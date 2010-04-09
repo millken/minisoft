@@ -19,14 +19,14 @@
 	<File name="src\form.c" open="0" top="0" tabpos="10">
 		<Cursor position="13197" topLine="651" />
 	</File>
-	<File name="src\html.cc" open="0" top="0" tabpos="3">
-		<Cursor position="6018" topLine="773" />
+	<File name="src\html.cc" open="1" top="0" tabpos="6">
+		<Cursor position="18381" topLine="722" />
 	</File>
-	<File name="src\html.h" open="0" top="0" tabpos="4">
-		<Cursor position="491" topLine="23" />
+	<File name="src\html.h" open="1" top="0" tabpos="8">
+		<Cursor position="1287" topLine="28" />
 	</File>
-	<File name="src\main.cc" open="0" top="0" tabpos="1">
-		<Cursor position="2235" topLine="364" />
+	<File name="src\main.cc" open="1" top="0" tabpos="1">
+		<Cursor position="6281" topLine="312" />
 	</File>
 	<File name="src\rc\rc.rc" open="0" top="0" tabpos="6">
 		<Cursor position="359" topLine="0" />
@@ -40,11 +40,11 @@
 	<File name="src\tray.h" open="0" top="0" tabpos="2">
 		<Cursor position="916" topLine="52" />
 	</File>
-	<File name="src\url.c" open="0" top="0" tabpos="5">
-		<Cursor position="2344" topLine="171" />
+	<File name="src\url.c" open="1" top="1" tabpos="2">
+		<Cursor position="6352" topLine="297" />
 	</File>
-	<File name="src\url.h" open="0" top="0" tabpos="6">
-		<Cursor position="333" topLine="0" />
+	<File name="src\url.h" open="1" top="0" tabpos="3">
+		<Cursor position="394" topLine="0" />
 	</File>
 	<File name="src\xml.cc" open="0" top="0" tabpos="6">
 		<Cursor position="305" topLine="0" />

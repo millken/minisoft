@@ -6,74 +6,20 @@
 #include "i32.h"
 #include <commdlg.h>
 #include "htmlayout/htmlayout.h"
-//#include "htmlayout/behaviors/notifications.h" // hyperlink behavior notfication is here
 #include "htmlayout/behaviors/notifications.h" // hyperlink behavior notfication is here
 
 #include "html.h"
 #include "xml.h"
 #include "db.h"
+#include "url.h"
 
 static int g_current_feedid = 0; /* 正在阅读的feed */
 static int g_menu_feedid = 0; /* 左侧菜单对应的feedid */
 static BOOL g_onleft = 0; /* 左侧菜单是否出现 */
 
-static CALLBACK LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-	BOOL bhandled;
-	LRESULT result = HTMLayoutProcND(hwnd,msg,wp,lp, &bhandled);
-	if (bhandled)
-		return result;
-
-	switch (msg) {
-		case WM_ERASEBKGND:
-		  return TRUE;
-	}
-
-	return DefWindowProc(hwnd, msg, wp, lp);
-}
-
-void reg_html_control ()
-{
-    WNDCLASSEX wincl;
-
-    /* The Window structure */
-    wincl.hInstance = GetModuleHandle(0);
-    wincl.lpszClassName = TEXT("html");
-    wincl.lpfnWndProc = win_proc;      /* This function is called by windows */
-    wincl.style = CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
-    wincl.cbSize = sizeof (WNDCLASSEX);
-
-    /* Use default icon and mouse-pointer */
-    wincl.hIcon = NULL;
-    wincl.hIconSm = NULL;
-    wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
-    wincl.lpszMenuName = NULL;                 /* No menu */
-    wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
-    wincl.cbWndExtra = 0;                      /* structure or the window instance */
-    /* Use Windows's default colour as the background of the window */
-    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
-
-    /* Register the window class, and if it fails quit the program */
-    RegisterClassEx (&wincl);
-}
-
-HWND html_create (HWND dad, const char *format, ...)
-{
-	HWND hwnd;
-	va_list p;
-
-	hwnd = i32create(TEXT("html"), "d|s", dad, WS_CTRL);
-	if (!hwnd) return NULL;
-
-	if (format) {
-		va_start(p, format);
-		i32vset (hwnd, format, p);
-		va_end(p);
-	}
-
-	return hwnd;
-}
-
+/* 订阅按钮 */
+static html_subcb g_clicksub = NULL;
+static html_logincb g_logincb = NULL;
 
 
 BOOL CALLBACK findelembyid (HELEMENT he, LPVOID param)
@@ -554,8 +500,7 @@ int html_loadstring (HWND hwnd, char *html)
 
 
 
-/* 订阅按钮 */
-static html_subcb g_clicksub = NULL;
+
 
 static BOOL CALLBACK click_showmenu (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 {
@@ -723,7 +668,108 @@ static BOOL CALLBACK on_feedlist (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prm
 	return FALSE;
 }
 
+/* 打开登录框 */
+static BOOL CALLBACK click_loginlink (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+
+		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
+		if (loginform)
+			HTMLayoutSetStyleAttribute(loginform, "display", L"block");
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
+/* 关闭登录框 */
+static BOOL CALLBACK click_closeform (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+
+		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
+		if (loginform)
+			HTMLayoutSetStyleAttribute(loginform, "display", L"none");
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
+/* 点登录按钮 */
+static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 1000)
+			return FALSE;
+
+		char *username, *password;
+		HELEMENT husername = html_getelementbyid(hwnd, "username");
+		HTMLayoutGetElementInnerText(husername, (BYTE **)&username);
+		HELEMENT hpwd = html_getelementbyid(hwnd, "password");
+		HTMLayoutGetElementInnerText(hpwd, (BYTE **)&password);
+
+
+		/* 表单验证 */
+		html_hidetip (hwnd);
+		if (strlen(username)==0 ) {
+			html_showtip(hwnd, "请填写用户名", 1);
+			return FALSE;
+		}
+		if (strlen(password)==0 ) {
+			html_showtip(hwnd, "密码不能为空", 0);
+			return FALSE;
+		}
+
+		struct user *u = url_login (username, password);
+		if (!u) {
+			html_showtip(hwnd, "登录失败:(", 0);
+			return TRUE;
+		}
+		printf ("account: uid-%s name:%s pwd:%s\n", u->suid, u->username, password);
+		if (g_logincb) g_logincb (hwnd, username, password);
+
+		lasttime = now;
+		return FALSE;
+	}
+	return FALSE;
+}
+
+/* 设置订阅按钮回调 */
 void html_set_subevt (HWND hwnd, html_subcb f)
+{
+	HELEMENT addbutton = html_getelementbyid (hwnd, "addbutton");
+	if (addbutton) {
+		g_clicksub = f;
+		HTMLayoutAttachEventHandler(addbutton, click_sub, (LPVOID)hwnd);
+	}
+
+}
+
+/* 设置登录后回调 */
+void html_set_logincb (HWND hwnd, html_logincb f)
+{
+	HELEMENT loginbutton = html_getelementbyid (hwnd, "loginbutton");
+	if (loginbutton) {
+		g_logincb = f;
+		HTMLayoutAttachEventHandler(loginbutton, click_loginbutton, (LPVOID)hwnd);
+	}
+
+}
+
+void html_init (HWND hwnd)
 {
 	HELEMENT submenu = html_getelementbyid (hwnd, "submenu");
 	if (submenu)
@@ -749,13 +795,16 @@ void html_set_subevt (HWND hwnd, html_subcb f)
 	if (feedlist)
 		HTMLayoutAttachEventHandler(feedlist, on_feedlist, (LPVOID)hwnd);
 
-	HELEMENT addbutton = html_getelementbyid (hwnd, "addbutton");
-	if (addbutton) {
-		g_clicksub = f;
-		HTMLayoutAttachEventHandler(addbutton, click_sub, (LPVOID)hwnd);
-	}
-}
+	/* login form */
+	HELEMENT loginlink = html_getelementbyid(hwnd, "loginlink");
+	if (loginlink)
+		HTMLayoutAttachEventHandler(loginlink, click_loginlink, (LPVOID)hwnd);
 
+	HELEMENT closeform = html_getelementbyid(hwnd, "closeform");
+	if (closeform)
+		HTMLayoutAttachEventHandler(closeform, click_closeform, (LPVOID)hwnd);
+
+}
 
 
 /* 加载提示框, state=1:黄, 0:红 */
@@ -769,7 +818,7 @@ void html_showtip(HWND hwnd, const char *info, int state)
 	HTMLayoutSetStyleAttribute(tipbox, "background-color", color);
 	HTMLayoutSetElementHtml(tipbox, (const BYTE *)info, strlen(info), SIH_REPLACE_CONTENT);
 	HTMLayoutSetStyleAttribute(tipbox, "display", L"block");
-	//HTMLayoutUpdateElement(tipbox, TRUE);
+	HTMLayoutUpdateElement(tipbox, TRUE);
 	HTMLayoutUpdateWindow(hwnd);
 }
 
@@ -795,4 +844,69 @@ void html_updatewindow (HWND hwnd)
 	HTMLayoutUpdateElement(itemlist, TRUE);
 
 	HTMLayoutUpdateWindow(hwnd);
+}
+
+
+
+
+
+/**
+ * window
+ */
+
+static CALLBACK LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	BOOL bhandled;
+	LRESULT result = HTMLayoutProcND(hwnd,msg,wp,lp, &bhandled);
+	if (bhandled)
+		return result;
+
+	switch (msg) {
+		case WM_ERASEBKGND:
+		  return TRUE;
+	}
+
+	return DefWindowProc(hwnd, msg, wp, lp);
+}
+
+void reg_html_control ()
+{
+    WNDCLASSEX wincl;
+
+    /* The Window structure */
+    wincl.hInstance = GetModuleHandle(0);
+    wincl.lpszClassName = TEXT("html");
+    wincl.lpfnWndProc = win_proc;      /* This function is called by windows */
+    wincl.style = CS_HREDRAW | CS_VREDRAW;      /* Catch double-clicks */
+    wincl.cbSize = sizeof (WNDCLASSEX);
+
+    /* Use default icon and mouse-pointer */
+    wincl.hIcon = NULL;
+    wincl.hIconSm = NULL;
+    wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
+    wincl.lpszMenuName = NULL;                 /* No menu */
+    wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
+    wincl.cbWndExtra = 0;                      /* structure or the window instance */
+    /* Use Windows's default colour as the background of the window */
+    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
+
+    /* Register the window class, and if it fails quit the program */
+    RegisterClassEx (&wincl);
+}
+
+HWND html_create (HWND dad, const char *format, ...)
+{
+	HWND hwnd;
+	va_list p;
+
+	hwnd = i32create(TEXT("html"), "d|s", dad, WS_CTRL);
+	if (!hwnd) return NULL;
+
+	if (format) {
+		va_start(p, format);
+		i32vset (hwnd, format, p);
+		va_end(p);
+	}
+
+	return hwnd;
 }

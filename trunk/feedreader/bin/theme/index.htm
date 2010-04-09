@@ -38,7 +38,79 @@ div#loadtip {
 	font-weight: bold;
 	padding: 3px 8px;
 	width: 0.4*;
+	text-align: center;
 }
+
+
+/* 加载提示框 */
+div#loginlink {
+	position: absolute;
+	right: 10px;
+	top: 4px;
+	width: 100px;
+	text-align: right;
+	color: #307EF5;
+	text-decoration: underline;
+	cursor: pointer;
+	font-family: Arial;
+}
+div#loginlink:hover {
+	color: #FF3333;
+}
+/* 登录后用户名 */
+div#loginuser {
+	display: none;
+	position: absolute;
+	right: 10px;
+	top: 4px;
+	width: 40px;
+	text-align: right;
+	font-family: Arial;
+	font-weight: bold;
+}
+
+div#loginform {
+	display: none;
+	position: fixed;
+	left: *; right: *;
+	top: 0.4*; bottom: 0.6*;
+	width: 180px;
+	border: 3px solid #ffffff;
+	background-color: #8FBDF5;
+	padding: 16px 40px;
+	padding-right: 20px;
+	padding-top: 13px;
+	border-radius: 3px;
+}
+div#loginhead {
+	margin-left: -30px;
+	margin-bottom: 5px;
+	padding: 5px;
+	font-weight: bold;
+}
+div#loginform input {
+	width: 120px;
+	height: 14px;
+}
+div#loginform span {
+	margin-top: 9px;
+	margin-left: 5px;
+}
+div#loginform button {
+	margin-top: 12px;
+}
+div#closeform {
+	position: absolute;
+	top: 3px;
+	right: 8px;
+	font-weight: bold;
+	color: #ffffff;
+	cursor: pointer;
+}
+div#closeform:hover {
+	color: #D2E4FB;
+}
+
 
 h1 {
 	background-color: #BFD9FB;
@@ -216,8 +288,19 @@ div.foot a:hover {
 
 <!-- header -->
 <h1>Feed Reader
-<div id='loadtip' align='center'>Loading..</div>
+<div id='loadtip'>Loading..</div>
+<div id='loginlink'>登录</div>
+<div id='loginuser'>zii</div>
 </h1>
+
+<!-- login form -->
+<div id='loginform'>
+	<div id='closeform'>x</div>
+	<div id='loginhead'>使用中铝网帐号登录</div>
+	<input type='text' value='' id='username' /> <span>用户名</span> <br/>
+	<input type='password' value='' id='password' /> <span>密码</span> <br/>
+	<button id='loginbutton'>登录</button>
+</div>
 
 <!-- body -->
 <div #body>
@@ -226,7 +309,7 @@ div.foot a:hover {
 	<button id='submenu'>添加新订阅</button>
 		<div id='subpad'>
 			<div id='closemenu'>x</div>
-		<div class='tip'>输入rss地址或网址</div>
+		<div class='tip'>输入rss地址</div>
 		<input type='text' style='border:0px solid #eeeeee;width:170px;height:14px;' id='inputurl' value='http://my.dongua.com/flashgame/feeds/blog/' />
 			<button id='addbutton'>确定</button>
 		<div class='tip'>例如: blog.cnal.com/rss.php</div>

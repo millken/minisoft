@@ -14,7 +14,7 @@
 	"i32.h"
 	<ctype.h>
 
-1270720902 source:f:\dev\minisoft\feedreader\src\main.cc
+1270802844 source:f:\dev\minisoft\feedreader\src\main.cc
 	<stdlib.h>
 	<io.h>
 	<process.h>
@@ -104,7 +104,7 @@
 	"tinyxml.h"
 	<windows.h>
 
-1270720606 source:f:\dev\minisoft\feedreader\src\url.c
+1270803252 source:f:\dev\minisoft\feedreader\src\url.c
 	<stdio.h>
 	<io.h>
 	<stdlib.h>
@@ -115,7 +115,7 @@
 	<assert.h>
 	"url.h"
 
-1270719854 f:\dev\minisoft\feedreader\src\url.h
+1270794202 f:\dev\minisoft\feedreader\src\url.h
 
 1270684552 source:f:\dev\minisoft\feedreader\src\xml.cc
 	<stdio.h>
@@ -295,7 +295,7 @@
 	"xml.h"
 	<time.h>
 
-1270684552 source:f:\dev\minisoft\feedreader\src\html.cc
+1270802894 source:f:\dev\minisoft\feedreader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -304,8 +304,9 @@
 	"html.h"
 	"xml.h"
 	"db.h"
+	"url.h"
 
-1270684552 f:\dev\minisoft\feedreader\src\html.h
+1270801410 f:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
 1269841320 source:f:\dev\minisoft\feedreader\src\html.c
