@@ -295,6 +295,7 @@ struct user *url_login (const char *username, const char *password)
 	curl_easy_setopt(curl, CURLOPT_HEADER, 0);
 	curl_easy_setopt(curl, CURLOPT_URL, url); /*Set URL*/
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 7);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, savepostresult);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&postlen);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);

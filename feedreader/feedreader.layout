@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Debug" />
+	<ActiveTarget name="Release" />
 	<File name="..\chat_client\src\i32.c" open="0" top="0" tabpos="5">
 		<Cursor position="7258" topLine="1332" />
 	</File>
-	<File name="..\chat_client\src\i32.h" open="0" top="0" tabpos="11">
-		<Cursor position="810" topLine="69" />
+	<File name="..\chat_client\src\i32.h" open="1" top="0" tabpos="11">
+		<Cursor position="810" topLine="55" />
 	</File>
 	<File name="src\ctrls.h" open="0" top="0" tabpos="7">
 		<Cursor position="2828" topLine="112" />
 	</File>
-	<File name="src\db.c" open="1" top="0" tabpos="7">
-		<Cursor position="550" topLine="19" />
+	<File name="src\db.c" open="1" top="0" tabpos="6">
+		<Cursor position="270" topLine="0" />
 	</File>
 	<File name="src\db.h" open="0" top="0" tabpos="8">
 		<Cursor position="492" topLine="27" />
@@ -19,14 +19,14 @@
 	<File name="src\form.c" open="0" top="0" tabpos="10">
 		<Cursor position="13197" topLine="651" />
 	</File>
-	<File name="src\html.cc" open="1" top="1" tabpos="4">
-		<Cursor position="19360" topLine="743" />
+	<File name="src\html.cc" open="1" top="0" tabpos="4">
+		<Cursor position="23661" topLine="881" />
 	</File>
 	<File name="src\html.h" open="1" top="0" tabpos="5">
-		<Cursor position="1251" topLine="42" />
+		<Cursor position="1305" topLine="28" />
 	</File>
-	<File name="src\main.cc" open="1" top="0" tabpos="1">
-		<Cursor position="7298" topLine="322" />
+	<File name="src\main.cc" open="1" top="1" tabpos="1">
+		<Cursor position="9060" topLine="420" />
 	</File>
 	<File name="src\rc\rc.rc" open="0" top="0" tabpos="6">
 		<Cursor position="359" topLine="0" />
@@ -41,15 +41,15 @@
 		<Cursor position="916" topLine="52" />
 	</File>
 	<File name="src\url.c" open="1" top="0" tabpos="2">
-		<Cursor position="1501" topLine="75" />
+		<Cursor position="4857" topLine="286" />
 	</File>
 	<File name="src\url.h" open="1" top="0" tabpos="3">
 		<Cursor position="129" topLine="0" />
 	</File>
-	<File name="src\xml.cc" open="0" top="0" tabpos="6">
-		<Cursor position="305" topLine="0" />
+	<File name="src\xml.cc" open="1" top="0" tabpos="13">
+		<Cursor position="577" topLine="24" />
 	</File>
-	<File name="src\xml.h" open="0" top="0" tabpos="5">
-		<Cursor position="612" topLine="22" />
+	<File name="src\xml.h" open="1" top="0" tabpos="12">
+		<Cursor position="612" topLine="8" />
 	</File>
 </CodeBlocks_layout_file>

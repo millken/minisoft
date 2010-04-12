@@ -682,6 +682,8 @@ static BOOL CALLBACK click_loginlink (LPVOID tag, HELEMENT he, UINT evtg, LPVOID
 		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
 		if (loginform)
 			HTMLayoutSetStyleAttribute(loginform, "display", L"block");
+		HELEMENT usernamebox = html_getelementbyid(hwnd, "username");
+		HTMLayoutSetElementState(usernamebox, STATE_FOCUS, 0, TRUE);
 		return FALSE;
 	}
 
@@ -699,27 +701,30 @@ static BOOL CALLBACK click_closeform (LPVOID tag, HELEMENT he, UINT evtg, LPVOID
 		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
 		if (loginform)
 			HTMLayoutSetStyleAttribute(loginform, "display", L"none");
+		html_hidetip (hwnd);
 		return FALSE;
 	}
 
 	return FALSE;
 }
 
-/* 点登录按钮 */
-static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+void html_loginsucess (HWND hwnd, const char *username)
 {
-	static DWORD lasttime = 0;
+	HELEMENT hlogen = html_getelementbyid (hwnd, "loginuser");
+	HELEMENT hloglink = html_getelementbyid (hwnd, "loginlink");
+	HELEMENT hlogform = html_getelementbyid (hwnd, "loginform");
+	if (hlogen) {
+		HTMLayoutSetElementInnerText(hlogen, (const BYTE *)username, strlen(username));
+		HTMLayoutSetStyleAttribute(hlogen, "display", L"block");
+	}
+	if (hloglink)
+		HTMLayoutSetStyleAttribute(hloglink, "display", L"none");
+	if (hlogform)
+		HTMLayoutSetStyleAttribute(hlogform, "display", L"none");
+}
 
-	HWND hwnd = (HWND)tag;
-	//struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
-	struct BEHAVIOR_EVENT_PARAMS *ep = (struct BEHAVIOR_EVENT_PARAMS *)prms;
-
-	//if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_DOWN && ep->button_state==MAIN_MOUSE_BUTTON) {
-	if ((evtg&HANDLE_BEHAVIOR_EVENT) && (BYTE)ep->cmd==BUTTON_PRESS) {
-		DWORD now = GetTickCount();
-		if (now - lasttime < 100)
-			return TRUE;
-
+static BOOL login (HWND hwnd)
+{
 		char *username, *password;
 		HELEMENT husername = html_getelementbyid(hwnd, "username");
 		HTMLayoutGetElementInnerText(husername, (BYTE **)&username);
@@ -737,13 +742,15 @@ static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVO
 			return TRUE;
 		}
 
+		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
+		HTMLayoutSetStyleAttribute(loginform, "display", L"none");
 		html_showtip (hwnd, "正在登录..", 1);
 
 		struct user *u = url_login (username, password);
-		lasttime = now = GetTickCount();
 		if (!u) {
 			url_deluser (u);
 			html_showtip(hwnd, "登录失败 :(", 0);
+			HTMLayoutSetStyleAttribute(loginform, "display", L"block");
 			return TRUE;
 		}
 
@@ -751,20 +758,36 @@ static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVO
 		if (g_logincb)
 			e = g_logincb (hwnd, u->suid, u->username);
 
-		if (e)
+		if (!e)
 			html_showtip (hwnd, "噢,发生错误!", 0);
 		else {
-			HELEMENT hlogen = html_getelementbyid (hwnd, "loginuser");
-			HELEMENT hloglink = html_getelementbyid (hwnd, "loginlink");
-			if (hlogen) {
-				HTMLayoutSetElementInnerText(hlogen, (const BYTE *)u->username, strlen(u->username));
-				HTMLayoutSetStyleAttribute(hlogen, "display", L"block");
-				HTMLayoutSetStyleAttribute(hloglink, "display", L"none");
-			}
+			html_showtip(hwnd, "登录成功!", 1);
+			Sleep(700);
+			html_hidetip(hwnd);
 		}
 
 		url_deluser (u);
-		lasttime = now;
+		return FALSE;
+}
+
+/* 点登录按钮 */
+static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	//struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+	struct BEHAVIOR_EVENT_PARAMS *ep = (struct BEHAVIOR_EVENT_PARAMS *)prms;
+
+	//if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_DOWN && ep->button_state==MAIN_MOUSE_BUTTON) {
+	if ((evtg&HANDLE_BEHAVIOR_EVENT) && (BYTE)ep->cmd==BUTTON_PRESS) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 500)
+			return TRUE;
+
+		login (hwnd);
+
+		lasttime = now = GetTickCount();
 		return TRUE;
 	}
 	return FALSE;
@@ -790,6 +813,25 @@ void html_set_logincb (HWND hwnd, html_logincb f)
 		HTMLayoutAttachEventHandler(loginbutton, click_loginbutton, (LPVOID)hwnd);
 	}
 
+}
+
+/* 回车提交 */
+static BOOL CALLBACK keydown_password (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct KEY_PARAMS *ep = (struct KEY_PARAMS *)prms;
+
+	if ((evtg&HANDLE_KEY) && (BYTE)ep->cmd==KEY_DOWN && ep->key_code==VK_RETURN) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 100) return FALSE;
+		login (hwnd);
+		lasttime = now = GetTickCount();
+		return FALSE;
+	}
+
+	return FALSE;
 }
 
 void html_init (HWND hwnd)
@@ -826,6 +868,10 @@ void html_init (HWND hwnd)
 	HELEMENT closeform = html_getelementbyid(hwnd, "closeform");
 	if (closeform)
 		HTMLayoutAttachEventHandler(closeform, click_closeform, (LPVOID)hwnd);
+
+	HELEMENT password = html_getelementbyid(hwnd, "password");
+	if (password)
+		HTMLayoutAttachEventHandler(password, keydown_password, (LPVOID)hwnd);
 
 }
 

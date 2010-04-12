@@ -45,11 +45,11 @@ div#loadtip {
 /* 加载提示框 */
 div#loginlink {
 	position: absolute;
-	right: 10px;
-	top: 4px;
-	width: 100px;
+	right: 44px;
+	top: 6px;
+	width: 30px;
 	text-align: right;
-	color: #307EF5;
+	color: #0950BB;
 	text-decoration: underline;
 	cursor: pointer;
 	font-family: Arial;
@@ -57,16 +57,37 @@ div#loginlink {
 div#loginlink:hover {
 	color: #FF3333;
 }
+span#llsplit {
+	position: absolute;
+	right: 37px;
+	top: 6px;
+}
+a#help {
+	position: absolute;
+	right: 10px;
+	top: 6px;
+	width: 25px;
+	text-align: right;
+	color: #0950BB;
+	text-decoration: underline;
+	cursor: pointer;
+	font-family: Arial;
+}
+a#help:hover {
+	color: #FF3333;
+}
 /* 登录后用户名 */
 div#loginuser {
 	display: none;
 	position: absolute;
-	right: 10px;
-	top: 4px;
+	right: 46px;
+	top: 8px;
 	width: 40px;
 	text-align: right;
-	font-family: Arial;
+	font-family: Verdana;
+	font-size: 11px;
 	font-weight: bold;
+	color: #ffffff;
 }
 
 div#loginform {
@@ -75,10 +96,10 @@ div#loginform {
 	left: *; right: *;
 	top: 0.4*; bottom: 0.6*;
 	width: 180px;
-	border: 3px solid #ffffff;
+	border: 3px solid #FFFCF0;
 	background-color: #8FBDF5;
 	padding: 16px 40px;
-	padding-right: 20px;
+	padding-right: 15px;
 	padding-top: 13px;
 	border-radius: 3px;
 }
@@ -117,7 +138,7 @@ h1 {
 	color: #ffffff;
 	padding: 6px;
 	margin-top: 0px;
-	margin-bottom: 10px;
+	margin-bottom: 0px;
 }
 
 
@@ -288,9 +309,10 @@ div.foot a:hover {
 
 <!-- header -->
 <h1>Feed Reader
-<div id='loadtip'>Loading..</div>
-<div id='loginlink'>登录</div>
-<div id='loginuser'>zii</div>
+	<div id='loadtip'>Loading..</div>
+
+	<div id='loginlink'>登录</div> <span id='llsplit'>|</span> <a href='http://cnal.com' id='help'>帮助</a>
+	<div id='loginuser'>zii</div>
 </h1>
 
 <!-- login form -->
@@ -321,7 +343,7 @@ div.foot a:hover {
 
 	<!-- right -->
 	<div class='right'>
-	<div id='board'>indiegm - indie game magazine</div>
+	<div id='board'></div>
 
 	<dl id='itemlist'>
 		<div id='itemcontent'>
