@@ -13,23 +13,42 @@
 #include "tray.h"
 
 #define must(exp) if(!(exp))return 0
+#define mfree(p) if(p)free(p)
+
+void quit_mainform (HWND hwnd);
 
 static CRITICAL_SECTION g_cs; /* url_download同步锁 */
 static int g_isactive = 0;
 static HANDLE g_mutex = NULL;
 
-static char *dump(char *s)
+static char *dump (const char *s)
 {
-	char *t;
-	int n = 0;
+	char *buf;
 
-	if (s) n = strlen(s);
-	t = (char *)malloc(n+1);
-	if (s) strcpy(t, s);
-	t[n] = '\0';
-	return t;
+	s = s ? s : "";
+
+	buf = (char *)malloc (strlen(s)+1);
+	strcpy (buf, s);
+
+	return buf;
 }
 
+static char *nexttok (char *s, const char split, char **out)
+{
+	char *p;
+
+	while (*s && (*s==split || *s==' ' || *s=='\t'))
+		s++;
+
+	*out = s;
+
+	for (p = s; *p && *p!=split; p++);
+
+	s = *p ? p + 1 : p; /* next start */
+	*p = '\0';
+
+	return s;
+}
 
 /* 下载并在数据库中插入新的feed和item, 返回新feed的id */
 int insert_newfeed(char *url)
@@ -148,12 +167,74 @@ static void click_sub (HWND hwnd, char *url)
 	}
 }
 
+static int login_init (const char *uid, const char *username)
+{
+	EnterCriticalSection (&g_cs);
+
+	/* 建立用户个人目录 */
+	int r = url_set_userdir(uid);
+	while (!r) {
+		int e = MessageBox(NULL, TEXT("无法访问个人目录, 程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
+		if (e == IDABORT)
+			return 0;
+		else if (e == IDRETRY) {
+			r = url_set_userdir(uid);
+			continue;
+		}
+		else if (e == IDIGNORE)
+			break;
+		else
+			return 0;
+	}
+
+	/* 每用户只需运行一个实例 */
+	CloseHandle(g_mutex);
+	char exepath[1024];
+	GetModuleFileNameA(NULL, exepath, sizeof(exepath)-100);
+	strcat(exepath, url_get_userdir());
+
+	for (int i = 0; i < strlen(exepath); i++)
+		if (exepath[i] == '\\')
+			exepath[i] = '_';
+
+	g_mutex = CreateMutexA(NULL, FALSE, exepath);
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		CloseHandle(g_mutex);
+		MessageBox(NULL,
+			TEXT("同一个帐号的程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
+		quit_mainform(i32("mainform"));
+		exit(0);
+		return 0;
+	}
+
+	/* 初始化数据库 */
+	char dbpath[128];
+	sprintf (dbpath, "%s/feed.db", url_get_userdir());
+	close_db ();
+	init_db (dbpath);
+	db_create_table ();
+
+	LeaveCriticalSection (&g_cs);
+
+	HWND hhtml = i32("htmlbox");
+	html_loadfeedlist (hhtml);
+	html_loaditemlist (hhtml, 0);
+	html_refresh_feedlist (hhtml); /* bug */
+	html_clearitemlist (hhtml);
+	html_loaditemlist (hhtml, 0);
+
+	html_updatewindow (hhtml);
+
+	if (strlen(username) > 0)
+		html_loginsucess (hhtml, username);
+
+	return 1;
+}
+
 /* 登录后 */
 static BOOL login_cb (HWND hhtml, char *uid, char *username)
 {
-
-
-	return FALSE;
+	return login_init(uid, username);
 }
 
 
@@ -323,62 +404,13 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 }
 
 
-static int login_init (const char *uid, const char *username)
-{
-	EnterCriticalSection (&g_cs);
 
-	/* 建立用户个人目录 */
-	int r = url_set_userdir(uid);
-	while (!r) {
-		int e = MessageBox(NULL, TEXT("无法访问个人目录, 程序没有写权限!"), TEXT("发生异常"), MB_ABORTRETRYIGNORE);
-		if (e == IDABORT)
-			return 0;
-		else if (e == IDRETRY) {
-			r = url_set_userdir(uid);
-			continue;
-		}
-		else if (e == IDIGNORE)
-			break;
-		else
-			return 0;
-	}
 
-	/* 每用户只需运行一个实例 */
-	CloseHandle(g_mutex);
-	g_mutex = CreateMutexA(NULL, FALSE, url_get_userdir());
-	if (GetLastError() == ERROR_ALREADY_EXISTS) {
-		CloseHandle(g_mutex);
-		MessageBox(NULL,
-			TEXT("同一个帐号的程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
-		return 0;
-	}
 
-	/* 初始化数据库 */
-	char dbpath[128];
-	sprintf (dbpath, "%s/feed.db", url_get_userdir());
-	close_db ();
-	init_db (dbpath);
-	db_create_table ();
-
-	LeaveCriticalSection (&g_cs);
-
-	HWND hhtml = i32("htmlbox");
-	html_loadfeedlist (hhtml);
-	html_loaditemlist (hhtml, 0);
-	html_refresh_feedlist (hhtml); /* bug */
-	html_clearitemlist (hhtml);
-	html_loaditemlist (hhtml, 0);
-
-	html_updatewindow (hhtml);
-
-	return 1;
-}
 
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
 	InitializeCriticalSection (&g_cs);
-
-	//_beginthread (download, 0, NULL); /* 开始后台循环抓取 */
 
 	/* UI form */
 	HWND hwnd = open_mainform();
@@ -404,11 +436,27 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	ShowWindow (hwnd, SW_SHOW);
 	SetFocus(hhtml);
 
-	login_init ("1", "cat");
-	Sleep(2000);
-	login_init ("2", "cat");
-	Sleep(2000);
-	login_init ("3", "cat");
+	/* 直接启动, 用exe参数登录, 格式"uid,username,showmethemoney" */
+	printf ("param: %s\n", param);
+	char *out = NULL, *s = dump(param);
+	char *uid, *username, *pwd;
+	s = nexttok (s, ',', &out);
+	uid = dump(out);
+	s = nexttok (s, ',', &out);
+	username = dump(out);
+	s = nexttok (s, ',', &out);
+	pwd = dump(out);
+	if (strlen(uid)>0 && strlen(username)>0 && strcmp(pwd, "showmethemoney")) {
+		MessageBox(NULL, TEXT("非法启动!"), TEXT("警告"), MB_OK|MB_ICONWARNING);
+	}
+	login_init (uid, username);
+	mfree (uid);
+	mfree (username);
+	mfree (pwd);
+	mfree (s);
+
+	/* 开始后台循环抓取 */
+	_beginthread (download, 0, NULL);
 
 	i32loop();
 

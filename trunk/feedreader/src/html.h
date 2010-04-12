@@ -58,7 +58,7 @@ void html_set_subevt (HWND hwnd, html_subcb f);
 typedef BOOL (*html_logincb) (HWND hwnd, char *uid, char *username);
 
 void html_set_logincb (HWND hwnd, html_logincb f);
-
+void html_loginsucess (HWND hwnd, const char *username);
 
 #ifdef __cplusplus
 }
