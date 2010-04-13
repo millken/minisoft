@@ -59,7 +59,7 @@ static char *dump(char *s)
 	return t;
 }
 
-static wchar_t *utf8tou (char *utf8)
+static wchar_t *utf8tou (const char *utf8)
 {
 	int len;
 	wchar_t *wbuf;
@@ -283,11 +283,11 @@ void html_loaditemlist (HWND hwnd, int feedid)
 		feed = db_loadfeed (feedid);
 		if (!feed) return;
 		printf ("fid: %s\n", feed->link);
-		html_setboard (hwnd, feed->title);
+		html_setboard (hwnd, feed->title, feed->link);
 		delfeed(feed);
 	}
 	else
-		html_setboard (hwnd, "所有");
+		html_setboard (hwnd, "所有", "");
 
 	if (feedid == 0)
 		rown = db_select_itemlist(&itemlist, "1 order by read, updated desc, id desc limit 400");
@@ -300,6 +300,8 @@ void html_loaditemlist (HWND hwnd, int feedid)
 	}
 
 	db_del_itemlist(itemlist, rown);
+
+
 }
 
 /* 清除所有item */
@@ -328,8 +330,6 @@ void html_clearitemlist (HWND hwnd)
 
 
 /* 点击feedlist事件 */
-
-
 BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 {
 	HWND hwnd = (HWND)tag;
@@ -349,6 +349,11 @@ BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 
 		html_clearitemlist(hwnd);
 		html_loaditemlist(hwnd, feedid);
+
+		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
+		HELEMENT dt;
+		HTMLayoutGetNthChild(hitemlist, 0, &dt);
+		HTMLayoutScrollToView(dt, SCROLL_TO_TOP);
 
 		return FALSE;
 	}
@@ -446,12 +451,10 @@ void html_clearfeedlist (HWND hwnd)
 	if (!hfeedlist) return;
 
 	HTMLayoutGetChildrenCount(hfeedlist, &n);
-	printf ("chn: %d\n", n);
 	for (i = 0; i < n; i++) {
 		int e = HTMLayoutGetNthChild(hfeedlist, 0, &hdt);
 		if (e != HLDOM_OK) continue;
 		HTMLayoutDetachEventHandler(hdt, feedproc, (LPVOID)hwnd);
-		printf ("hdt: %u\n", hdt);
 		HTMLayoutDeleteElement(hdt);
 	}
 }
@@ -463,16 +466,19 @@ void html_refresh_feedlist (HWND hwnd)
 }
 
 /* 设置右侧标题 */
-void html_setboard (HWND hwnd, const char *feedtitle)
+void html_setboard (HWND hwnd, const char *feedtitle, const char *feedlink)
 {
 	HELEMENT hboard;
 
 	if (!feedtitle) return;
 
-	hboard = html_getelementbyid(hwnd, "board");
+	hboard = html_getelementbyid(hwnd, "boardtitle");
 	if (!hboard) return;
 
 	HTMLayoutSetElementInnerText(hboard, (const BYTE *)feedtitle, strlen(feedtitle));
+	wchar_t *wlink = utf8tou(feedlink);
+	HTMLayoutSetAttributeByName(hboard, "href", wlink);
+	wfree(wlink);
 }
 
 /**
@@ -486,6 +492,7 @@ int html_loadfile (HWND hwnd, const wchar_t *filename)
 	// 获得绝对路径
 	len = GetModuleFileNameW (NULL, path, sizeof(path)/sizeof(wchar_t));
 	if (len <= 0) return 0;
+
 	for (i = len; i >= 0 && (path[i]!=L'\\' && path[i]!=L'/'); i--);
 	path[i+1] = L'\0';
 	lstrcat (path, filename);
@@ -581,7 +588,7 @@ static BOOL CALLBACK click_linker (LPVOID tag, HELEMENT he, UINT evtg, LPVOID pr
 		now = GetTickCount();
 		if (now - lasttime < 100)
 			return TRUE;
-		printf ("%u ", evtg);
+
 		wchar_t *link;
 		HTMLayoutGetAttributeByName(ep->he, "href", (const WCHAR **)&link);
 		if (lstrlen(link) > 4)
@@ -708,6 +715,24 @@ static BOOL CALLBACK click_closeform (LPVOID tag, HELEMENT he, UINT evtg, LPVOID
 	return FALSE;
 }
 
+/* right board on mouse hover */
+static BOOL CALLBACK hover_board (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_ENTER) {
+		HELEMENT markbtn = html_getelementbyid(hwnd, "markbtn");
+		HTMLayoutSetStyleAttribute(markbtn, "display", L"block");
+	}
+	else if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_LEAVE) {
+		HELEMENT markbtn = html_getelementbyid(hwnd, "markbtn");
+		HTMLayoutSetStyleAttribute(markbtn, "display", L"none");
+	}
+
+	return FALSE;
+}
+
 void html_loginsucess (HWND hwnd, const char *username)
 {
 	HELEMENT hlogen = html_getelementbyid (hwnd, "loginuser");
@@ -793,6 +818,33 @@ static BOOL CALLBACK click_loginbutton (LPVOID tag, HELEMENT he, UINT evtg, LPVO
 	return FALSE;
 }
 
+/* 点全部读过按钮 */
+static BOOL CALLBACK click_markbtn (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	//struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+	struct BEHAVIOR_EVENT_PARAMS *ep = (struct BEHAVIOR_EVENT_PARAMS *)prms;
+
+	//if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_DOWN && ep->button_state==MAIN_MOUSE_BUTTON) {
+	if ((evtg&HANDLE_BEHAVIOR_EVENT) && (BYTE)ep->cmd==BUTTON_PRESS) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 500)
+			return TRUE;
+
+		db_markallread (g_current_feedid);
+		html_refresh_feedlist(hwnd);
+		html_clearitemlist(hwnd);
+		html_loaditemlist(hwnd, g_current_feedid);
+
+		lasttime = now = GetTickCount();
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
 /* 设置订阅按钮回调 */
 void html_set_subevt (HWND hwnd, html_subcb f)
 {
@@ -873,6 +925,13 @@ void html_init (HWND hwnd)
 	if (password)
 		HTMLayoutAttachEventHandler(password, keydown_password, (LPVOID)hwnd);
 
+	HELEMENT board = html_getelementbyid (hwnd, "board");
+	if (board)
+		HTMLayoutAttachEventHandler(board, hover_board, (LPVOID)hwnd);
+
+	HELEMENT markbtn = html_getelementbyid(hwnd, "markbtn");
+	if (markbtn)
+		HTMLayoutAttachEventHandler(markbtn, click_markbtn, (LPVOID)hwnd);
 }
 
 

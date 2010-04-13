@@ -16,6 +16,7 @@ body {
 	margin:0px;
 	overflow: none;
 }
+
 menu {
 	transition: none;
 }
@@ -46,7 +47,7 @@ div#loadtip {
 div#loginlink {
 	position: absolute;
 	right: 44px;
-	top: 6px;
+	top: 5px;
 	width: 30px;
 	text-align: right;
 	color: #0950BB;
@@ -60,12 +61,12 @@ div#loginlink:hover {
 span#llsplit {
 	position: absolute;
 	right: 37px;
-	top: 6px;
+	top: 5px;
 }
 a#help {
 	position: absolute;
 	right: 10px;
-	top: 6px;
+	top: 5px;
 	width: 25px;
 	text-align: right;
 	color: #0950BB;
@@ -81,7 +82,7 @@ div#loginuser {
 	display: none;
 	position: absolute;
 	right: 46px;
-	top: 8px;
+	top: 6px;
 	width: 40px;
 	text-align: right;
 	font-family: Verdana;
@@ -139,6 +140,7 @@ h1 {
 	padding: 6px;
 	margin-top: 0px;
 	margin-bottom: 0px;
+	font-weight: bolder;
 }
 
 
@@ -227,12 +229,27 @@ div.right {
 	min-width: 100px;
 }
 div.right #board {
+	position: relative;
 	behavior:htmlarea;
-	font-weight:bold;
-	font-size: 18px;
 	background-color: #8FBDF5;
 	padding: 6px;
 	padding-left: 5px;
+	height: 23px;
+}
+a#boardtitle {
+	font-weight:bold;
+	font-size: 18px;
+	color: #000000;
+	text-decoration: none;
+}
+a#boardtitle:hover {
+	text-decoration: underline;
+}
+button#markbtn {
+	position: absolute;
+	display: none;
+	right: 5px;
+	top: 7px;
 }
 div.right #itemlist {
 	height: *;
@@ -308,7 +325,7 @@ div.foot a:hover {
 
 
 <!-- header -->
-<h1>Feed Reader
+<h1>RSS阅读器
 	<div id='loadtip'>Loading..</div>
 
 	<div id='loginlink'>登录</div> <span id='llsplit'>|</span> <a href='http://cnal.com' id='help'>帮助</a>
@@ -332,7 +349,7 @@ div.foot a:hover {
 		<div id='subpad'>
 			<div id='closemenu'>x</div>
 		<div class='tip'>输入rss地址</div>
-		<input type='text' style='border:0px solid #eeeeee;width:170px;height:14px;' id='inputurl' value='http://my.dongua.com/flashgame/feeds/blog/' />
+		<input type='text' style='border:0px solid #eeeeee;width:170px;height:14px;' id='inputurl' value='http://blog.cnal.com/rss.php' />
 			<button id='addbutton'>确定</button>
 		<div class='tip'>例如: blog.cnal.com/rss.php</div>
 		</div>
@@ -343,12 +360,12 @@ div.foot a:hover {
 
 	<!-- right -->
 	<div class='right'>
-	<div id='board'></div>
+	<div id='board'><a id='boardtitle' href=''></a><button id='markbtn'>全部读过</button></div>
 
 	<dl id='itemlist'>
 		<div id='itemcontent'>
 			<a href='#' id='ctitle'></a><br/>
-			<div id='cnote'>asdfasdf</div>
+			<div id='cnote'></div>
 			<div id='ccon'></div>
 		</div>
 

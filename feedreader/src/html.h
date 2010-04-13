@@ -37,7 +37,7 @@ void html_clearitemlist (HWND hwnd);
 
 
 /* 设置标题 */
-void html_setboard (HWND hwnd, const char *feedtitle);
+void html_setboard (HWND hwnd, const char *feedtitle, const char *feedlink);
 
 
 void html_showtip(HWND hwnd, const char *info, int state);
