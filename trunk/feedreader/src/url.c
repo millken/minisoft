@@ -29,8 +29,8 @@ typedef struct {
 static urow g_list[URLMAX];
 static int g_len;
 
-static char g_userdir[128] = {"u/0"};
-static char g_downdir[256] = {"u/0/download"};
+static char g_userdir[1280] = {"u/0"};
+static char g_downdir[1480] = {"u/0/download"};
 
 static char g_postresult[512]; /* 登录后接收post结果 */
 
@@ -82,16 +82,30 @@ void url_deluser (struct user *u)
 	}
 }
 
+static void abspath (char *buf, int size)
+{
+	int len, i;
+
+	len = GetModuleFileNameA (NULL, buf, size);
+	for (i = len; i >=0 && buf[i]!='/' && buf[i]!='\\'; i--);
+	buf[i] = '\0';
+}
+
 /* 根据WinMain参数获得uid,创建各自目录 */
 int url_set_userdir (const char *param)
 {
 	const char *uid = param;
 
-	mkdir ("u");
-
 	if (uid==NULL || strlen(uid)==0)
 		uid = "0";
-	sprintf (g_userdir, "u/%s", uid);
+
+	abspath(g_userdir, sizeof(g_userdir));
+	abspath(g_downdir, sizeof(g_downdir));
+
+	sprintf (g_userdir, "%s/u", g_userdir);
+	mkdir (g_userdir); /* u/ */
+
+	sprintf (g_userdir, "%s/%s", g_userdir, uid);
 	mkdir (g_userdir);
 
 	sprintf (g_downdir, "%s/download", g_userdir);
@@ -276,7 +290,7 @@ struct user *url_login (const char *username, const char *password)
 
 	struct user *user;
 
-	sprintf (url, "http://service.cnal.com/?m=login&a=softlogin&rand=%u", (int)time(NULL));
+	sprintf (url, "http://service.cnal.cc/?m=login&a=softlogin&rand=%u", (int)time(NULL));
 
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "username",
@@ -295,11 +309,11 @@ struct user *url_login (const char *username, const char *password)
 	curl_easy_setopt(curl, CURLOPT_HEADER, 0);
 	curl_easy_setopt(curl, CURLOPT_URL, url); /*Set URL*/
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 7);
+	//curl_easy_setopt(curl, CURLOPT_TIMEOUT, 17);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, savepostresult);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&postlen);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1);
+	//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+	//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1);
 
 	postlen = 0;
 	memset(g_postresult, 0, sizeof(g_postresult));

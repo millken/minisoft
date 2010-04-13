@@ -189,32 +189,37 @@ static int login_init (const char *uid, const char *username)
 
 	/* 每用户只需运行一个实例 */
 	CloseHandle(g_mutex);
-	char exepath[1024];
-	GetModuleFileNameA(NULL, exepath, sizeof(exepath)-100);
-	strcat(exepath, url_get_userdir());
-
+	char *exepath = dump(url_get_userdir());
 	for (int i = 0; i < strlen(exepath); i++)
 		if (exepath[i] == '\\')
 			exepath[i] = '_';
-
 	g_mutex = CreateMutexA(NULL, FALSE, exepath);
+	mfree(exepath);
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(g_mutex);
 		MessageBox(NULL,
-			TEXT("同一个帐号的程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
+			TEXT("程序已经在运行中, 不能重复启动!"), TEXT("提示"), MB_OK|MB_ICONWARNING);
 		quit_mainform(i32("mainform"));
 		exit(0);
 		return 0;
 	}
 
 	/* 初始化数据库 */
-	char dbpath[128];
+	char dbpath[1280];
 	sprintf (dbpath, "%s/feed.db", url_get_userdir());
 	close_db ();
 	init_db (dbpath);
 	db_create_table ();
 
 	LeaveCriticalSection (&g_cs);
+
+	if (strlen(username) > 0) {
+		char title[100];
+		HWND hmainform = i32("mainform");
+		sprintf (title, "RSS Reader - %s", uid);
+		SetWindowTextA(hmainform, title);
+		i32send(hmainform, WM_NCPAINT, 0, 0); /* 重绘标题 */
+	}
 
 	HWND hhtml = i32("htmlbox");
 	html_loadfeedlist (hhtml);
@@ -266,10 +271,10 @@ HWND open_mainform()
 
 	reg_form();
 	hwnd = i32create (TEXT("form"), "n|s|w|h|a|t|bc", "mainform",
-		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("FeedReader"), -1);
+		WS_OVERLAPPEDWINDOW, 800, 600, "c", TEXT("RSS Reader"), -1);
 
 	reg_html_control();
-	hhtml = html_create (hwnd, "n|w|h|a", "htmlbox", 200, 200, "c");
+	hhtml = html_create (hwnd, "id|n|w|h|a", 1001, "htmlbox", 200, 200, "c");
 	html_loadfile (hhtml, L"theme/index.htm");
 
 	return hwnd;
@@ -350,8 +355,10 @@ int mainform_ontray (I32E e)
 {
 	if (e.wp==ID_TRAY && e.lp==WM_LBUTTONUP) {
 		if (!IsWindowVisible(e.hwnd)) {
-			ShowWindow(e.hwnd, SW_MINIMIZE); /* 有时候在任务栏里不出来 */
-			i32send(e.hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			//ShowWindow(e.hwnd, SW_MINIMIZE); /* 有时候在任务栏里不出来 */
+			//i32send(e.hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			ShowWindow (e.hwnd, SW_SHOW);
+			SetForegroundWindow(e.hwnd);
 			SetFocus(i32("htmlbox"));
 		}
 		else {
@@ -412,6 +419,38 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
 	InitializeCriticalSection (&g_cs);
 
+
+	/* 直接启动, 用exe参数登录, 格式"uid,username,showmethemoney" */
+	printf ("param: %s\n", param);
+	char *out = NULL, *s = dump(param);
+	char *uid, *username, *pwd;
+	s = nexttok (s, ',', &out);
+	uid = dump(out);
+	s = nexttok (s, ',', &out);
+	username = dump(out);
+	s = nexttok (s, ',', &out);
+	pwd = dump(out);
+	if (strlen(uid)>0 && strlen(username)>0 && strcmp(pwd, "c")) {
+		MessageBox(NULL, TEXT("非法启动!"), TEXT("警告"), MB_OK|MB_ICONWARNING);
+		MessageBoxA(NULL, pwd, "err", MB_OK);
+		return 0;
+	}
+	/* 重复启动直接打开已存在的 */
+	{
+		char title[100];
+		if (strlen(username) > 0)
+			sprintf (title, "RSS Reader - %s", uid);
+		else
+			sprintf (title, "RSS Reader");
+		printf ("title: %s\n", title);
+		HWND hrepeat = FindWindowA("form", title);
+		if (hrepeat) {
+			ShowWindow(hrepeat, SW_SHOW);
+			SetForegroundWindow(hrepeat);
+			return 0;
+		}
+	}
+
 	/* UI form */
 	HWND hwnd = open_mainform();
 
@@ -433,22 +472,7 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	html_set_subevt (hhtml, click_sub); /* click one feed */
 	html_set_logincb (hhtml, login_cb);
 
-	ShowWindow (hwnd, SW_SHOW);
-	SetFocus(hhtml);
-
-	/* 直接启动, 用exe参数登录, 格式"uid,username,showmethemoney" */
-	printf ("param: %s\n", param);
-	char *out = NULL, *s = dump(param);
-	char *uid, *username, *pwd;
-	s = nexttok (s, ',', &out);
-	uid = dump(out);
-	s = nexttok (s, ',', &out);
-	username = dump(out);
-	s = nexttok (s, ',', &out);
-	pwd = dump(out);
-	if (strlen(uid)>0 && strlen(username)>0 && strcmp(pwd, "showmethemoney")) {
-		MessageBox(NULL, TEXT("非法启动!"), TEXT("警告"), MB_OK|MB_ICONWARNING);
-	}
+	/* init */
 	login_init (uid, username);
 	mfree (uid);
 	mfree (username);
@@ -457,6 +481,9 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 
 	/* 开始后台循环抓取 */
 	_beginthread (download, 0, NULL);
+
+	ShowWindow (hwnd, SW_SHOW);
+	SetFocus(hhtml);
 
 	i32loop();
 
