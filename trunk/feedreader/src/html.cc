@@ -354,7 +354,7 @@ BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 		HELEMENT dt;
 		HTMLayoutGetNthChild(hitemlist, 0, &dt);
 		HTMLayoutScrollToView(dt, SCROLL_TO_TOP);
-
+		HTMLayoutUpdateElement(hitemlist, TRUE);
 		return FALSE;
 	}
 
