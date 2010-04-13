@@ -290,7 +290,7 @@ struct user *url_login (const char *username, const char *password)
 
 	struct user *user;
 
-	sprintf (url, "http://service.cnal.cc/?m=login&a=softlogin&rand=%u", (int)time(NULL));
+	sprintf (url, "http://service.cnal.com/?m=login&a=softlogin&rand=%u", (int)time(NULL));
 
 	curl_formadd(&post, &last,
 		CURLFORM_COPYNAME, "username",
