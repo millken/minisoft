@@ -355,8 +355,8 @@ int mainform_ontray (I32E e)
 {
 	if (e.wp==ID_TRAY && e.lp==WM_LBUTTONUP) {
 		if (!IsWindowVisible(e.hwnd)) {
-			//ShowWindow(e.hwnd, SW_MINIMIZE); /* 有时候在任务栏里不出来 */
-			//i32send(e.hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			ShowWindow(e.hwnd, SW_MINIMIZE); /* 有时候在任务栏里不出来 */
+			i32send(e.hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			ShowWindow (e.hwnd, SW_SHOW);
 			SetForegroundWindow(e.hwnd);
 			SetFocus(i32("htmlbox"));
