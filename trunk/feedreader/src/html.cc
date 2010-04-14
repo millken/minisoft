@@ -17,6 +17,8 @@ static int g_current_feedid = 0; /* 正在阅读的feed */
 static int g_menu_feedid = 0; /* 左侧菜单对应的feedid */
 static BOOL g_onleft = 0; /* 左侧菜单是否出现 */
 
+static HELEMENT g_lastexpand = NULL; /* 用于标记展开收起 */
+
 /* 订阅按钮 */
 static html_subcb g_clicksub = NULL;
 static html_logincb g_logincb = NULL;
@@ -146,8 +148,6 @@ int html_getnth (HELEMENT he)
 /* 展开/收起item事件 */
 BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 {
-	static HELEMENT lastclick = NULL;
-
 	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
 	HWND hwnd = (HWND)tag;
 	int e;
@@ -163,10 +163,10 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
 
 		/* 收起 */
-		if (lastclick == he) {
+		if (g_lastexpand == he) {
 			HTMLayoutSetStyleAttribute(hitemcon, "display", L"none");
 			HTMLayoutUpdateElement(hitemlist, TRUE);
-			lastclick = NULL;
+			g_lastexpand = NULL;
 			return TRUE;
 		}
 
@@ -206,7 +206,7 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HTMLayoutScrollToView(he, SCROLL_SMOOTH);
 		HTMLayoutUpdateElement(hitemlist, TRUE);
 
-		lastclick = he;
+		g_lastexpand = he;
 
 		return TRUE;
 	}
@@ -328,6 +328,32 @@ void html_clearitemlist (HWND hwnd)
 }
 
 
+static
+BOOL CALLBACK enum_item ( LPVOID p, HELEMENT he, int pos, int postype, WCHAR code )
+{
+	const char *tag;
+
+	HTMLayoutGetElementType(he, &tag);
+	if (strcmp(tag, "dt") == 0) {
+		*(HELEMENT *)p = he;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/* 获得第一个item */
+static
+HELEMENT get_first_item (HWND hwnd)
+{
+	HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
+	if (!hitemlist) return NULL;
+
+	HELEMENT hitem = NULL;
+	HTMLayoutEnumerate(hitemlist, enum_item, &hitem, FALSE);
+	return hitem;
+}
+
+
 
 /* 点击feedlist事件 */
 BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
@@ -352,7 +378,8 @@ BOOL CALLBACK feedproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
 
 		HELEMENT hitemlist = html_getelementbyid(hwnd, "itemlist");
 		HELEMENT dt;
-		HTMLayoutGetNthChild(hitemlist, 0, &dt);
+		dt = get_first_item (hwnd);
+		//HTMLayoutGetNthChild(hitemlist, 1, &dt);
 		HTMLayoutScrollToView(dt, SCROLL_TO_TOP);
 		HTMLayoutUpdateElement(hitemlist, TRUE);
 		return FALSE;
@@ -886,6 +913,32 @@ static BOOL CALLBACK keydown_password (LPVOID tag, HELEMENT he, UINT evtg, LPVOI
 	return FALSE;
 }
 
+/* 折叠 */
+static BOOL CALLBACK click_fold (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms)
+{
+	static DWORD lasttime = 0;
+
+	HWND hwnd = (HWND)tag;
+	struct MOUSE_PARAMS *ep = (struct MOUSE_PARAMS *)prms;
+
+	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
+		DWORD now = GetTickCount();
+		if (now - lasttime < 100)
+			return FALSE;
+		else
+			lasttime = now;
+
+		HELEMENT hcont = html_getelementbyid(hwnd, "itemcontent");
+		if (hcont)
+			HTMLayoutSetStyleAttribute(hcont, "display", L"none");
+
+		g_lastexpand = NULL;
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
 void html_init (HWND hwnd)
 {
 	HELEMENT submenu = html_getelementbyid (hwnd, "submenu");
@@ -932,6 +985,10 @@ void html_init (HWND hwnd)
 	HELEMENT markbtn = html_getelementbyid(hwnd, "markbtn");
 	if (markbtn)
 		HTMLayoutAttachEventHandler(markbtn, click_markbtn, (LPVOID)hwnd);
+
+	HELEMENT fold = html_getelementbyid(hwnd, "fold");
+	if (fold)
+		HTMLayoutAttachEventHandler(fold, click_fold, (LPVOID)hwnd);
 }
 
 
