@@ -94,6 +94,7 @@ div#loginuser {
 div#loginform {
 	display: none;
 	position: fixed;
+	z-index: 10000;
 	left: *; right: *;
 	top: 0.4*; bottom: 0.6*;
 	width: 180px;
@@ -253,16 +254,28 @@ button#markbtn {
 	top: 7px;
 }
 div.right #itemlist {
+	position: relative;
 	height: *;
 	overflow-y: scroll;
 	overflow-x: auto;
 }
+#itemlist dt i {
+	position: absolute;
+	font-style: normal;
+	font-size: 11px;
+	font-weight: normal;
+	color: #999999;
+	right: 5px;
+	width: 60px;
+}
+
 div.right #itemcontent {
 	behavior:htmlarea;
 	context-menu:selector(menu#for-htmlarea);
 	display: none;
 	padding: 12px;
 	overflow: none;
+	line-height: 16px;
 }
 
 div.right #ctitle {
@@ -274,6 +287,11 @@ div.right #ctitle {
 div.right #ctitle:hover {
 	color: #3366FF;
 	text-decoration: underline;
+}
+div.right #ctime {
+	margin-left: 5px;
+	font-size: 11px;
+	color: #999999;
 }
 div.right #cnote {
 	font-size: 10px;
@@ -365,7 +383,7 @@ div.foot a:hover {
 
 	<dl id='itemlist'>
 		<div id='itemcontent'>
-			<a href='#' id='ctitle'></a><br/>
+			<a href='#' id='ctitle'></a> <span id='ctime'></span><br/>
 			<div id='cnote'></div>
 			<div id='ccon'></div>
 		</div>

@@ -7,6 +7,9 @@ extern "C" {
 
 #define DOWNLOADDIR "download"
 
+void url_init ();
+void url_close ();
+
 int url_set_userdir (const char *param);
 char *url_get_userdir ();
 char *url_get_downdir ();

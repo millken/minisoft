@@ -418,7 +418,7 @@ void CALLBACK timerproc (HWND hwnd, UINT a, UINT b, DWORD d)
 int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 {
 	InitializeCriticalSection (&g_cs);
-
+	url_init ();
 
 	/* 直接启动, 用exe参数登录, 格式"uid,username,showmethemoney" */
 	printf ("param: %s\n", param);
@@ -488,7 +488,8 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	i32loop();
 
 	/* end */
-	DeleteCriticalSection (&g_cs) ;
+	url_close();
+	DeleteCriticalSection (&g_cs);
 	close_db();
 	CloseHandle(g_mutex);
 

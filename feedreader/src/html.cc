@@ -191,6 +191,17 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 		HTMLayoutSetAttributeByName(ctitle, "href", (const WCHAR *)link);
 		wfree(link);
 		HTMLayoutSetElementInnerText(cnote, (const BYTE *)note, strlen(note));
+
+		//updated time
+		HELEMENT hctime = html_getelementbyid(hwnd, "ctime");
+		if (hctime) {
+			char timebuf[64];
+			struct tm* t = localtime(&item->updated);
+			sprintf (timebuf, "%d-%d-%d %d:%02d:%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday,
+					t->tm_hour, t->tm_min, t->tm_sec);
+			HTMLayoutSetElementInnerText(hctime, (const BYTE*)timebuf, strlen(timebuf));
+		}
+
 		HTMLayoutSetElementHtml(ccon, (const BYTE *)item->content, strlen(item->content), SIH_REPLACE_CONTENT);
 		//HTMLayoutSetElementHtml(hitemcon, (const BYTE *)html, strlen(html), SIH_REPLACE_CONTENT);
 		delitem(item);
@@ -245,7 +256,7 @@ BOOL CALLBACK itemproc (LPVOID tag, HELEMENT he, UINT evtg, LPVOID prms )
 /* 插入单条item */
 void html_insertitem (HWND hwnd, FeedItem *item)
 {
-	HELEMENT hitemlist, hdt;
+	HELEMENT hitemlist, hdt, span, i;
 	uint n;
 
 	if (!item) return;
@@ -254,13 +265,30 @@ void html_insertitem (HWND hwnd, FeedItem *item)
 	if (!hitemlist) return;
 
 	/* create item element */ {
-		wchar_t *wtitle = utf8tou(item->title);
-		HTMLayoutCreateElement ("dt", wtitle, &hdt); /* <dt itemid=''> */
-		wfree(wtitle);
-		wchar_t wid[10];
-		wsprintf (wid, L"%d", item->id);
-		HTMLayoutSetAttributeByName (hdt, "itemid", wid);
+	HTMLayoutCreateElement ("dt", NULL, &hdt); /* <dt itemid=''> */
+	wchar_t wid[10];
+	wsprintf (wid, L"%d", item->id);
+	HTMLayoutSetAttributeByName (hdt, "itemid", wid);
 	}
+
+	{
+	wchar_t *wtitle = utf8tou(item->title);
+	HTMLayoutCreateElement ("span", wtitle, &span);
+	wfree(wtitle);
+	HTMLayoutInsertElement (span, hdt, 0);
+	}
+
+	{
+	struct tm* t = localtime(&item->updated);
+	char timebuf[128];
+	sprintf (timebuf, "%d-%d-%d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+	//printf ("%s\n", timebuf);
+	wchar_t *wtime = utf8tou(timebuf);
+	HTMLayoutCreateElement ("i", wtime, &i);
+	wfree(wtime);
+	HTMLayoutInsertElement (i, hdt, 1);
+	}
+
 	HTMLayoutGetChildrenCount (hitemlist, &n);
 	HTMLayoutInsertElement (hdt, hitemlist, n+1);
 	if (item->read == 0)
@@ -714,8 +742,10 @@ static BOOL CALLBACK click_loginlink (LPVOID tag, HELEMENT he, UINT evtg, LPVOID
 	if ((evtg&HANDLE_MOUSE) && (BYTE)ep->cmd==MOUSE_UP && ep->button_state==MAIN_MOUSE_BUTTON) {
 
 		HELEMENT loginform = html_getelementbyid(hwnd, "loginform");
-		if (loginform)
+		if (loginform) {
 			HTMLayoutSetStyleAttribute(loginform, "display", L"block");
+			printf ("s");
+		}
 		HELEMENT usernamebox = html_getelementbyid(hwnd, "username");
 		HTMLayoutSetElementState(usernamebox, STATE_FOCUS, 0, TRUE);
 		return FALSE;
