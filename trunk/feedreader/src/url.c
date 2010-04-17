@@ -33,8 +33,17 @@ static char g_userdir[1280] = {"u/0"};
 static char g_downdir[1480] = {"u/0/download"};
 
 static char g_postresult[512]; /* 登录后接收post结果 */
+static CRITICAL_SECTION g_cs;
 
+void url_init ()
+{
+	InitializeCriticalSection (&g_cs);
+}
 
+void url_close ()
+{
+	DeleteCriticalSection (&g_cs);
+}
 
 static char *nexttok (char *s, const char split, char **out)
 {
@@ -190,6 +199,8 @@ void url_download ()
 	int running_handle_count;
 	int i;
 
+	EnterCriticalSection (&g_cs);
+
 	multi_handle = curl_multi_init();
 
 	mkdir (g_downdir); /* 创建临时目录 */
@@ -258,6 +269,8 @@ void url_download ()
 	url_clear ();
 	curl_multi_cleanup(multi_handle);
 	curl_global_cleanup();
+
+	LeaveCriticalSection (&g_cs);
 }
 
 
@@ -289,6 +302,8 @@ struct user *url_login (const char *username, const char *password)
 	struct curl_httppost *last = NULL;
 
 	struct user *user;
+
+	EnterCriticalSection (&g_cs);
 
 	sprintf (url, "http://service.cnal.com/?m=login&a=softlogin&rand=%u", (int)time(NULL));
 
@@ -330,7 +345,7 @@ struct user *url_login (const char *username, const char *password)
 
 	s = nexttok(s, ',', &out);
 	uid = atoi(out);
-	if (uid == 0) return NULL;
+	if (uid == 0) goto fail;
 	suid = dump(out);
 
 	s = nexttok(s, ',', &out);
@@ -343,10 +358,12 @@ struct user *url_login (const char *username, const char *password)
 	}
 
 	curl_easy_cleanup(curl);
+	LeaveCriticalSection (&g_cs);
 	return user;
 
 fail:
 	curl_formfree(post);
 	curl_easy_cleanup(curl);
+	LeaveCriticalSection (&g_cs);
 	return NULL;
 }
