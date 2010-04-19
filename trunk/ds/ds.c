@@ -346,7 +346,7 @@ vchar* vsncat (vchar* a, const char* b, size_t n)
 	return a;
 }
 
-vchar* vs_vsprintf (vchar* vs, const char* format, va_list p)
+vchar* vs_vsprintf (vchar* vs, const char* format, __VALIST p)
 {
 	vs_data* d;
 
@@ -387,14 +387,14 @@ vchar* vs_printf (const char* format, ...)
 /*
  * global list 广义表
  */
-glnode* glnew (void* data)
+glnode* glnewv (void* data)
 {
 	glnode* n = (glnode*)salloc(sizeof(glnode));
 	n->data = data;
 	return n;
 }
 
-void glleave (glnode* node)
+void glout (glnode* node)
 {
 	glnode *dad, *next, *prev;
 
@@ -406,18 +406,22 @@ void glleave (glnode* node)
 
 	if (dad) {
 		dad->child = next;
-		if (next) next->dad = dad;
+		dad->cn--;
 	}
 
 	if (next)
 		next->prev = prev;
 	if (prev)
 		prev->next = next;
+
+	node->dad = NULL;
+	node->prev = NULL;
+	node->next = NULL;
 }
 
 void* gldel (glnode* node, void(*freedatafunc)(void*))
 {
-	glnode *p;
+	glnode *p, *next;
 	void* data;
 
 	if (!node) return NULL;
@@ -425,11 +429,14 @@ void* gldel (glnode* node, void(*freedatafunc)(void*))
 	data = node->data;
 
 	/* del children */
-	for (p = node->child; p; p=p->next)
+	for (p = node->child; p; ) {
+		next = p->next;
 		gldel(p, freedatafunc);
+		p = next;
+	}
 
 	/* del self */
-	glleave (node);
+	glout (node);
 	if (freedatafunc) {
 		freedatafunc (node->data);
 		data = NULL;
@@ -440,7 +447,7 @@ void* gldel (glnode* node, void(*freedatafunc)(void*))
 }
 
 /* insert after one */
-void glinsert (glnode* dst, glnode* src)
+static void glinsert (glnode* dst, glnode* src)
 {
 	glnode* next;
 
@@ -454,69 +461,70 @@ void glinsert (glnode* dst, glnode* src)
 		next->prev = src;
 }
 
+static void glinsertbefore (glnode* dst, glnode* src)
+{
+	glnode* prev;
+
+	if (!dst || !src) return;
+
+	prev = dst->prev;
+	src->next = dst;
+	src->prev = prev;
+	dst->prev = src;
+	if (prev)
+		prev->next = src;
+}
+
 size_t glchildn (glnode* dad)
 {
-	glnode *p, *begin, *end;
+	glnode *p;
 	size_t n = 0;
 
 	if (!dad->child) return 0;
 
-	begin = dad->child;
-	end = begin->prev;
-	n = 1;
-	for (p=begin; p!=end; p=p->next)
+	for (p = dad->child; p; p = p->next)
 		n++;
 	return n;
 }
 
-glnode* glchild (glnode* dad, int nth)
+glnode* glget (glnode* dad, int nth)
 {
-	glnode *p, *begin, *end;
+	glnode *p, *end;
 	int i;
 
 	if (!dad->child) return NULL;
 
-	begin = dad->child;
-	end = begin->prev;
+	if (nth < 0) {
+		nth += dad->cn + 1;
+		if (nth <= 0) return NULL;
+	}
 
-	if (nth == 0) nth = 1;
-	if (nth > 0)
-		for (i=1, p=begin; i<=nth && p!=end; i++, p=p->next);
+	for (i = 1, p=dad->child; i < nth && p->next; i++, p=p->next);
+
 	return p;
 }
 
-void* glchildv (glnode* dad, int nth)
-{
-	glnode* p = glchild(dad, nth);
-	return p ? p->data : NULL;
-}
-
-/* insert to be the last child */
 void gljoin (glnode* dad, glnode* node, int nth)
 {
-	glnode *p, *old;
+	glnode *p;
 
 	if (!dad || !node) return;
 
-	p = nth!=0 ? glchild(dad, nth) : NULL;
+	p = nth!=0 ? glget(dad, nth) : NULL;
 	if (p) {
 		glinsert(p, node);
 	}
 	else {
-		old = dad->child;
-		dad->child = node;
-		node->dad = dad;
-		if (old) {
-			printf ("y");
-			node->next = old;
-			node->prev = old->prev;
-			old->prev = node;
-			old->dad = NULL;
+		if (dad->child) {
+			glinsertbefore(dad->child, node);
 		}
 		else {
-			printf ("n");
-			node->next = node;
-			node->prev = node;
+			node->next = NULL;
+			node->prev = NULL;
 		}
+		dad->child = node;
 	}
+	node->dad = dad;
+	dad->cn++;
 }
+

@@ -81,7 +81,7 @@ vchar* vsncpy (vchar* a, const char*b, size_t len);
 #define vscpy(a,b) vsncpy(a,b,strlen(b))
 vchar* vsncat (vchar* a, const char* b, size_t n);
 #define vscat(a,b) vsncat(a,b,strlen(b))
-vchar* vs_vsprintf (vchar* vs, const char* format, va_list p);
+vchar* vs_vsprintf (vchar* vs, const char* format, __VALIST p);
 vchar* vs_sprintf (vchar* vs, const char* format, ...); /* sprintf to a vstring */
 vchar* vs_printf (const char* format, ...); /* create a new vstring */
 bool isvs (const char* s);
@@ -94,18 +94,17 @@ typedef struct glnode {
 	struct glnode *prev, *next;
 	struct glnode *child, *dad;
 	void* data;
+	size_t cn; /* child count */
 } glnode;
 
-
-glnode* glnew (void* data);
-void glleave (glnode* node);
+glnode* glnewv (void* data);
+#define glnew(p) glnewv((void*)p)
+void glout (glnode* node);
 void* gldel (glnode* node, void(*freedatafunc)(void*));
-void glinsert (glnode* dst, glnode* src);
-glnode* glchild (glnode* dad, int nth);
-void* glchildv (glnode* dad, int nth);
+glnode* glget (glnode* dad, int nth); /* get nth child */
 size_t glchildn (glnode* dad);
 void gljoin (glnode* dad, glnode* node, int nth);
-
+#define gl_foreach(dad,p) for(p=dad->child;p;p=p->next)
 
 #ifdef __cplusplus
 }
