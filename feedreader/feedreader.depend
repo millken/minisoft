@@ -350,7 +350,7 @@
 	<string.h>
 	<assert.h>
 
-1271158821 source:e:\dev\minisoft\feedreader\src\html.cc
+1271498466 source:e:\dev\minisoft\feedreader\src\html.cc
 	<ctype.h>
 	"i32.h"
 	<commdlg.h>
@@ -461,7 +461,7 @@
 1271157970 e:\dev\minisoft\feedreader\src\html.h
 	"xml.h"
 
-1271158008 source:e:\dev\minisoft\feedreader\src\main.cc
+1271498467 source:e:\dev\minisoft\feedreader\src\main.cc
 	<stdlib.h>
 	<io.h>
 	<process.h>
@@ -476,7 +476,7 @@
 	"ctrls.h"
 	"tray.h"
 
-1270818319 e:\dev\minisoft\feedreader\src\url.h
+1271498467 e:\dev\minisoft\feedreader\src\url.h
 
 1270552505 e:\dev\minisoft\feedreader\src\ctrls.h
 	<windows.h>
@@ -517,7 +517,7 @@
 	"tinyxml.h"
 	<windows.h>
 
-1271158090 source:e:\dev\minisoft\feedreader\src\url.c
+1271498466 source:e:\dev\minisoft\feedreader\src\url.c
 	<stdio.h>
 	<io.h>
 	<stdlib.h>

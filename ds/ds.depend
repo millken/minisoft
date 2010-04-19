@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1271566371 source:e:\dev\minisoft\ds\ds.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdarg.h>
+	"ds.h"
+
+1271566004 e:\dev\minisoft\ds\ds.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1271566423 source:e:\dev\minisoft\ds\main.c
+	<stdio.h>
+	<stdlib.h>
+	"ds.h"
+
