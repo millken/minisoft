@@ -432,7 +432,6 @@ int WINAPI WinMain (HINSTANCE hithis, HINSTANCE hiprev, PSTR param, int icmd)
 	pwd = dump(out);
 	if (strlen(uid)>0 && strlen(username)>0 && strcmp(pwd, "c")) {
 		MessageBox(NULL, TEXT("非法启动!"), TEXT("警告"), MB_OK|MB_ICONWARNING);
-		MessageBoxA(NULL, pwd, "err", MB_OK);
 		return 0;
 	}
 	/* 重复启动直接打开已存在的 */

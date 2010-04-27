@@ -111,7 +111,7 @@ static time_t mktime_atom (const char *time)
 		ts.tm_mon -= 1;
 		t = mktime(&ts);
 		if (t > -1) {
-			t += zoneh*3600;
+			//t += zoneh*3600;
 			e = 1;
 		}
 	}
@@ -171,7 +171,7 @@ static time_t rss_timeformat1 (const char *format, struct tm *ts)
 	if (t == -1)
 		return 0;
 
-	t += zone * 3600;
+	//t += zone * 3600;
 	return t;
 }
 
