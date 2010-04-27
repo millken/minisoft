@@ -1,0 +1,30 @@
+# depslib dependency file v1.0
+1272362454 source:f:\dev\minisoft\htmlrender\main.c
+	<windows.h>
+	"i32.h"
+	"ds.h"
+
+1270598024 source:f:\dev\minisoft\chat_client\src\i32.c
+	"i32.h"
+	<ctype.h>
+
+1270598024 f:\dev\minisoft\chat_client\src\i32.h
+	<windows.h>
+	<commctrl.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+
+1272361320 source:f:\dev\minisoft\ds\ds.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdarg.h>
+	"ds.h"
+
+1272357322 f:\dev\minisoft\ds\ds.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
