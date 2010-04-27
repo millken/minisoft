@@ -34,6 +34,18 @@ void* mdump (void* data, size_t n)
 	return p;
 }
 
+char* sdumpn (const char* s, size_t len)
+{
+	char *p;
+
+	s = s ? s : "";
+	if (!s) len = 0;
+	p = (char*)salloc(len+1);
+	strncpy(p, s, len);
+	p[len] = '\0';
+	return p;
+}
+
 char* sdump (const char* s)
 {
 	char *p;
@@ -46,6 +58,41 @@ char* sdump (const char* s)
 	p[len] = '\0';
 	return p;
 }
+
+char* fdump (const char* filename)
+{
+	FILE* f;
+	int size, n;
+	char* buffer;
+
+	f = fopen(filename, "rb");
+	if (!f) {
+		log("cant open file.");
+		return NULL;
+	}
+
+	fseek (f, 0L, SEEK_END);
+	size = ftell (f);
+	fseek (f, 0L, SEEK_SET);
+
+	buffer = (char*)salloc(size+1);
+	if (!buffer) {
+		fclose(f);
+		return NULL;
+	}
+
+	n = fread (buffer, size, 1, f);
+	if (n != 1) {
+		free (buffer);
+		fclose (f);
+		return NULL;
+	}
+
+	buffer[size] = '\0';
+	fclose(f);
+	return buffer;
+}
+
 
 /*
  * hash-table
@@ -404,8 +451,8 @@ void glout (glnode* node)
 	next = node->next;
 	prev = node->prev;
 
-	if (dad) {
-		dad->child = next;
+	if (dad && dad->child == node) {
+		dad->child = next ? next : prev;
 		dad->cn--;
 	}
 
@@ -489,7 +536,7 @@ size_t glchildn (glnode* dad)
 
 glnode* glget (glnode* dad, int nth)
 {
-	glnode *p, *end;
+	glnode *p;
 	int i;
 
 	if (!dad->child) return NULL;

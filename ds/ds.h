@@ -38,12 +38,13 @@ typedef enum{false, true} bool;
 #endif
 
 /* memory */
-void *salloc (size_t size);
+void* salloc (size_t size);
 #define sfree(p) if(p)free(p) /* safe free */
 #define mclean(p,size) memset(p,0,size)
-void *mdump(void *data, size_t n); /* memory dump, malloc and memcpy */
-char *sdump(const char *s); /* string dump */
-
+void* mdump(void *data, size_t n); /* memory dump, malloc and memcpy */
+char* sdumpn (const char* s, size_t len);
+char* sdump(const char *s); /* string dump */
+char* fdump (const char* filename); /* load file to string */
 
 /* hash-table */
 typedef struct {
@@ -98,13 +99,15 @@ typedef struct glnode {
 } glnode;
 
 glnode* glnewv (void* data);
-#define glnew(p) glnewv((void*)p)
+#define glnew(data) glnewv((void*)data)
 void glout (glnode* node);
-void* gldel (glnode* node, void(*freedatafunc)(void*));
+void* gldel (glnode* node, void(*datafreefunc)(void*));
 glnode* glget (glnode* dad, int nth); /* get nth child */
 size_t glchildn (glnode* dad);
 void gljoin (glnode* dad, glnode* node, int nth);
-#define gl_foreach(dad,p) for(p=dad->child;p;p=p->next)
+#define glforeach(dad,p) for(p=dad->child;p;p=p->next)
+
+
 
 #ifdef __cplusplus
 }
