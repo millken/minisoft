@@ -158,7 +158,7 @@ h1 {
 
 div.left {
 	background-color: #ffffff;
-	width: 240px;
+	width: 220px;
 	min-width: 150px;
 	max-width: 250px;
 	height: *;
@@ -289,15 +289,14 @@ div.right #ctitle:hover {
 	text-decoration: underline;
 }
 div.right #ctime {
-	margin-left: 5px;
-	font-size: 11px;
+	font-size: 10px;
 	color: #999999;
 }
 div.right #cnote {
 	font-size: 10px;
 	color: #999999;
 	margin: 4px 0;
-	
+	margin-right: 10px;	
 }
 div.right #ccon {
 	padding-top: 10px;
@@ -368,7 +367,7 @@ div.foot a:hover {
 		<div id='subpad'>
 			<div id='closemenu'>x</div>
 		<div class='tip'>输入rss地址</div>
-		<input type='text' style='border:0px solid #eeeeee;width:170px;height:14px;' id='inputurl' value='http://blog.cnal.com/rss.php' />
+		<input type='text' style='border:0px solid #eeeeee;width:150px;height:14px;' id='inputurl' value='http://blog.cnal.com/rss.php' />
 			<button id='addbutton'>确定</button>
 		<div class='tip'>例如: blog.cnal.com/rss.php</div>
 		</div>
@@ -383,8 +382,8 @@ div.foot a:hover {
 
 	<dl id='itemlist'>
 		<div id='itemcontent'>
-			<a href='#' id='ctitle'></a> <span id='ctime'></span><br/>
-			<div id='cnote'></div>
+			<a href='#' id='ctitle'></a> <br/>
+			<div><span id='cnote'></span> <span style='font-size:10px;color:#999999;'>发表于: </span><span id='ctime'></span></div>
 			<div id='ccon'></div>
 		</div>
 
@@ -402,11 +401,11 @@ div.foot a:hover {
 
 <!-- 右侧内容菜单 -->
 <menu.context #for-htmlarea>
-  <li id='fold'>收起</li>
   <li command="htmlarea:copy"
 	>复制<span class="accesskey">Ctrl+C</span></li>
   <li command="htmlarea:selectall"
 	>全选</li>
+  <li id='fold'>收起</li>
 </menu>
 
 <!-- footer -->
