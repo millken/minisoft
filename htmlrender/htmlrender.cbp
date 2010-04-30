@@ -31,6 +31,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DUNICODE" />
 			<Add directory="..\chat_client\src" />
 			<Add directory="..\ds" />
 		</Compiler>

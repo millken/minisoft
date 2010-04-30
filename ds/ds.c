@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <windows.h>
 
 #include "ds.h"
 
@@ -93,6 +95,31 @@ char* fdump (const char* filename)
 	return buffer;
 }
 
+char* trimn (const char* text, size_t len)
+{
+	char *begin, *end;
+
+	for (begin = (char*)text; isspace(*begin); begin++);
+	for (end = (char*)(text+len); end>begin && isspace(end[-1]); end--);
+
+	return sdumpn(begin, end-begin);
+}
+
+char* trim (const char* text)
+{
+	return trimn(text, strlen(text));
+}
+
+wchar_t* utf2unicode (char* utf8)
+{
+	wchar_t* ws;
+	size_t n;
+
+	n = MultiByteToWideChar (CP_UTF8, 0, utf8, -1, NULL, 0);
+	ws = (wchar_t*)salloc((n+1)*sizeof(wchar_t));
+	MultiByteToWideChar (CP_UTF8, 0, utf8, -1, ws, sizeof(wchar_t)*(n+1));
+	return ws;
+}
 
 /*
  * hash-table
