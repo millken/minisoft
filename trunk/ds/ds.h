@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +38,7 @@ typedef enum{false, true} bool;
 #endif
 #endif
 
-/* memory */
+/* memory & string */
 void* salloc (size_t size);
 #define sfree(p) if(p)free(p) /* safe free */
 #define mclean(p,size) memset(p,0,size)
@@ -45,6 +46,11 @@ void* mdump(void *data, size_t n); /* memory dump, malloc and memcpy */
 char* sdumpn (const char* s, size_t len);
 char* sdump(const char *s); /* string dump */
 char* fdump (const char* filename); /* load file to string */
+char* trimn (const char* text, size_t len);
+char* trim (const char* text);
+
+/* string encode */
+wchar_t* utf2unicode (char* utf8);
 
 /* hash-table */
 typedef struct {
@@ -90,7 +96,7 @@ size_t vssize (vchar* vs); /* get mem size */
 int vslen (vchar* vs);
 
 
-/* glist 广义表 */
+/* global list 广义表 */
 typedef struct glnode {
 	struct glnode *prev, *next;
 	struct glnode *child, *dad;
