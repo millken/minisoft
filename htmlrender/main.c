@@ -46,8 +46,8 @@ typedef struct {
 	wchar_t* wname;
 	size_t namelen; /* char count of wname */
 	Attr* attrs;
-	int an;
-	int y; /* line bottom */
+	int an; /* count of attributes */
+	int linemaxh; /* max height of this line */
 } Tag;
 
 Tag* newtag (TagType type)
@@ -245,47 +245,43 @@ void tagfreefunc (void* data)
 	deltag((Tag*)data);
 }
 
-/* 确定本行高度 */
-int rowheight (HDC hdc, glnode* firstnode, int left, int width)
+
+/* 排版&渲染,
+ * 参数:
+ * todraw: false为排版, true为渲染,
+ * r->left: 左边界x坐标,
+ * r->top: 上边界y坐标,
+ * r->right: 宽度,
+ * r->bottom: 首行起点x,
+ * lh: 每个渲染行的第一个tag, 外部调用传NULL
+ *
+ * 返回: 元素底部y坐标
+ */
+int layout_render (bool todraw, HDC hdc, glnode* dad, RECT* wrap, Tag* lh)
 {
-	glnode* p;
-	Tag* tag;
-	int maxheight = 0;
+	static Tag* linehead = NULL;
 
-	if (!firstnode) return 0;
-
-	for (p = firstnode; p; p=p->next) {
-		tag = (Tag*)p->data;
-		if (tag->type == TEXT) {
-			maxheight = max(maxheight, 12);
-		}
-		else
-			maxheight = max(maxheight, 20);
-	}
-
-	return maxheight;
-}
-
-void render_gl (HDC hdc, glnode* dad, RECT* r)
-{
 	glnode* node;
 	Tag* tag;
 	wchar_t* ws;
 	int len;
-	int left, top, width, h;
+	int left, top, width, height = 0;
+	int dadh = 0;
 
-	SetTextAlign(hdc, TA_LEFT|TA_BOTTOM|TA_NOUPDATECP);
+	if (!dad) return 0;
 
-	top = r->top;
-	left = r->left;
-	width = r->right - left;
+	top = wrap->top;
+	left = wrap->bottom; //起点
+	width = wrap->right;
 
-	h = rowheight (hdc, dad->child, left, width);
-	printf ("rowh: %d, cn:%d\n", h, dad->cn);
-	top += h;
+	if (lh == NULL)
+		linehead = dad->child;
+	if (linehead == NULL)
+		return top;
 
 	glforeach (dad, node) {
 		tag = (Tag*)node->data;
+
 		if (tag->type == TEXT) {
 			//printf ("%d\n", tag->len);
 			int rowlen = 0;
@@ -293,43 +289,112 @@ void render_gl (HDC hdc, glnode* dad, RECT* r)
 			len = tag->namelen;
 
 			if (len <= 0) continue;
-
+			// walk line by line
 			while (len > 0) {
 				SIZE size;
-				width = r->right - left;
-				GetTextExtentExPointW(hdc, ws, len, width, &rowlen, NULL, &size);
-				ExtTextOutW(hdc, left, top, ETO_OPAQUE, NULL, ws, rowlen, NULL);
+				bool nextline;
 
-				// next segent
+				// 超出边界
+				if (left > wrap->right || left < 0)
+					left = wrap->left;
+
+				width = wrap->right - left;
+				GetTextExtentExPointW(hdc, ws, len, width, &rowlen, NULL, &size);
+				height = size.cy+2;
+				nextline = left + size.cx > wrap->right;
+
+				// from the line start
+				if (left == wrap->left) {
+					linehead = tag;
+					printf ("text: %s, linemaxh: %d\n", tag->name, linehead->linemaxh);
+					top += (left==wrap->left&&nextline) ? height : linehead->linemaxh;
+				}
+
+				// layout, caculate line max height
+				if (!todraw) {
+					if (linehead->linemaxh < height)
+						linehead->linemaxh = height;
+					if (left == wrap->left) {
+						linehead = tag;
+						linehead->linemaxh = height;
+					}
+				}
+
+				if (todraw) {
+					//printf ("linemaxh: %d\n", linehead->linemaxh);
+					//printf("left: %d, top: %d\n", left, top);
+					SetTextAlign(hdc, TA_LEFT|TA_BOTTOM|TA_NOUPDATECP);
+					ExtTextOutW(hdc, left, top, ETO_OPAQUE, NULL, ws, rowlen, NULL);
+				}
+
+				// next text-segment
 				ws += rowlen;
 				len -= rowlen;
 
-				// next line
-				if (left + size.cx > r->right) {
-					left = r->left;
-					top += size.cy+2;
-				}
+				// get x
+				if (nextline)
+					left = wrap->left;
 				else
 					left += size.cx;
 			}
 
 		}
 		else if (tag->type == ELEMENT) {
+			// img [原子元素]
 			if (strcmp(tag->name, "img") == 0) {
-				int iw = 16, ih = 16;
-				if (left+iw > r->right) {
+				int iw = 86, ih = 46;
+				bool nextline = (left > wrap->left && left+iw > wrap->right);
+
+				if (left > wrap->left && left+iw > wrap->right) {
 					// next line
-					top += ih;
-					left = r->left;
+					left = wrap->left;
 				}
-				RECT r = {left, top-ih, left+iw, top};
-				i32fillrect(hdc, &r, 0x00ccff);
+
+				if (left == wrap->left) {
+					linehead = tag;
+					printf ("img linemax: %d\n", linehead->linemaxh);
+					top += linehead->linemaxh;
+				}
+
+				// layout, caculate line max height
+				if (!todraw) {
+					if (left == wrap->left) {
+						linehead = tag;
+						linehead->linemaxh = ih + 1; //margin-bottom 1
+					}
+					else if (linehead->linemaxh < ih)
+						linehead->linemaxh = ih + 1;
+				}
+
+				RECT r = {left+1, top-ih, left+iw+1, top};
+				if (todraw) {
+					//printf ("r->top: %d\n", r.top);
+					i32fillrect(hdc, &r, 0x00ccff);
+				}
 				left = r.right;
+			}
+			// span [行容器], 本身无宽,由子元素决定
+			else if (strcmp(tag->name, "span") == 0) {
+				RECT r = {wrap->left, top, wrap->right, left};
+				top = layout_render (todraw, hdc, node, &r, linehead);
+				left = r.bottom;
+			}
+			// div [块容器], 自己占一行, 宽度100%
+			else if (strcmp(tag->name, "div") == 0) {
+				RECT r = {wrap->left, top, wrap->right, wrap->left};
+				// new line
+				linehead = tag;
+				left = wrap->left;
+				top = layout_render (todraw, hdc, node, &r, linehead);
+				// new line
+				linehead = tag;
+				left = wrap->left;
 			}
 		}
 
 	}
-
+	wrap->bottom = left;
+	return top;
 }
 
 LRESULT CALLBACK winproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -341,12 +406,25 @@ LRESULT CALLBACK winproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 			root = (glnode*)wp;
 		return 0;
 
+		case WM_SIZE: {
+			HDC hdc = GetDC(hwnd);
+			RECT rect;
+			GetClientRect (hwnd, &rect);
+			rect.right -= rect.left;
+			rect.bottom = rect.left;
+			layout_render (false, hdc, root, &rect, NULL);
+			ReleaseDC(hwnd, hdc);
+			return 0;
+		}
+
 		case WM_PAINT: {
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
 			RECT rect;
 			GetClientRect (hwnd, &rect);
-			render_gl (hdc, root, &rect);
+			rect.right -= rect.left;
+			rect.bottom = rect.left;
+			layout_render (true, hdc, root, &rect, NULL);
 			EndPaint(hwnd, &ps);
 			return 0;
 		}
