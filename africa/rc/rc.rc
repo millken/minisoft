@@ -1,0 +1,12 @@
+LOGO ICON "gb.ico"
+
+/* 弹出菜单 */
+POPMENU MENU DISCARDABLE
+BEGIN
+  POPUP "traymenu"
+  BEGIN
+  MENUITEM "Play", 1001
+  MENUITEM SEPARATOR
+  MENUITEM "Leave(&X)", 1000
+  END
+END
