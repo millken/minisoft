@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1275458748 source:f:\dev\minisoft\age_of_africa\main.c
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	"tray.h"
+
+1275457472 source:f:\dev\minisoft\age_of_africa\rc\rc.rc
+
+1275456018 f:\dev\minisoft\age_of_africa\tray.h
+	<windows.h>
+	<string.h>
+
+1275457472 source:f:\dev\minisoft\africa\rc\rc.rc
+

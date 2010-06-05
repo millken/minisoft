@@ -1,0 +1,35 @@
+# depslib dependency file v1.0
+1275461788 source:f:\dev\minisoft\age_of_africa\luacgi\main.c
+	<stdio.h>
+	<stdlib.h>
+	<lua.h>
+	<lualib.h>
+	<lauxlib.h>
+	<windows.h>
+
+1199374876 f:\dev\minisoft\age_of_africa\luacgi\lua\lua.h
+	<stdarg.h>
+	<stddef.h>
+	"luaconf.h"
+
+1200676068 f:\dev\minisoft\age_of_africa\luacgi\lua\luaconf.h
+	<limits.h>
+	<stddef.h>
+	<unistd.h>
+	<io.h>
+	<stdio.h>
+	<stdio.h>
+	<readline/readline.h>
+	<readline/history.h>
+	<assert.h>
+	<math.h>
+	<unistd.h>
+
+1198760546 f:\dev\minisoft\age_of_africa\luacgi\lua\lualib.h
+	"lua.h"
+
+1198760546 f:\dev\minisoft\age_of_africa\luacgi\lua\lauxlib.h
+	<stddef.h>
+	<stdio.h>
+	"lua.h"
+

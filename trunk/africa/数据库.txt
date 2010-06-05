@@ -1,0 +1,60 @@
+[Road of the Sahara]
+
+command: {
+	say|'
+	help|?
+	list %2
+	kill %2
+	buy %1 from %2
+}
+
+room: {
+	sysname: 'wild001'; //唯一
+	name: 'dune001';
+	description: '...';
+	pic: 'rc/xx.png';
+}
+
+people: {
+	uid: 999;
+	sysname: 'master';
+	name: '村长';
+	description: '...';
+	pic: 'rc/xx.png';
+	hp: 98;
+	maxhp: 100;
+	where: 10;
+	follow: 'cat000';
+}
+
+item: {
+	id: 99999;
+	sysname: 'salt';
+	name: '盐';
+	description: '...';
+	pic: 'rc/xx.png';
+	owner: 999;
+	where: 20;
+	home: 'sudan';
+	value: 1000; //价钱
+	weight: 10;
+	maxweight: 100;
+	visible: true;
+	cmd: {
+		'look': 'if($this->value<50)echo "半块盐";else echo "一块大盐饼";',
+		'eat': '$this->value-=10; echo "你舔了一下,感觉甜甜的."; if($this->value<=0){clear($this);echo "吃完了.";}',
+		'drop': '$this->owner=0;',
+	}
+}
+
+command: {
+	sysname: ''; cmd: 'say'; script: 'echo $_param;';
+	sysname: ''; cmd: 'help'; script: 'loaddoc($_param)';
+	sysname: ''; cmd: 'look'; script: 'if($_param=="" && !cmdexists($thisroom->sysname) echo $thisroom->description;)';
+	sysname: ''; cmd: 'team'; script: ''; //查看队伍(follow我的)
+	sysname: ''; cmd 'find'; script: '$item = finditem($thisroom);';
+	sysname: 'dune001'; cmd: 'south'; script:'moveto("dune001")';
+	sysname: 'seller'; cmd: 'list'; script: 'echo getitemlist($npcuid)';
+	sysname: 'seller'; cmd: 'ask'; script: 'if ($P0=="gold" && haveitem("apple")) echo "据说...";';
+	sysname: 'seller'; cmd: 'sell'; script: ''; // sell %1 to %2 from %3(骆驼)
+}
