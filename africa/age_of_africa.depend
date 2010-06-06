@@ -13,3 +13,15 @@
 
 1275457472 source:f:\dev\minisoft\africa\rc\rc.rc
 
+1275812595 source:e:\dev\minisoft\africa\rc\rc.rc
+
+1275812934 source:e:\dev\minisoft\africa\main.c
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	"tray.h"
+
+1275741455 e:\dev\minisoft\africa\tray.h
+	<windows.h>
+	<string.h>
+

@@ -7,13 +7,14 @@ HANDLE g_httphandle = NULL;
 
 void httpserver_start ()
 {
+    TCHAR cmd[] = {0};
 	STARTUPINFO si = {0};
 	PROCESS_INFORMATION pi;
 	memset(&pi, 0, sizeof(pi));
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESHOWWINDOW;
-	CreateProcess (TEXT("mongoose.exe"), TEXT(""), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	CreateProcess (TEXT("mongoose.exe"), cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 
 	g_httphandle = pi.hProcess;
 }
@@ -43,7 +44,7 @@ void popmenu (HWND hwnd)
 
 void play ()
 {
-	ShellExecute(NULL,TEXT("open"), TEXT("http://localhost:8080"), TEXT(""), TEXT(""), SW_SHOWMINIMIZED);
+	ShellExecute(NULL,TEXT("open"), TEXT("http://localhost:8079"), TEXT(""), TEXT(""), SW_SHOWMINIMIZED);
 }
 
 LRESULT CALLBACK wproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -70,6 +71,12 @@ LRESULT CALLBACK wproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 				case 1001:
 					play();
+				break;
+
+				case 1002:
+                    httpserver_end ();
+                    httpserver_start ();
+                    MessageBox(NULL, TEXT("Restart Mongoose successfully."), TEXT("A of A"), MB_OK|MB_ICONWARNING);
 				break;
 			}
 		return 0;
