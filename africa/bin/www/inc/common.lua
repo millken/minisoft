@@ -1,21 +1,42 @@
 
+function gethttp ()
+	local t = {}
+	local _response = ''
+	local _cookies = ''
 
-function http_header_begin ()
-	io.write ("Content-type: text/html\n")
-end
-
-function http_set_cookie (key, value, expire)
-	local s = "Set-Cookie:" .. key .. "=" .. value
-	if expire ~= nil then
-		s = s .. ';expires=' .. os.date('%A,%d-%B-%Y %X GMT', expire)
+	t.header = function ()
+		io.write ("Content-type: text/html\n")
+		if _cookies ~= '' then
+			io.write (_cookies)
+		end
+		io.write ('\n')
+		if _response ~= '' then
+			io.write (_response)
+		end
+		os.exit()
 	end
-	s = s .. '\n'
-	io.write (s)
-end
 
-function http_header_end ()
-	io.write ('\n')
+	t.setcookie = function (key, value, expire)
+		local s = "Set-Cookie:" .. key .. "=" .. value
+		if expire ~= nil then
+			s = s .. ';expires=' .. os.date('%A,%d-%B-%Y %X GMT', expire)
+		end
+		s = s .. '\n'
+		_cookies = _cookies .. s
+	end
+
+	t.delcookie = function (key)
+		t.setcookie(key, 0, 1)
+	end
+
+	t.echo = function (s)
+		s = s or ''
+		_response = _response .. s
+	end
+
+	return t
 end
+http = gethttp()
 
 -- 字符串转化为表
 string.explode = function (s, tok)

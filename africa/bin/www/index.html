@@ -10,13 +10,14 @@
 <style>
 html {background-color:#5F98DE;}
 .page {width:520px; margin:0 auto;margin-top:6%;}
-#input {display:block;width:100%;height:20px;margin:4px auto;padding-left:3px; border:1px solid #000;font-family:Courier New;font-size:13px;line-height:20px;}
-#input:focus {background-color:#FFF4C4;border:2px groove #000;}
+#input {width:455px;height:20px;margin:4px 0px;padding-left:3px; border:1px solid #000;font-family:Courier New;font-size:13px;line-height:20px;}
+#input:focus {background-color:#FFF4C4;border:1px groove #000;}
 #textarea {overflow-y:auto;width:512px;height:300px;background-color:#000000;color:#009713;border:3px ridge #B4BCC7;
 			font-family:Courier New;font-size:13px;padding:5px;line-height:17px;
 			}
 #textarea ul {margin:0;padding:0px;}
 #endblock {height:6px;}
+#send {width:50px;height:25px;margin:0;}
 </style>
 
 <body onload="load();">
@@ -25,25 +26,25 @@ html {background-color:#5F98DE;}
 	
 	<div id='textarea'>
 		<ul>
-		3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>
-		3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>3<br/>
+		
 		</ul>
 		<div id='endblock'></div>
 	</div>
-	<input id='input' type='text' value='' />
+	<input id='input' type='text' value='' /> <button id='send' onclick='return post(false);'>Send</button>
 </div>
 
 <script>
 $('#input').keypress(function(e){
 	if (e.which == 13)
-		return post();
+		return post(false);
 });
 
-function post()
+function post(cmd)
 {
-	var cmd = $('#input').val();
+	if (!cmd)
+		cmd = $('#input').val();
 	$.post('i.lua', cmd, function(html) {
-		//alert(html);
+		alert(html);
 		$('#textarea > ul').append('<li>'+html+'</li>');
 		$('#endblock')[0].scrollIntoView();
 		$('#input').val('');
@@ -54,6 +55,7 @@ function post()
 
 function load ()
 {
+	post ('quit');
 	$('#input').focus();
 	$('#endblock')[0].scrollIntoView();
 	return false;
