@@ -76,7 +76,7 @@ LRESULT CALLBACK wproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 				case 1002:
                     httpserver_end ();
                     httpserver_start ();
-                    MessageBox(NULL, TEXT("Restart Mongoose successfully."), TEXT("A of A"), MB_OK|MB_ICONWARNING);
+                    MessageBox(NULL, TEXT("Server Restart successfully!"), TEXT("A of A"), MB_OK);
 				break;
 			}
 		return 0;

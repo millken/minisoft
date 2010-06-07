@@ -1,42 +1,47 @@
-
+-- http cgi协议类
 function gethttp ()
 	local t = {}
-	local _response = ''
-	local _cookies = ''
+	local response = ''
+	local cookie = {}
 
 	t.header = function ()
 		io.write ("Content-type: text/html\n")
-		if _cookies ~= '' then
-			io.write (_cookies)
+		if next(cookie) ~= nil then
+			local cookies = ''
+			for _,c in pairs(cookie) do
+				cookies = cookies .. "Set-Cookie:" .. c.key .. "=" .. c.value
+				if c.expire ~= nil then
+					cookies = cookies .. ';expires=' .. os.date('%A,%d-%B-%Y %X GMT', c.expire)
+				end
+				cookies = cookies .. '\n'
+			end
+			io.write(cookies)
 		end
 		io.write ('\n')
-		if _response ~= '' then
-			io.write (_response)
+		if response ~= '' then
+			io.write (response)
 		end
 		os.exit()
 	end
 
 	t.setcookie = function (key, value, expire)
-		local s = "Set-Cookie:" .. key .. "=" .. value
-		if expire ~= nil then
-			s = s .. ';expires=' .. os.date('%A,%d-%B-%Y %X GMT', expire)
-		end
-		s = s .. '\n'
-		_cookies = _cookies .. s
+		table.insert(cookie, {key=key, value=value, expire=expire})
 	end
 
 	t.delcookie = function (key)
-		t.setcookie(key, 0, 1)
+		t.setcookie(key, 0, 0)
 	end
 
 	t.echo = function (s)
 		s = s or ''
-		_response = _response .. s
+		response = response .. s
 	end
 
 	return t
 end
-http = gethttp()
+HTTP = gethttp()
+echo = HTTP.echo
+
 
 -- 字符串转化为表
 string.explode = function (s, tok)
@@ -180,3 +185,33 @@ function savetable (tname, o)
 	f:write(code)
 	io.close(f)
 end
+
+
+
+
+-- 配置
+DBDIR = 'data/'
+DBFILE_EXT = 'lua'
+LOCKMAXTIME = 2  --尝试打开被锁文件的超时时间(秒)
+
+_thisroom = {}
+_thisplayer = {}
+
+COOKIE = string.kvlist(os.getenv('HTTP_COOKIE'), ';')
+COOKIE_EXPIRE = 3600 --cookie过期时间
+
+POSTS = ''
+POST = {}
+local method = os.getenv('REQUEST_METHOD')
+if method == 'POST' then
+	local cmd = ''
+	local len = 0 + (os.getenv('CONTENT_LENGTH') or 0)
+	if len > 0 then
+		cmd = io.read(len)
+	end
+	POSTS = cmd
+	POST = string.kvlist(POSTS, '&')
+end
+
+GETS = os.getenv('QUERY_STRING') or ''
+GET = string.kvlist(GETS, '&')

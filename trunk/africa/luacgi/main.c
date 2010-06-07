@@ -47,9 +47,10 @@ int main(int argn, char** arg)
 
 	absdir (path, sizeof(path));
 	sprintf (path, "%s\\%s", path, script);
-	error = luaL_loadfile(L, path) || lua_pcall(L, 0, 0, 0);
+	error = luaL_loadfile(L, path) || lua_pcall(L, 0, LUA_MULTRET, 0);
 	if (error) {
-		printf ("<b>Lua Error:</b> %s<br>\n\n", lua_tostring(L, -1));
+		printf ("Content-type: text/html\n\n");
+		printf ("<b>Lua Error:</b> %s<br/>\n", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return 0;
 	}

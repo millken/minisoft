@@ -3,11 +3,11 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>A of A</title>
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-<script type="text/javascript" src="jquery.js"></script>
+<link rel="shortcut icon" href="inc/favicon.ico" type="image/x-icon" />
+<script type="text/javascript" src="inc/jquery.js"></script>
 </head>
 
-<style>
+<style2>
 html {background-color:#5F98DE;}
 .page {width:520px; margin:0 auto;margin-top:6%;}
 #input {width:455px;height:20px;margin:4px 0px;padding-left:3px; border:1px solid #000;font-family:Courier New;font-size:13px;line-height:20px;}
@@ -43,8 +43,11 @@ function post(cmd)
 {
 	if (!cmd)
 		cmd = $('#input').val();
+	if (!cmd)
+		return false;
 	$.post('i.lua', cmd, function(html) {
-		alert(html);
+		if (!html)
+			alert(html);
 		$('#textarea > ul').append('<li>'+html+'</li>');
 		$('#endblock')[0].scrollIntoView();
 		$('#input').val('');
@@ -55,7 +58,7 @@ function post(cmd)
 
 function load ()
 {
-	post ('quit');
+	post ('enter');
 	$('#input').focus();
 	$('#endblock')[0].scrollIntoView();
 	return false;
