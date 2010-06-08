@@ -57,9 +57,9 @@ LRESULT CALLBACK wproc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		return 0;
 
 		case ON_TRAY:
-			if (wp==ID_TRAY && lp==WM_LBUTTONDOWN)
+			if (wp==ID_TRAY && lp==WM_RBUTTONDOWN)
 				popmenu(hwnd);
-			else if (wp==ID_TRAY && lp==WM_RBUTTONUP)
+			else if (wp==ID_TRAY && lp==WM_LBUTTONDBLCLK)
 				PostMessage(hwnd, WM_DESTROY, 0, 0);
 		return 0;
 
