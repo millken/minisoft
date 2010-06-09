@@ -1,3 +1,12 @@
+-- 获得关联表元素数量
+table.count = function (t)
+	local n = 0
+	for k,v in pairs(t) do
+		n = n + 1
+	end
+	return n
+end
+
 -- table序列化为可打印格式
 function t2s(t)
 	local mark={}
@@ -63,11 +72,11 @@ function gethttp ()
 
 	t.echo = function (s)
 		if s == nil then
-			s = '#NIL'
+			s = '(nil)'
 		elseif type(s) == 'table' then 
 			s = t2s(s)
 		elseif type(s) == 'function' then
-			s = '#FUNCTION'
+			s = '(function)'
 		else
 			s = s
 		end
@@ -78,6 +87,7 @@ function gethttp ()
 end
 HTTP = gethttp()
 echo = HTTP.echo
+print = echo
 error = HTTP.echo
 
 -- 字符串转化为表
@@ -144,8 +154,7 @@ function serialize(t)
 	local assign={}
 	
 	local function ser_table(tbl,parent, indent)
-		local ts = ''
-		for i = 1, indent do ts = ts .. ' ' end
+		local ts = string.rep('  ', indent)
 		mark[tbl]=parent
 		local tmp={}
 		for k,v in pairs(tbl) do
@@ -159,14 +168,19 @@ function serialize(t)
 				end
 			elseif type(v)=='boolean' then
 				table.insert(tmp, ts..key.."=".. (v==true and 'true' or 'false'))
-			else
-				table.insert(tmp, ts..key.."="..string.format('%q',v))
+			elseif type(v)=='string' then
+				if string.find(v, '%c') then
+          v = string.gsub(v, '\t', '  ')
+					table.insert(tmp, ts..key.."=[[\n"..string.format('%s', v).."]]")
+				else
+					table.insert(tmp, ts..key.."="..string.format('%q',v))
+				end
 			end
 		end
-		return "{\n"..table.concat(tmp,",\n").."\n}\n"
+		return "{\n"..table.concat(tmp,",\n").."\n" .. string.rep('  ', indent-1) .. "}"
 	end
 
-	return "do local ret="..ser_table(t,"ret", 0)..table.concat(assign," ").."return ret end"
+	return "-- Tab最好定成2\n\n".."do local ret="..ser_table(t,"ret", 0)..table.concat(assign," ").."return ret end"
 end
 
 -- 锁
@@ -182,9 +196,18 @@ function loadtable (tname)
 			return nil
 		end
 	end
+	
+	local t = dofile(path) or {}
 	-- 继续保持锁
-	local t = dofile(path)
 	g_lock[tname] = io.open(path, "r+")
+	-- command string to function
+	for k,v in pairs(t) do
+		local cmd = v.cmd or {}
+		v.a = {}
+		for name, s in pairs(cmd) do
+			v.a[name] = loadstring(s)
+		end
+	end
 	return t
 end
 
@@ -202,6 +225,10 @@ function savetable (tname, o)
 			return nil
 		end
 	end
+	-- 去除指令函数
+	for k,v in pairs(o) do
+		v.a = nil
+	end
 	local code = serialize(o)
 	local f = io.open(path, 'w')
 	f:write(code)
@@ -210,33 +237,34 @@ end
 
 -------------------------
 -- 加载所有数据库
-TP = {} --people
-TR = {} --room
-TI = {} --item
+PEOPLE = {} --people
+ROOM = {} --room
+ITEM = {} --item
 -------------------------
 function loaddb ()
-	TP = loadtable('people') or {}
-	TR = loadtable('room') or {}
-	TI = loadtable('item') or {}
-	return TP, TR, TI
+	PEOPLE = loadtable('people') or {}
+	ROOM = loadtable('room') or {}
+	ITEM = loadtable('item') or {}
+	return PEOPLE, ROOM, ITEM
 end
 
 function savedb ()
-	savetable('people', TP)
-	savetable('room', TR)
-	savetable('item', TI)
+	savetable('people', PEOPLE)
+	savetable('room', ROOM)
+	savetable('item', ITEM)
 end
 
+-------------------------
 -- 配置
+-------------------------
 DBDIR = 'data/'
 DBFILE_EXT = 't'
 LOCKMAXTIME = 2  --尝试打开被锁文件的超时时间(秒)
 
-_thisroom = {}
-_thisplayer = {}
-
 COOKIE = string.kvlist(os.getenv('HTTP_COOKIE'), ';')
 COOKIE_EXPIRE = 3600 --cookie过期时间
+
+BORNROOM = 'sudan'		--出生点
 
 POSTS = ''
 POST = {}
