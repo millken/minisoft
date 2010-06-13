@@ -207,6 +207,56 @@ A.delroom = function (cmd)
 	end
 end
 
+-- 添加新东西
+A.newitem = function(cmd)
+	local sysname = cmd[2]
+	if sysname==nil or ITEM[sysname] then print'the name was exist' return end
+	local name = cmd[3] or sysname
+	local t = {
+		name = name,
+		desc = '',
+		cmd = {}
+	}
+	ITEM[sysname] = t
+	print'ok'
+end
+
+-- 删除东西
+A.delitem = function(cmd)
+	local sysname = cmd[2]
+	if sysname==nil or ITEM[sysname]==nil then print'the item is not exist' return end
+	ITEM[sysname] = nil
+	print'ok'
+end
+
+-- 列出所有东西
+A.listitem = function()
+	print('There are ' .. table.count(ITEM) .. ' items<br>\n')
+	for k,v in pairs(ITEM) do
+		print('<b>' .. v.name .. '</b>' .. '(' .. k .. ') ')
+	end
+end
+
+-- 给某人添加东西
+A.additem = function(cmd)
+	local username = cmd[2]
+	if username==nil or PEOPLE[username]==nil then print'no username' return end
+	local sysname = cmd[3]
+	if sysname==nil or ITEM[sysname]==nil then print'no this item' return end
+	local n = cmd[4]
+	if n==nil then print'this count is nil' return end
+	local sellval = cmd[5]
+	if value==nil or type(sellval)~='number' then print'plz give it a supply-value' return end
+	local buyval = cmd[6]
+	if value==nil or type(buyval)~='number' then print'plz give it a buy-value' return end
+	local user = PEOPLE[username]
+	if user.item == nil then user.item = {} end
+	if user.item[sysname] ~= nil then
+	local o = {
+		
+	}
+end
+
 -- 列出所有人
 A.who = function ()
 	print ("There are ".. table.count(PEOPLE) .." people:<br>")
@@ -243,10 +293,12 @@ A.list = function (cmd)
 		A.who()
 	elseif p == 'room' or p == 'r' then
 		A.listroom()
+	elseif p == 'item' or p == 'i' then
+		A.listitem()
 	elseif p == 'cmd' or p == 'c' then
 		A.listcmd()
 	else
-		print("Command Help: list (who|room|cmd)")
+		print("Command Help: list (who|room|item|cmd)")
 	end
 end
 
