@@ -9,7 +9,7 @@ do local ret={
     ]]
   },
   ['name']="亚历山大",
-  ['desc']="这里是..."
+  ['desc']="<img src='img/flag_orange.gif' style='float:left' />这里是....."
 },
 ['sudan']={
   ['cmd']={
