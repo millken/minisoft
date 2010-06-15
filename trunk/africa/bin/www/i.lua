@@ -251,7 +251,7 @@ A.additem = function(cmd)
 	if value==nil or type(buyval)~='number' then print'plz give it a buy-value' return end
 	local user = PEOPLE[username]
 	if user.item == nil then user.item = {} end
-	if user.item[sysname] ~= nil then
+	if user.item[sysname] ~= nil then end
 	local o = {
 		
 	}
