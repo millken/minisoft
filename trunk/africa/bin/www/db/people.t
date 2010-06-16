@@ -2,19 +2,19 @@
 
 do local ret={
 ['seller']={
+  ['at']="timbuktu",
+  ['name']="盐商",
   ['cmd']={
 
   },
-  ['name']="盐商",
-  ['at']="timbuktu",
   ['desc']="sudan"
 },
 ['zii']={
-  ['at']="alexander",
-  ['name']="zii",
   ['cmd']={
 
   },
+  ['name']="zii",
+  ['at']="alexander",
   ['desc']=""
 }
 }return ret end
