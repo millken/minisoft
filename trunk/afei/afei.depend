@@ -5,3 +5,10 @@
 	<string.h>
 	<ctype.h>
 
+1278928934 source:f:\dev\minisoft\afei\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<windows.h>
+

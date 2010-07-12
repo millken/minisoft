@@ -133,13 +133,17 @@ void freedb(char*map[])
     }
 }
 
-/**********************************/
+/*****************  LALA语言  *****************/
 
 char* g_map[100] = {NULL}; //当前地图
+char* g_me[100] = {NULL}; //主角资料
+char* g_cmdline[100] = {NULL}; //每个指令的脚本行列表
+int g_lineno = 0; //行号
+int g_ret = 0; //上一行留下的返回值
 
 void gotomap(char* mapname);
 
-/* 继承loaddb的分支函数 */
+/* 继承loaddb */
 int loadmap(char* mapname, char*data[])
 {
     char path[1024];
@@ -150,24 +154,259 @@ int loadmap(char* mapname, char*data[])
     return loaddb(path, data);
 }
 
-void doscript (char* s)
+/* 执行元表达式,顺序迭代的,返回-1,0,1 */
+int doexp(char* s)
 {
-    char* cmd = strtok(s, " \t\r\n");
-    char* param = cmd?cmd+strlen(cmd)+1:"(empty param)";
-    //ECHO
-    if (strcmp(cmd, "!")==0)
-        printf("%s\n", param);
-    else if (strcmp(cmd, "GOTO")==0)
-        gotomap(param);
-        //printf("%s\n", param);
-    else
-        printf("wrong command:%s\n", cmd);
+	char* op = strtok(s, " \t");
+	char *p1, *p2;
+
+	if (!op) return -1;
+
+	// 去某地图
+	if (strcmp(op, "GOTO")==0) {
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("GOTO where?");
+			return -1;
+		}
+		gotomap(p1);
+		return -1;
+	}
+	// 打印文字,最好单独使用.
+	if (strcmp(op, "!")==0) {
+		p1 = op+strlen(op)+1;
+		printf ("%s\n", p1);
+		return -1;
+	}
+	// 设置主角属性变量
+	if (strcmp(op, "SET")==0) {
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator 'SET' need a key.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		if (!p2) {
+			printf ("error: operator 'SET' need a value.");
+			exit(1);
+		}
+		dbset(g_me, p1, p2);
+		printdb(g_me);
+		return -1;
+	}
+	// 比较属性变量
+	if (strcmp(op, ">")==0) {
+		char* vs;
+		int v, i2;
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator '>' need a variable-name to compare.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		vs = dbget(g_me, p1);
+		if (!vs) return 0;
+		if (p2==NULL) i2 = 0;
+		else i2 = atoi(p2);
+		v = atoi(vs);
+		if (v > i2) return 1;
+		return 0;
+	}
+	if (strcmp(op, ">=")==0) {
+		char* vs;
+		int v, i2;
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator '>=' need a variable-name to compare.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		vs = dbget(g_me, p1);
+		if (!vs) v = 0;
+		else v = atoi(vs);
+		if (p2==NULL) i2 = 0;
+		else i2 = atoi(p2);
+		if (v >= i2) return 1;
+		return 0;
+	}
+	if (strcmp(op, "=")==0) {
+		char* vs;
+		int v, i2;
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator '=' need a variable-name to compare.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		vs = dbget(g_me, p1);
+		if (!vs) v = 0;
+		else v = atoi(vs);
+		if (p2==NULL) i2 = 0;
+		else i2 = atoi(p2);
+		if (v == i2) return 1;
+		return 0;
+	}
+	if (strcmp(op, "<")==0) {
+		char* vs;
+		int v, i2;
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator '<' need a variable-name to compare.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		vs = dbget(g_me, p1);
+		if (!vs) v = 0;
+		else v = atoi(vs);
+		if (p2==NULL) i2 = 0;
+		else i2 = atoi(p2);
+		if (v < i2) return 1;
+		return 0;
+	}
+	if (strcmp(op, "<=")==0) {
+		char* vs;
+		int v, i2;
+		p1 = strtok(NULL, " \t");
+		if (!p1) {
+			printf ("error: operator '<=' need a variable-name to compare.");
+			exit(1);
+		}
+		p2 = strtok(NULL, " \t");
+		vs = dbget(g_me, p1);
+		if (!vs) v = 0;
+		else v = atoi(vs);
+		if (p2==NULL) i2 = 0;
+		else i2 = atoi(p2);
+		if (v <= i2) return 1;
+		return 0;
+	}
+	return -1;
 }
 
+/* 执行组合表达式(内含&和|),隐式修改g_ret的值 */
+void dostring(char* s)
+{
+	char* tok;
+	char* p;
+	char op;
+	int ret;
+	if (!strchr(s, '|') && !strchr(s, '&')) {
+		ret = doexp(s);
+		if (ret >= 0)
+			g_ret = ret;
+		return;
+	}
+
+	for (p = s; *p!='&'&&*p!='|'; p++);
+	op = *p;
+	*p = '\0';
+	ret = doexp(s);
+
+	for (s = p+1; *s; s = p+1) {
+		char tmpop;
+		int r;
+		for (p = s; *p&&*p!='&'&&*p!='|'; p++);
+		tmpop = *p;
+		*p = '\0';
+
+		r = doexp(s);
+		if (op == '|')
+			ret = ret || r;
+		else if (op == '&')
+			ret = ret && r;
+
+		if (tmpop)
+			op = tmpop;
+		else
+			break;
+	}
+	g_ret = ret!=0;
+}
+
+/* 执行一个单行,这一行的第一个词应该是一个LALA语言内定控制符(包括?~.&|),否则都按表达式执行. */
+void doline(char* line)
+{
+	char* linebuf = strdup(line);
+	char* op = strtok(linebuf, " \t");
+	char* param = op+strlen(op)+1;
+	int ret = g_ret;
+
+	if (strcmp(op, "?")==0) {
+		if(ret) dostring(param);
+	}
+	else if (strcmp(op, "~")==0) {
+		if(!ret) dostring(param);
+	}
+	else if (strcmp(op, ".")==0)
+		g_ret = 0;
+	else if (strcmp(op, "&")==0) {
+		dostring(param);
+		g_ret = ret && g_ret;
+	}
+	else if (strcmp(op, "|")==0) {
+		dostring(param);
+		g_ret = ret || g_ret;
+	}
+	else {
+		param[-1] = ' '; //补回来
+		dostring(linebuf);
+	}
+	free(linebuf);
+}
+
+/* create tmp line-buffer, 返回行数 */
+int loadcmdline (char* script)
+{
+	int n = 0;
+	//create tmp line-buffer
+	char* tok = strtok(script, "\r\n");
+	while (tok) {
+		g_cmdline[n++] = strdup(tok);
+		tok = strtok(NULL, "\r\n");
+	}
+	return n;
+}
+
+void freecmdline ()
+{
+	int i;
+	char** p;
+	for (i = 0; i < sizeof(g_cmdline)/sizeof(g_cmdline[0]); i++) {
+		p = g_cmdline+i;
+		if (*p)
+			free(*p);
+	}
+	memset(g_cmdline, 0, sizeof(g_cmdline));
+	g_lineno = 0;
+}
+
+/* 执行一串脚本
+   脚本以行为单位,一行一行执行,
+   直到超过最大行数 */
+void doscript (char* script)
+{
+	int n = 0, i;
+
+	n = loadcmdline(script);
+	//for (i = 0; i < n; i++) printf ("#%d: %s\n", i, g_cmdline[i]);
+	//interpretate line by line
+	if (n > 0) {
+		for(g_lineno = 0; g_lineno < n; g_lineno++)
+			doline(g_cmdline[g_lineno]);
+	}
+
+	freecmdline();
+}
+
+/* 一切命令都是基于当前地图的 */
 void mapcmd (char* cmd)
 {
     char* v = dbget(g_map, cmd);
     char* script;
+
+	if (strcmp(cmd, "q")==0)
+		exit(0);
+
     if (!v) {
         printf ("?\n");
         return;
@@ -184,17 +423,18 @@ void delaybar(int sec)
     int i;
     for (i = 0; i < sec; i++) {
         printf (".");
-        Sleep(900);
+        Sleep(600);
     }
     printf ("\n\n");
 }
 
-/* 地图名可以用.来表示子地图 */
+/* 地图名可以用点来表示子地图, 例如cp1.snowroad1*/
 void gotomap(char* mapname)
 {
     freedb(g_map);
     loadmap(mapname, g_map);
-    delaybar(3);
+    freecmdline();
+    //delaybar(3);
     mapcmd("look");
 }
 
@@ -204,15 +444,12 @@ int main()
 {
     char cmd[20];
 
-    printf ("冷风如刀，以大地为砧板，视众生为鱼肉。\n万里飞雪，将苍穹作洪炉，溶万物为白银。\n\n");
-
-    gotomap("cp1.snowroad1");
+    //printf ("冷风如刀，以大地为砧板，视众生为鱼肉。\n万里飞雪，将苍穹作洪炉，溶万物为白银。\n\n");
+    gotomap("cp1.test1");
     //printdb(map);
 
     while (1) {
         gets(cmd);
-        if (strcmp(cmd, "q")==0)
-            return 0;
         mapcmd(cmd);
     }
 
