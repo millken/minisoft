@@ -13,6 +13,23 @@ void strrplc(char*s, char c, char dst)
     }
 }
 
+int find_in_set (char* src, char* find)
+{
+    char* buf = strdup(src);
+    char* tok = strtok(buf, "|,");
+    int ret = 0;
+    while (tok) {
+        if (strcmp(tok, find)==0) {
+            ret = 1;
+            break;
+        }
+        tok = strtok(NULL, "|,");
+    }
+
+    free(buf);
+    return ret;
+}
+
 char *filedup (char* filename)
 {
     FILE* f;
@@ -89,7 +106,7 @@ char* dbget(char*db[], char* key)
     char**p;
 
     for (p = db; *p; p+=2)
-        if (strcmp(*p, key)==0)
+        if (find_in_set(*p, key))
             return *(p+1);
     return NULL;
 }
@@ -142,6 +159,8 @@ int g_lineno = 0; //行号
 int g_ret = 0; //上一行留下的返回值
 
 void gotomap(char* mapname);
+void mapcmd (char* cmd);
+void delaybar(int sec);
 
 /* 继承loaddb */
 int loadmap(char* mapname, char*data[])
@@ -162,6 +181,19 @@ int doexp(char* s)
 
 	if (!op) return -1;
 
+    if (strcmp(op, "CALL")==0) {
+        p1 = strtok(NULL, " \t");
+        mapcmd(p1);
+        return -1;
+    }
+    // 延时
+	if (strcmp(op, "DELAY")==0) {
+        int sec;
+        p1 = strtok(NULL, " \t");
+        sec = atoi(p1);
+        delaybar(sec);
+        return -1;
+	}
 	// 去某地图
 	if (strcmp(op, "GOTO")==0) {
 		p1 = strtok(NULL, " \t");
@@ -191,7 +223,6 @@ int doexp(char* s)
 			exit(1);
 		}
 		dbset(g_me, p1, p2);
-		printdb(g_me);
 		return -1;
 	}
 	// 比较属性变量
@@ -286,10 +317,10 @@ int doexp(char* s)
 /* 执行组合表达式(内含&和|),隐式修改g_ret的值 */
 void dostring(char* s)
 {
-	char* tok;
 	char* p;
 	char op;
 	int ret;
+	if (!s) return;
 	if (!strchr(s, '|') && !strchr(s, '&')) {
 		ret = doexp(s);
 		if (ret >= 0)
@@ -328,8 +359,12 @@ void doline(char* line)
 {
 	char* linebuf = strdup(line);
 	char* op = strtok(linebuf, " \t");
-	char* param = op+strlen(op)+1;
+	char* param;
 	int ret = g_ret;
+
+    if (!op)
+        return;
+    param = op+strlen(op)+1;
 
 	if (strcmp(op, "?")==0) {
 		if(ret) dostring(param);
@@ -373,7 +408,7 @@ void freecmdline ()
 	char** p;
 	for (i = 0; i < sizeof(g_cmdline)/sizeof(g_cmdline[0]); i++) {
 		p = g_cmdline+i;
-		if (*p)
+		if (p && *p)
 			free(*p);
 	}
 	memset(g_cmdline, 0, sizeof(g_cmdline));
@@ -385,10 +420,9 @@ void freecmdline ()
    直到超过最大行数 */
 void doscript (char* script)
 {
-	int n = 0, i;
+	int n = 0;
 
 	n = loadcmdline(script);
-	//for (i = 0; i < n; i++) printf ("#%d: %s\n", i, g_cmdline[i]);
 	//interpretate line by line
 	if (n > 0) {
 		for(g_lineno = 0; g_lineno < n; g_lineno++)
@@ -423,7 +457,7 @@ void delaybar(int sec)
     int i;
     for (i = 0; i < sec; i++) {
         printf (".");
-        Sleep(600);
+        Sleep(200);
     }
     printf ("\n\n");
 }
@@ -434,8 +468,8 @@ void gotomap(char* mapname)
     freedb(g_map);
     loadmap(mapname, g_map);
     freecmdline();
-    //delaybar(3);
-    mapcmd("look");
+    //delaybar(4);
+    mapcmd("create");
 }
 
 
@@ -443,15 +477,18 @@ void gotomap(char* mapname)
 int main()
 {
     char cmd[20];
+    printf ("%d\n", find_in_set("l young|look young", "l young"));
+    printf ("冷风如刀，以大地为砧板，视众生为鱼肉。\n万里飞雪，将苍穹作洪炉，溶万物为白银。\n\n");
 
-    //printf ("冷风如刀，以大地为砧板，视众生为鱼肉。\n万里飞雪，将苍穹作洪炉，溶万物为白银。\n\n");
-    gotomap("cp1.test1");
+    gotomap("cp1.snowroad1");
     //printdb(map);
 
     while (1) {
         gets(cmd);
         mapcmd(cmd);
     }
+
+
 
     //freedb(g_map);
 

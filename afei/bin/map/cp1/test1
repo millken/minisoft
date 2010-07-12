@@ -1,7 +1,0 @@
-look:
-> bag 14 | > bag 20
-;
-
-south:
-GOTO cp1.test2
-;

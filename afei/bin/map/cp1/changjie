@@ -1,0 +1,21 @@
+create:
+CALL look
+;
+
+l|look:
+! - 小镇.长街
+! 东面是客栈，西面是饭铺. 
+! (这里的出口: east,west,north,south) 
+;
+
+e|east:
+GOTO cp1.kezhan1;
+
+w|west:
+GOTO cp1.fanpu;
+
+n|north:
+GOTO cp1.snowroad2;
+
+s|south:
+GOTO cp1.nanjiao;
