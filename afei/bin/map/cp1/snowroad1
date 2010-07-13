@@ -9,6 +9,6 @@ l|look:
 ;
 
 s|south:
-DELAY 4
+DELAY 3
 GOTO cp1.snowroad2
 ;

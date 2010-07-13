@@ -1,0 +1,32 @@
+create:
+CALL look
+;
+
+l|look:
+! - 小小酒铺
+> 得到金丝甲
+? ! □ 一坛酒(wine)
+<= 已中毒
+? ! □ 老者(oldman) 
+;
+
+l wine|look wine:
+! 上好的剑南春，真想喝(drink wine).
+;
+
+hi oldman:
+<= 已中毒
+? ! 本店的酒专治咳嗽,客官请用.
+? set 已和老者说话 1
+;
+
+drink wine:
+> 已和老者说话
+? ! 不好，中毒了！
+? ! 哈哈，中了我的寒鸡散，休想使出半分真力。金丝甲我拿走了。老者扬长而去。
+? set 已中毒 1
+~ ! 别人的酒怎么能随便喝。
+;
+
+e|east:
+GOTO cp1.shulin1;

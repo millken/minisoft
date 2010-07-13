@@ -459,6 +459,7 @@ void parseElem (Tag* tag, char* text, size_t len)
 	text[len] = endchar;
 }
 
+/* 返回下一个要解析的位置 */
 char* lex (char* text, glnode* dad)
 {
 	glnode* node;
