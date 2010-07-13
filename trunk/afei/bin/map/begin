@@ -1,0 +1,4 @@
+create:
+! 《老李的故事》
+delay 5
+goto cp1.snowroad1;

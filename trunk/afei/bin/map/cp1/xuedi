@@ -1,0 +1,14 @@
+create:
+CALL look
+;
+
+l|look:
+! - 雪地
+! 人间的污秽，似乎已全都被雪花洗净，自车窗中望出去，天地一片银白，能活着，毕竟还是件好事。(south)
+;
+
+n|north:
+GOTO cp1.niujiaz;
+
+s|south:
+GOTO cp1.xiaoqiao;

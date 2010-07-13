@@ -475,7 +475,7 @@ void mapcmd (char* cmd)
 	if (strcmp(cmd, "q")==0)
 		exit(0);
 	if (strcmp(cmd, "?")==0 || strcmp(cmd, "help")==0) {
-		printf ("常用的命令有: e(东),s(南),w(西),n(北),look(看),hi(打招呼)\n\n");
+		printf ("常用的命令有: q(退出),e(东),s(南),w(西),n(北),look(看),hi(打招呼)\n\n");
 		return;
 	}
 
@@ -495,7 +495,7 @@ void delaybar(int sec)
     int i;
     for (i = 0; i < sec; i++) {
         printf (".");
-        Sleep(150);
+        Sleep(250);
     }
     printf ("\n\n");
 }
@@ -514,7 +514,7 @@ int main()
 {
     char cmd[20];
 
-    gotomap("enter");
+    gotomap("begin");
     //printdb(map);
 
     while (1) {

@@ -4,11 +4,11 @@ CALL look
 
 l|look:
 ! - 树林
-! 西面隐约是个店铺。 
+! 这时天边又霏霏地落下了雪来，天地间静得甚至可以听到雪花飘落在地上的声音。西面隐约有个店铺。 
 ;
 
 e|east:
-GOTO cp1.changjie;
+GOTO cp1.nanjiao;
 
 w|west:
 GOTO cp1.xiaojiupu;

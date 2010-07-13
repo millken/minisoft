@@ -1,0 +1,14 @@
+create:
+CALL look
+;
+
+l|look:
+! - 小桥
+! 小桥上积雪如新，看不到人的足迹，只有一行黄犬的脚印，象一连串梅花似的洒在栏杆旁。在梅树丛中，有三五石屋，红花白屋，风物宛如图画。(south)
+;
+
+n|north:
+GOTO cp1.xuedi;
+
+s|south:
+GOTO cp1.meilin;
