@@ -2,6 +2,9 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="main.c" open="1" top="1" tabpos="1">
-		<Cursor position="9207" topLine="489" />
+		<Cursor position="10537" topLine="505" />
+	</File>
+	<File name="rc.rc" open="1" top="0" tabpos="2">
+		<Cursor position="20" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

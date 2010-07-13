@@ -1,0 +1,17 @@
+create:
+CALL look
+;
+
+l|look:
+! - 牛家庄
+! 牛家庄是个很繁荣的小镇，这时天色还未全黑，雪已住了，街道两旁的店家都有人拿着把扫把出来扫自己门前的积雪。西面有一酒馆.
+;
+
+n|north:
+GOTO cp1.nanjiao;
+
+w|west:
+goto cp1.jiuguan;
+
+s|south:
+GOTO cp1.xuedi;
