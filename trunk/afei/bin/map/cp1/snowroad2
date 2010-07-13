@@ -10,11 +10,11 @@ l|look:
 ;
 
 s|south:
-DELAY 4
+DELAY 3
 GOTO cp1.changjie;
 
 n|north:
-DELAY 4
+DELAY 3
 GOTO cp1.snowroad1;
 
 l young|look young:
@@ -27,6 +27,6 @@ hi|hi young:
 ~ ! 想请我喝酒? 不是我自己买来的东西，我绝不要，不是我自己买来的酒，我也绝不喝…… 
 ~ ! 我的话已经说得够清楚了吗？你走吧. 
 SET 已和少年邂逅 1
-~ ! 少年大步走了。
+~ ! 少年大步向前走去。
 ? ! ?
 ;

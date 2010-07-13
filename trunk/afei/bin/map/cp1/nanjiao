@@ -1,0 +1,29 @@
+create:
+call look;
+
+l|look:
+! - 小镇南郊
+> 诸葛雷已死 & <= 得到金丝甲
+? ! 道路的中央，不知被哪家顽童堆起个雪人(snowman)，大大的肚子，圆圆的脸，脸上还嵌着两粒煤球算作眼睛。 
+! 西面是一片树林。
+;
+
+n|north:
+goto cp1.changjie;
+
+w|west:
+goto cp1.shulin1;
+
+l snowman|look snowman:
+> 诸葛雷已死
+? ! 真想拿个雪球把它砸碎(throw).
+~ ! ?;
+
+throw|throw snowman:
+> 诸葛雷已死
+? ! 你捏起雪团球，‘砰’地击在那雪人上。 
+? delay 4
+? ! 雪人中竟藏着一个真正的人。死人！是黑蛇! 有一个包袱掉了出来。
+? ! [得到金丝甲!]
+? set 得到金丝甲 1
+~ ! ?;

@@ -1,0 +1,14 @@
+create:
+CALL look
+;
+
+l|look:
+! - 树林
+! 西面隐约是个店铺。 
+;
+
+e|east:
+GOTO cp1.changjie;
+
+w|west:
+GOTO cp1.xiaojiupu;

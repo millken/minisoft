@@ -181,21 +181,21 @@ int doexp(char* s)
 
 	if (!op) return -1;
 
-    if (strcmp(op, "CALL")==0) {
+    if (stricmp(op, "CALL")==0) {
         p1 = strtok(NULL, " \t");
         mapcmd(p1);
         return -1;
     }
     // 延时
-	if (strcmp(op, "DELAY")==0) {
+	if (stricmp(op, "DELAY")==0) {
         int sec;
         p1 = strtok(NULL, " \t");
         sec = atoi(p1);
         delaybar(sec);
         return -1;
 	}
-	// 去某地图
-	if (strcmp(op, "GOTO")==0) {
+	// 到某地图
+	if (stricmp(op, "GOTO")==0) {
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
 			printf ("GOTO where?");
@@ -211,7 +211,7 @@ int doexp(char* s)
 		return -1;
 	}
 	// 设置主角属性变量
-	if (strcmp(op, "SET")==0) {
+	if (stricmp(op, "SET")==0) {
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
 			printf ("error: operator 'SET' need a key.");
@@ -227,7 +227,7 @@ int doexp(char* s)
 	}
 	// 比较属性变量
 	if (strcmp(op, ">")==0) {
-		char* vs;
+		char* vs, *vs2;
 		int v, i2;
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
@@ -236,15 +236,18 @@ int doexp(char* s)
 		}
 		p2 = strtok(NULL, " \t");
 		vs = dbget(g_me, p1);
-		if (!vs) return 0;
+		if (!vs) v = atoi(p1);
+		else v = atoi(vs);
+
 		if (p2==NULL) i2 = 0;
+		else if ((vs2 = dbget(g_me, p2))) i2 = atoi(vs2);
 		else i2 = atoi(p2);
-		v = atoi(vs);
+
 		if (v > i2) return 1;
 		return 0;
 	}
 	if (strcmp(op, ">=")==0) {
-		char* vs;
+		char* vs, *vs2;
 		int v, i2;
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
@@ -253,15 +256,16 @@ int doexp(char* s)
 		}
 		p2 = strtok(NULL, " \t");
 		vs = dbget(g_me, p1);
-		if (!vs) v = 0;
+		if (!vs) v = atoi(p1);
 		else v = atoi(vs);
 		if (p2==NULL) i2 = 0;
+		else if ((vs2 = dbget(g_me, p2))) i2 = atoi(vs2);
 		else i2 = atoi(p2);
 		if (v >= i2) return 1;
 		return 0;
 	}
 	if (strcmp(op, "=")==0) {
-		char* vs;
+		char* vs, *vs2;
 		int v, i2;
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
@@ -270,15 +274,18 @@ int doexp(char* s)
 		}
 		p2 = strtok(NULL, " \t");
 		vs = dbget(g_me, p1);
-		if (!vs) v = 0;
+		if (!vs) v = atoi(p1);
 		else v = atoi(vs);
+
 		if (p2==NULL) i2 = 0;
+		else if ((vs2 = dbget(g_me, p2))) i2 = atoi(vs2);
 		else i2 = atoi(p2);
+
 		if (v == i2) return 1;
 		return 0;
 	}
 	if (strcmp(op, "<")==0) {
-		char* vs;
+		char* vs, *vs2;
 		int v, i2;
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
@@ -287,15 +294,18 @@ int doexp(char* s)
 		}
 		p2 = strtok(NULL, " \t");
 		vs = dbget(g_me, p1);
-		if (!vs) v = 0;
+		if (!vs) v = atoi(p1);
 		else v = atoi(vs);
+
 		if (p2==NULL) i2 = 0;
+		else if ((vs2 = dbget(g_me, p2))) i2 = atoi(vs2);
 		else i2 = atoi(p2);
+
 		if (v < i2) return 1;
 		return 0;
 	}
 	if (strcmp(op, "<=")==0) {
-		char* vs;
+		char* vs, *vs2;
 		int v, i2;
 		p1 = strtok(NULL, " \t");
 		if (!p1) {
@@ -304,13 +314,34 @@ int doexp(char* s)
 		}
 		p2 = strtok(NULL, " \t");
 		vs = dbget(g_me, p1);
-		if (!vs) v = 0;
+		if (!vs) v = atoi(p1);
 		else v = atoi(vs);
 		if (p2==NULL) i2 = 0;
+		else if ((vs2 = dbget(g_me, p2))) i2 = atoi(vs2);
 		else i2 = atoi(p2);
 		if (v <= i2) return 1;
 		return 0;
 	}
+	if (strcmp(op, "*")==0) {
+		char* param = op+strlen(op)+1;
+		char* p1 = strtok(param, " \t");
+		int n, i;
+		char* v;
+		if (!p1) {
+			printf ("error: operator '*' need a number.\n");
+			return -1;
+		}
+		v = dbget(g_me, p1);
+		if (v)
+			n = atoi(v);
+		else
+			n = atoi(p1);
+		param = p1+strlen(p1)+1;
+		for (i = 0; i < n; i++)
+			doexp(param);
+		return -1;
+	}
+
 	return -1;
 }
 
@@ -382,6 +413,9 @@ void doline(char* line)
 		dostring(param);
 		g_ret = ret || g_ret;
 	}
+	else if (strcmp(op, "#")==0) {
+		// 这是注释
+	}
 	else {
 		param[-1] = ' '; //补回来
 		dostring(linebuf);
@@ -440,6 +474,10 @@ void mapcmd (char* cmd)
 
 	if (strcmp(cmd, "q")==0)
 		exit(0);
+	if (strcmp(cmd, "?")==0 || strcmp(cmd, "help")==0) {
+		printf ("常用的命令有: e(东),s(南),w(西),n(北),look(看),hi(打招呼)\n\n");
+		return;
+	}
 
     if (!v) {
         printf ("?\n");
@@ -457,7 +495,7 @@ void delaybar(int sec)
     int i;
     for (i = 0; i < sec; i++) {
         printf (".");
-        Sleep(200);
+        Sleep(150);
     }
     printf ("\n\n");
 }
@@ -468,27 +506,21 @@ void gotomap(char* mapname)
     freedb(g_map);
     loadmap(mapname, g_map);
     freecmdline();
-    //delaybar(4);
     mapcmd("create");
 }
-
 
 
 int main()
 {
     char cmd[20];
-    printf ("%d\n", find_in_set("l young|look young", "l young"));
-    printf ("冷风如刀，以大地为砧板，视众生为鱼肉。\n万里飞雪，将苍穹作洪炉，溶万物为白银。\n\n");
 
-    gotomap("cp1.snowroad1");
+    gotomap("enter");
     //printdb(map);
 
     while (1) {
         gets(cmd);
         mapcmd(cmd);
     }
-
-
 
     //freedb(g_map);
 
